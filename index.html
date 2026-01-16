@@ -1,0 +1,2005 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>MEHIC SALES OS - Ultimate Edition v1.6</title>
+    <!-- MEHIC SALES OS Ultimate Edition v1.6 © 2026 Enes Mehic - Proprietary Software -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        :root {
+            --ceramic-grey: #F3F4F6;
+            --pure-white: #FFFFFF;
+            --accent-red: #E3000F;
+            --soft-black: #111827;
+            --label-grey: #6B7280;
+            --glass-bg: rgba(255, 255, 255, 0.75);
+            --shadow-soft: 0 8px 32px rgba(0, 0, 0, 0.08);
+            --shadow-deep: 0 20px 60px rgba(0, 0, 0, 0.12);
+            --radius-card: 20px;
+            --radius-control: 16px;
+            --transition-smooth: cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        @supports (view-transition-name: none) {
+            ::view-transition-old(root),
+            ::view-transition-new(root) {
+                animation-duration: 0.4s;
+            }
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', sans-serif;
+            background: var(--ceramic-grey);
+            color: var(--soft-black);
+            line-height: 1.6;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            overflow-x: hidden;
+            overscroll-behavior-y: contain;
+            height: 100dvh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Header */
+        .header {
+            background: var(--pure-white);
+            padding: 20px 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: var(--shadow-soft);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            backdrop-filter: blur(16px);
+            user-select: none;
+            cursor: pointer;
+        }
+
+        .logo-container {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .logo-svg {
+            width: 48px;
+            height: 48px;
+        }
+
+        .logo-text {
+            font-size: 20px;
+            font-weight: 800;
+            letter-spacing: -0.5px;
+            color: var(--soft-black);
+        }
+
+        .logo-text span {
+            font-weight: 300;
+            color: var(--label-grey);
+        }
+
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .dept-badge {
+            padding: 6px 14px;
+            background: linear-gradient(135deg, var(--accent-red), #C70010);
+            color: white;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            box-shadow: 0 4px 12px rgba(227, 0, 15, 0.3);
+        }
+
+        .icon-btn {
+            width: 40px;
+            height: 40px;
+            background: var(--ceramic-grey);
+            border: none;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s var(--transition-smooth);
+        }
+
+        .icon-btn:hover {
+            background: #E5E7EB;
+            transform: scale(1.05);
+        }
+
+        .icon-btn:active {
+            transform: scale(0.95);
+        }
+
+        .icon-btn svg {
+            width: 20px;
+            height: 20px;
+            stroke: var(--soft-black);
+            fill: none;
+            stroke-width: 2.5;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+        }
+
+        /* Stealth Mode Overlay */
+        .stealth-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100dvh;
+            background: rgba(0, 0, 0, 0.95);
+            backdrop-filter: blur(40px);
+            -webkit-backdrop-filter: blur(40px);
+            z-index: 9999;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            gap: 24px;
+            animation: fadeIn 0.3s var(--transition-smooth);
+        }
+
+        .stealth-overlay.active {
+            display: flex;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .stealth-icon {
+            width: 80px;
+            height: 80px;
+            stroke: #444;
+            stroke-width: 1.5;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 0.3; }
+            50% { opacity: 0.6; }
+        }
+
+        .stealth-text {
+            font-size: 18px;
+            font-weight: 600;
+            color: #666;
+            letter-spacing: 1px;
+        }
+
+        /* Main Stage */
+        .stage {
+            flex: 1;
+            overflow-y: auto;
+            padding: 24px;
+            padding-bottom: 200px;
+            scroll-behavior: smooth;
+        }
+
+        .stage::-webkit-scrollbar {
+            width: 0;
+        }
+
+        /* Masonry Grid */
+        .cards-grid {
+            display: grid;
+            gap: 20px;
+            grid-template-columns: 1fr;
+        }
+
+        @media (min-width: 768px) {
+            .cards-grid {
+                grid-template-columns: repeat(auto-fit, minmax(380px, 1fr));
+            }
+        }
+
+        /* Card Design */
+        .card {
+            background: var(--pure-white);
+            border-radius: var(--radius-card);
+            padding: 28px;
+            box-shadow: var(--shadow-deep);
+            border: 1px solid rgba(0, 0, 0, 0.06);
+            position: relative;
+            overflow: hidden;
+            animation: cardAppear 0.6s var(--transition-smooth);
+            transform-origin: bottom;
+        }
+
+        @keyframes cardAppear {
+            from {
+                opacity: 0;
+                transform: translateY(30px) scale(0.95);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+
+        .card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 5px;
+            height: 100%;
+            background: linear-gradient(180deg, var(--accent-red), #FF3344);
+        }
+
+        .card.success::before {
+            background: linear-gradient(180deg, #10B981, #059669);
+        }
+
+        .card.warning::before {
+            background: linear-gradient(180deg, #F59E0B, #D97706);
+        }
+
+        .card-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 24px;
+        }
+
+        .card-icon {
+            width: 32px;
+            height: 32px;
+            stroke: var(--accent-red);
+            fill: none;
+            stroke-width: 2;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+        }
+
+        .card-title {
+            font-size: 16px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--label-grey);
+            font-variant: small-caps;
+        }
+
+        .card-badge {
+            margin-left: auto;
+            padding: 4px 10px;
+            background: var(--ceramic-grey);
+            border-radius: 8px;
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--soft-black);
+            text-transform: uppercase;
+        }
+
+        /* Quick Cues */
+        .quick-cues {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .cue-block {
+            position: relative;
+        }
+
+        .cue-label {
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            color: var(--label-grey);
+            margin-bottom: 8px;
+            font-variant: small-caps;
+        }
+
+        .cue-text {
+            font-size: 15px;
+            line-height: 1.7;
+            color: var(--soft-black);
+            font-weight: 500;
+        }
+
+        .cue-text.entry {
+            font-weight: 400;
+            color: var(--label-grey);
+        }
+
+        .cue-text.anchor {
+            font-weight: 800;
+            color: var(--soft-black);
+        }
+
+        .cue-text.question {
+            font-weight: 600;
+            font-style: italic;
+        }
+
+        /* Expandable Sections */
+        .expandable {
+            margin-top: 24px;
+            padding-top: 24px;
+            border-top: 1px solid var(--ceramic-grey);
+        }
+
+        .expand-trigger {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            cursor: pointer;
+            user-select: none;
+            padding: 12px 0;
+            transition: all 0.3s var(--transition-smooth);
+        }
+
+        .expand-trigger:hover {
+            opacity: 0.7;
+        }
+
+        .expand-trigger:active {
+            transform: scale(0.98);
+        }
+
+        .expand-label {
+            font-size: 14px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--soft-black);
+        }
+
+        .expand-icon {
+            width: 20px;
+            height: 20px;
+            stroke: var(--soft-black);
+            fill: none;
+            stroke-width: 2.5;
+            transition: transform 0.4s var(--transition-smooth);
+        }
+
+        .expand-icon.open {
+            transform: rotate(180deg);
+        }
+
+        .expand-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.5s var(--transition-smooth);
+        }
+
+        .expand-content.open {
+            max-height: 2000px;
+            padding-top: 16px;
+        }
+
+        .coach-block {
+            margin-bottom: 20px;
+        }
+
+        .coach-label {
+            font-size: 12px;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 1.2px;
+            color: var(--accent-red);
+            margin-bottom: 8px;
+        }
+
+        .coach-text {
+            font-size: 14px;
+            line-height: 1.8;
+            color: var(--soft-black);
+        }
+
+        .drill-list {
+            list-style: none;
+            padding: 0;
+        }
+
+        .drill-list li {
+            padding: 10px 0;
+            padding-left: 24px;
+            position: relative;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+
+        .drill-list li::before {
+            content: '→';
+            position: absolute;
+            left: 0;
+            color: var(--accent-red);
+            font-weight: 900;
+            font-size: 18px;
+        }
+
+        /* Card Actions */
+        .card-actions {
+            margin-top: 24px;
+            padding-top: 24px;
+            border-top: 1px solid var(--ceramic-grey);
+            display: flex;
+            gap: 12px;
+        }
+
+        .feedback-btn {
+            flex: 1;
+            padding: 12px;
+            border: 2px solid var(--ceramic-grey);
+            background: transparent;
+            border-radius: 12px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            font-size: 13px;
+            font-weight: 700;
+            color: var(--soft-black);
+            transition: all 0.3s var(--transition-smooth);
+        }
+
+        .feedback-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .feedback-btn:active {
+            transform: translateY(0);
+        }
+
+        .feedback-btn svg {
+            width: 18px;
+            height: 18px;
+            stroke: currentColor;
+            fill: none;
+            stroke-width: 2.5;
+        }
+
+        .feedback-btn.success {
+            border-color: #10B981;
+            color: #10B981;
+        }
+
+        .feedback-btn.error {
+            border-color: var(--accent-red);
+            color: var(--accent-red);
+        }
+
+        /* Control Bar (Floating Glassmorphism) */
+        .control-bar {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-top: 1px solid rgba(0, 0, 0, 0.08);
+            padding: 20px 24px;
+            padding-bottom: calc(20px + env(safe-area-inset-bottom));
+            box-shadow: 0 -8px 32px rgba(0, 0, 0, 0.08);
+            z-index: 200;
+        }
+
+        /* Context Chips */
+        .context-chips {
+            display: flex;
+            gap: 8px;
+            overflow-x: auto;
+            margin-bottom: 16px;
+            padding-bottom: 8px;
+            -webkit-overflow-scrolling: touch;
+            scrollbar-width: none;
+        }
+
+        .context-chips::-webkit-scrollbar {
+            display: none;
+        }
+
+        .chip {
+            padding: 10px 18px;
+            background: var(--pure-white);
+            border: 2px solid var(--ceramic-grey);
+            border-radius: 24px;
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--soft-black);
+            cursor: pointer;
+            white-space: nowrap;
+            transition: all 0.3s var(--transition-smooth);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .chip:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .chip:active {
+            transform: translateY(0);
+        }
+
+        .chip.active {
+            background: linear-gradient(135deg, var(--accent-red), #C70010);
+            border-color: var(--accent-red);
+            color: white;
+            box-shadow: 0 4px 16px rgba(227, 0, 15, 0.4);
+        }
+
+        .chip svg {
+            width: 16px;
+            height: 16px;
+            stroke: currentColor;
+            fill: none;
+            stroke-width: 2.5;
+        }
+
+        /* Input Area */
+        .input-area {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+        }
+
+        .input-wrapper {
+            flex: 1;
+            position: relative;
+        }
+
+        .input-field {
+            width: 100%;
+            padding: 16px 20px;
+            background: var(--pure-white);
+            border: 2px solid var(--ceramic-grey);
+            border-radius: var(--radius-control);
+            font-size: 16px;
+            font-weight: 500;
+            color: var(--soft-black);
+            font-family: inherit;
+            transition: all 0.3s var(--transition-smooth);
+        }
+
+        .input-field:focus {
+            outline: none;
+            border-color: var(--accent-red);
+            box-shadow: 0 0 0 4px rgba(227, 0, 15, 0.1);
+        }
+
+        .input-field::placeholder {
+            color: var(--label-grey);
+            font-weight: 400;
+        }
+
+        /* Mic FAB */
+        .mic-fab {
+            width: 56px;
+            height: 56px;
+            background: linear-gradient(135deg, var(--accent-red), #C70010);
+            border: none;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: 0 8px 24px rgba(227, 0, 15, 0.4);
+            transition: all 0.3s var(--transition-smooth);
+        }
+
+        .mic-fab:hover {
+            transform: scale(1.1);
+            box-shadow: 0 12px 32px rgba(227, 0, 15, 0.5);
+        }
+
+        .mic-fab:active {
+            transform: scale(0.95);
+        }
+
+        .mic-fab.recording {
+            animation: micPulse 1.5s infinite;
+        }
+
+        @keyframes micPulse {
+            0%, 100% {
+                box-shadow: 0 8px 24px rgba(227, 0, 15, 0.4);
+            }
+            50% {
+                box-shadow: 0 8px 40px rgba(227, 0, 15, 0.9);
+            }
+        }
+
+        .mic-fab svg {
+            width: 24px;
+            height: 24px;
+            stroke: white;
+            fill: none;
+            stroke-width: 2.5;
+        }
+
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(8px);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+            padding: 24px;
+            animation: modalFade 0.3s var(--transition-smooth);
+        }
+
+        @keyframes modalFade {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .modal.open {
+            display: flex;
+        }
+
+        .modal-content {
+            background: var(--pure-white);
+            border-radius: var(--radius-card);
+            padding: 32px;
+            max-width: 500px;
+            width: 100%;
+            max-height: 85vh;
+            overflow-y: auto;
+            box-shadow: var(--shadow-deep);
+            animation: modalSlide 0.4s var(--transition-smooth);
+        }
+
+        @keyframes modalSlide {
+            from {
+                opacity: 0;
+                transform: translateY(40px) scale(0.95);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+
+        .modal-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 28px;
+        }
+
+        .modal-title {
+            font-size: 24px;
+            font-weight: 800;
+            color: var(--soft-black);
+        }
+
+        .close-btn {
+            width: 36px;
+            height: 36px;
+            background: var(--ceramic-grey);
+            border: none;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s var(--transition-smooth);
+        }
+
+        .close-btn:hover {
+            background: #E5E7EB;
+            transform: rotate(90deg);
+        }
+
+        .close-btn svg {
+            width: 18px;
+            height: 18px;
+            stroke: var(--soft-black);
+            stroke-width: 2.5;
+        }
+
+        /* Form Elements */
+        .form-group {
+            margin-bottom: 24px;
+        }
+
+        .form-label {
+            display: block;
+            font-size: 13px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--soft-black);
+            margin-bottom: 8px;
+        }
+
+        .form-input,
+        .form-select,
+        .form-textarea {
+            width: 100%;
+            padding: 14px 16px;
+            background: var(--ceramic-grey);
+            border: 2px solid transparent;
+            border-radius: 12px;
+            font-size: 15px;
+            font-weight: 500;
+            color: var(--soft-black);
+            font-family: inherit;
+            transition: all 0.3s var(--transition-smooth);
+        }
+
+        .form-input:focus,
+        .form-select:focus,
+        .form-textarea:focus {
+            outline: none;
+            background: var(--pure-white);
+            border-color: var(--accent-red);
+            box-shadow: 0 0 0 4px rgba(227, 0, 15, 0.1);
+        }
+
+        .form-textarea {
+            min-height: 100px;
+            resize: vertical;
+        }
+
+        .warning-box {
+            display: flex;
+            gap: 12px;
+            padding: 14px;
+            background: #FEF3C7;
+            border-left: 4px solid #F59E0B;
+            border-radius: 8px;
+            margin-top: 12px;
+        }
+
+        .warning-box svg {
+            width: 20px;
+            height: 20px;
+            stroke: #F59E0B;
+            flex-shrink: 0;
+            stroke-width: 2.5;
+        }
+
+        .warning-text {
+            font-size: 13px;
+            line-height: 1.6;
+            color: #92400E;
+        }
+
+        /* Buttons */
+        .btn-group {
+            display: flex;
+            gap: 12px;
+            margin-top: 24px;
+        }
+
+        .btn {
+            flex: 1;
+            padding: 14px 20px;
+            border: none;
+            border-radius: 12px;
+            font-size: 15px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s var(--transition-smooth);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--accent-red), #C70010);
+            color: white;
+            box-shadow: 0 4px 16px rgba(227, 0, 15, 0.3);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(227, 0, 15, 0.4);
+        }
+
+        .btn-primary:active {
+            transform: translateY(0);
+        }
+
+        .btn-secondary {
+            background: var(--ceramic-grey);
+            color: var(--soft-black);
+        }
+
+        .btn-secondary:hover {
+            background: #E5E7EB;
+        }
+
+        .btn-danger {
+            background: #DC2626;
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #B91C1C;
+        }
+
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 80px 24px;
+            animation: fadeInUp 0.6s var(--transition-smooth);
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .empty-illustration {
+            width: 120px;
+            height: 120px;
+            margin: 0 auto 32px;
+            opacity: 0.3;
+        }
+
+        .empty-illustration svg {
+            width: 100%;
+            height: 100%;
+            stroke: var(--label-grey);
+            stroke-width: 1.5;
+        }
+
+        .empty-title {
+            font-size: 22px;
+            font-weight: 800;
+            color: var(--soft-black);
+            margin-bottom: 12px;
+        }
+
+        .empty-subtitle {
+            font-size: 15px;
+            color: var(--label-grey);
+            line-height: 1.6;
+        }
+
+        /* Loading */
+        .loading {
+            text-align: center;
+            padding: 60px 24px;
+        }
+
+        .loading-spinner {
+            width: 48px;
+            height: 48px;
+            margin: 0 auto 24px;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        .loading-spinner svg {
+            width: 100%;
+            height: 100%;
+            stroke: var(--accent-red);
+            stroke-width: 3;
+        }
+
+        .loading-text {
+            font-size: 15px;
+            font-weight: 600;
+            color: var(--label-grey);
+        }
+
+        /* Toast */
+        .toast {
+            position: fixed;
+            bottom: 220px;
+            left: 50%;
+            transform: translateX(-50%) translateY(20px);
+            background: var(--soft-black);
+            color: white;
+            padding: 16px 24px;
+            border-radius: 16px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+            font-size: 14px;
+            font-weight: 600;
+            opacity: 0;
+            pointer-events: none;
+            transition: all 0.4s var(--transition-smooth);
+            z-index: 3000;
+        }
+
+        .toast.show {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+        }
+
+        /* Footer */
+        .footer {
+            text-align: center;
+            padding: 16px;
+            font-size: 12px;
+            color: var(--label-grey);
+            background: var(--pure-white);
+            border-top: 1px solid var(--ceramic-grey);
+        }
+
+        .build-info {
+            margin-top: 8px;
+            font-size: 10px;
+            font-family: 'Courier New', monospace;
+            color: var(--label-grey);
+            opacity: 0.6;
+        }
+    </style>
+</head>
+<body>
+    <!-- Stealth Mode Overlay -->
+    <div class="stealth-overlay" id="stealthOverlay">
+        <svg class="stealth-icon" viewBox="0 0 24 24" fill="none">
+            <rect x="2" y="2" width="20" height="20" rx="2"/>
+            <line x1="7" y1="12" x2="17" y2="12"/>
+        </svg>
+        <div class="stealth-text">SYSTEM STANDBY</div>
+    </div>
+
+    <!-- Header -->
+    <div class="header" id="header">
+        <div class="logo-container">
+            <svg class="logo-svg" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <defs>
+                    <linearGradient id="logoGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                        <stop offset="0%" style="stop-color:#E3000F;stop-opacity:1" />
+                        <stop offset="100%" style="stop-color:#C70010;stop-opacity:1" />
+                    </linearGradient>
+                </defs>
+                <path d="M20 80 L20 20 L50 50 L80 20 L80 80" stroke="url(#logoGrad)" stroke-width="8" stroke-linecap="round" stroke-linejoin="round" fill="none" opacity="0.9"/>
+                <circle cx="50" cy="50" r="8" fill="url(#logoGrad)" opacity="0.8"/>
+            </svg>
+            <div class="logo-text">MEHIC SALES <span>OS</span></div>
+        </div>
+        <div class="header-right">
+            <div class="dept-badge" id="deptBadge">TV</div>
+            <button class="icon-btn" id="resetBtn" title="Zurücksetzen">
+                <svg viewBox="0 0 24 24">
+                    <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/>
+                    <path d="M21 3v5h-5"/>
+                </svg>
+            </button>
+            <button class="icon-btn" id="settingsBtn" title="Einstellungen">
+                <svg viewBox="0 0 24 24">
+                    <circle cx="12" cy="12" r="3"/>
+                    <path d="M12 1v6m0 6v6"/>
+                </svg>
+            </button>
+        </div>
+    </div>
+
+    <!-- Main Stage -->
+    <div class="stage" id="stage">
+        <div id="cardsContainer"></div>
+    </div>
+
+    <!-- Control Bar -->
+    <div class="control-bar">
+        <div class="context-chips" id="contextChips">
+            <div class="chip" data-context="hurry">
+                <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+                Eilig
+            </div>
+            <div class="chip" data-context="duo">
+                <svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/></svg>
+                Paar
+            </div>
+            <div class="chip" data-context="easy">
+                <svg viewBox="0 0 24 24"><path d="M12 2v20M2 12h20"/></svg>
+                Einfach
+            </div>
+            <div class="chip" data-context="techie">
+                <svg viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>
+                Techie
+            </div>
+        </div>
+
+        <div class="input-area">
+            <div class="input-wrapper">
+                <input type="text" class="input-field" id="objectionInput" placeholder="Kundeneinwand eingeben..." autocomplete="off" />
+            </div>
+            <button class="mic-fab" id="micBtn">
+                <svg viewBox="0 0 24 24">
+                    <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/>
+                    <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
+                    <line x1="12" y1="19" x2="12" y2="23"/>
+                    <line x1="8" y1="23" x2="16" y2="23"/>
+                </svg>
+            </button>
+        </div>
+    </div>
+
+    <!-- Settings Modal -->
+    <div class="modal" id="settingsModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title">Einstellungen</div>
+                <button class="close-btn" id="closeSettingsBtn">
+                    <svg viewBox="0 0 24 24">
+                        <line x1="18" y1="6" x2="6" y2="18"/>
+                        <line x1="6" y1="6" x2="18" y2="18"/>
+                    </svg>
+                </button>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">API Provider</label>
+                <select class="form-select" id="apiProvider">
+                    <option value="openai">OpenAI</option>
+                    <option value="groq">Groq</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">API Key (BYOK)</label>
+                <input type="password" class="form-input" id="apiKey" placeholder="sk-..." />
+                <div class="warning-box">
+                    <svg viewBox="0 0 24 24">
+                        <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+                        <line x1="12" y1="9" x2="12" y2="13"/>
+                        <line x1="12" y1="17" x2="12.01" y2="17"/>
+                    </svg>
+                    <div class="warning-text">Schlüssel wird lokal gespeichert. Niemals auf öffentlichen Geräten verwenden.</div>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">AI Model Name</label>
+                <input type="text" class="form-input" id="modelName" placeholder="gpt-4o-mini" />
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">API Proxy URL (optional)</label>
+                <input type="text" class="form-input" id="proxyUrl" placeholder="https://..." />
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Abteilung</label>
+                <select class="form-select" id="department">
+                    <option value="TV">TV & Audio</option>
+                    <option value="Mobile">Mobile</option>
+                    <option value="IT">IT</option>
+                    <option value="Weiß">Weiße Ware</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Store Policy</label>
+                <textarea class="form-textarea" id="storePolicy" placeholder="z.B. 'Winteraktion bis 31.01.2026'"></textarea>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Datenmanagement</label>
+                <div class="btn-group">
+                    <button class="btn btn-secondary" id="exportBtn">Export</button>
+                    <button class="btn btn-secondary" id="importBtn">Import</button>
+                </div>
+                <input type="file" id="importFile" accept=".json" style="display:none" />
+                <div class="btn-group">
+                    <button class="btn btn-danger" id="clearBtn">Löschen</button>
+                </div>
+            </div>
+
+            <div class="btn-group">
+                <button class="btn btn-primary" id="saveSettingsBtn">Speichern</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast -->
+    <div class="toast" id="toast"></div>
+
+    <!-- Footer -->
+    <div class="footer">
+        © 2026 Enes Mehic. All rights reserved.
+        <div class="build-info" id="buildInfo"></div>
+    </div>
+
+    <script>
+        // Build Signature
+        const BUILD_SIGNATURE = "MEHIC_SALES_OS_ULTIMATE_v1.6__2026__" + Math.random().toString(36).substr(2, 9);
+
+        // Database Configuration
+        const DB_NAME = "MehicSalesOS_DB";
+        const DB_VERSION = 1;
+        let db = null;
+        let wakeLock = null;
+
+        // App State
+        const appState = {
+            objection: "",
+            contexts: [],
+            cards: [],
+            loading: false,
+            settings: {
+                apiProvider: "openai",
+                apiKey: "",
+                modelName: "gpt-4o-mini",
+                proxyUrl: "",
+                department: "TV",
+                storePolicy: ""
+            },
+            stealthMode: false,
+            lastHeaderTap: 0
+        };
+
+        // Golden Standard Seeds
+        const SEED_DATA = [
+            {
+                id: "seed_1",
+                objection: "zu teuer",
+                keywords: ["teuer", "preis", "kostet", "viel"],
+                meta: { status: "success", pattern: "price", safety: "clean" },
+                ui: { color: "success", icon: "tag" },
+                content: {
+                    quick: {
+                        entry: "Ich verstehe, dass der Preis im ersten Moment hoch erscheint.",
+                        anchor: "Viele Kundinnen und Kunden haben anfangs dieselbe Reaktion und sind dann sehr zufrieden mit ihrer Entscheidung.",
+                        question: "Darf ich Ihnen kurz zeigen, was dieses Gerät von günstigeren Modellen unterscheidet?",
+                        bridge: "Langfristig gesehen investieren Sie hier in Qualität, die sich rechnet.",
+                        close: "Wenn wir gemeinsam schauen, welche Features Sie wirklich brauchen, finden wir das beste Preis-Leistungs-Verhältnis für Sie."
+                    },
+                    smart: {
+                        text: "Verstehe ich absolut. Preis ist wichtig. Lassen Sie uns kurz vergleichen: Das günstigere Modell hat X, unser Modell bietet zusätzlich Y und Z. Das bedeutet für Sie konkret [Vorteile]. Viele Kundinnen und Kunden entscheiden sich letztlich für die höhere Investition, weil sie langfristig profitieren.",
+                        closing: "Möchten Sie beide Modelle nebeneinander sehen, damit Sie selbst entscheiden können?"
+                    },
+                    coach: {
+                        diagnosis: "Preiseinwand ist oft ein Kontrolleinwand. Kunde sucht Rechtfertigung für Investition.",
+                        strategy: "Nicht verteidigen, sondern Wert aufbauen. Von Preis auf Wert shiften.",
+                        behavioral_fix: "Anchor-Technik: 'Viele Kundinnen und Kunden...' schafft Social Proof. Frage am Ende gibt Kontrolle zurück.",
+                        drill: [
+                            "Üben: 'Verstehe ich. Darf ich fragen, was Ihnen an diesem Modell gefällt?' (Commitment verstärken)",
+                            "Üben: Preisvergleich immer mit konkretem Mehrwert verknüpfen, nie nur Zahlen nennen"
+                        ]
+                    }
+                }
+            },
+            {
+                id: "seed_2",
+                objection: "keine versicherung",
+                keywords: ["versicherung", "garantie", "schutz", "abo"],
+                meta: { status: "success", pattern: "subscription_aversion", safety: "transparency_required" },
+                ui: { color: "warning", icon: "shield" },
+                content: {
+                    quick: {
+                        entry: "Verstehe ich vollkommen, Versicherungen sind nicht jedermanns Sache.",
+                        anchor: "Viele Kundinnen und Kunden denken anfangs ähnlich, bis sie die erste Reparatur brauchen.",
+                        question: "Darf ich Ihnen transparent zeigen, was genau abgedeckt wäre und wie sich das rechnet?",
+                        bridge: "Wichtig: Sie entscheiden natürlich selbst. Mir geht es nur darum, dass Sie alle Infos haben.",
+                        close: "Wenn wir einmal durchrechnen, können Sie in Ruhe entscheiden, ob es sich für Sie lohnt."
+                    },
+                    smart: {
+                        text: "Alles klar, kein Problem. Viele verzichten darauf und kommen dann doch zurück. Die Versicherung deckt [konkrete Leistungen] ab. Das bedeutet: [Beispiel Schadensfall]. Hinweis: Alle Konditionen stehen transparent im Vertrag, keine versteckten Kosten.",
+                        closing: "Möchten Sie die Unterlagen mitnehmen und in Ruhe entscheiden?"
+                    },
+                    coach: {
+                        diagnosis: "Versicherungs-Aversion ist häufig. Oft fehlt Vertrauen oder Transparenz.",
+                        strategy: "Transparenz vor Verkauf. Konkrete Beispiele statt Angstmache.",
+                        behavioral_fix: "Niemals Druck aufbauen. 'Sie entscheiden' gibt Kontrolle zurück und baut Vertrauen auf.",
+                        drill: [
+                            "Üben: Schadensfall-Beispiel parat haben (konkret, realistisch, keine Übertreibung)",
+                            "Üben: Kosten transparent darstellen (monatlich UND jährlich nennen)"
+                        ]
+                    }
+                }
+            },
+            {
+                id: "seed_3",
+                objection: "muss überlegen",
+                keywords: ["überlegen", "bedenkzeit", "später", "nachdenken"],
+                meta: { status: "success", pattern: "uncertainty", safety: "clean" },
+                ui: { color: "success", icon: "clock" },
+                content: {
+                    quick: {
+                        entry: "Natürlich, das ist eine wichtige Entscheidung. Nehmen Sie sich ruhig Zeit.",
+                        anchor: "Viele Kundinnen und Kunden gehen das genauso an und überlegen in Ruhe.",
+                        question: "Darf ich fragen, worüber Sie noch nachdenken möchten? Vielleicht kann ich noch etwas klären?",
+                        bridge: "Mir ist wichtig, dass Sie sich sicher fühlen mit Ihrer Entscheidung.",
+                        close: "Wenn Sie mögen, reserviere ich das Gerät für Sie, damit Sie in Ruhe überlegen können, ohne dass es weg ist."
+                    },
+                    smart: {
+                        text: "Absolut verständlich. Ist eine Investition und die sollte gut überlegt sein. Viele vergleichen erst noch online oder besprechen es zu Hause. Gibt es noch einen speziellen Punkt, den ich klären kann?",
+                        closing: "Möchten Sie, dass ich das Gerät für 24 Stunden reserviere?"
+                    },
+                    coach: {
+                        diagnosis: "Bedenkzeit ist legitim, aber oft versteckt sich ein ungelöster Einwand dahinter.",
+                        strategy: "Respektieren, aber nachfragen. Offene Frage stellen, um echten Grund zu finden.",
+                        behavioral_fix: "Reservierungs-Offer gibt Kontrolle und schafft sanften Commitment-Anker ohne Druck.",
+                        drill: [
+                            "Üben: 'Worüber möchten Sie noch nachdenken?' (offene Frage, kein Druck)",
+                            "Üben: Reservierungsangebot als Service-Geste positionieren, nicht als Druck"
+                        ]
+                    }
+                }
+            }
+        ];
+
+        // Joker Card
+        const JOKER_CARD = {
+            id: "joker",
+            meta: { status: "success", pattern: "trust", safety: "clean" },
+            ui: { color: "success", icon: "info" },
+            content: {
+                quick: {
+                    entry: "Ich verstehe Ihre Bedenken vollkommen.",
+                    anchor: "Viele Kundinnen und Kunden stellen diese Frage, und das ist auch richtig so.",
+                    question: "Darf ich Ihnen erklären, wie wir das bei uns handhaben?",
+                    bridge: "Mir ist wichtig, dass Sie sich gut informiert fühlen.",
+                    close: "Lassen Sie uns gemeinsam schauen, was für Sie die beste Lösung ist."
+                },
+                smart: {
+                    text: "Das ist eine berechtigte Frage. In meiner Erfahrung hilft es, wenn wir das ganz konkret durchgehen. Viele Kundinnen und Kunden sind dann beruhigt.",
+                    closing: "Welche Informationen brauchen Sie noch, um sich sicher zu fühlen?"
+                },
+                coach: {
+                    diagnosis: "Unbekannter Einwand. Empathie und Nachfragen ist der Schlüssel.",
+                    strategy: "Aktives Zuhören, offene Fragen stellen, Vertrauen aufbauen.",
+                    behavioral_fix: "Niemals defensive Position. Kunde hat immer einen guten Grund für seinen Einwand.",
+                    drill: [
+                        "Üben: Pausentechnik - 2 Sekunden warten nach Kundenaussage, dann erst antworten",
+                        "Üben: 'Verstehe ich richtig, dass...' (Reformulierung zum Validieren)"
+                    ]
+                }
+            }
+        };
+
+        // Wake Lock
+        async function requestWakeLock() {
+            try {
+                if ('wakeLock' in navigator) {
+                    wakeLock = await navigator.wakeLock.request('screen');
+                    wakeLock.addEventListener('release', () => {
+                        console.log('Wake Lock released');
+                    });
+                }
+            } catch (err) {
+                console.error('Wake Lock error:', err);
+            }
+        }
+
+        // Haptic Feedback
+        function haptic(pattern = [50]) {
+            if ('vibrate' in navigator) {
+                navigator.vibrate(pattern);
+            }
+        }
+
+        // IndexedDB Functions
+        function initDB() {
+            return new Promise((resolve, reject) => {
+                const request = indexedDB.open(DB_NAME, DB_VERSION);
+                
+                request.onerror = () => reject(request.error);
+                request.onsuccess = () => {
+                    db = request.result;
+                    resolve(db);
+                };
+                
+                request.onupgradeneeded = (event) => {
+                    const db = event.target.result;
+                    
+                    if (!db.objectStoreNames.contains("library")) {
+                        const store = db.createObjectStore("library", { keyPath: "id" });
+                        store.createIndex("keywords", "keywords", { multiEntry: true });
+                    }
+                    
+                    if (!db.objectStoreNames.contains("logs")) {
+                        db.createObjectStore("logs", { keyPath: "id", autoIncrement: true });
+                    }
+                };
+            });
+        }
+
+        function seedDB() {
+            return new Promise((resolve, reject) => {
+                const tx = db.transaction(["library"], "readwrite");
+                const store = tx.objectStore("library");
+                
+                SEED_DATA.forEach(item => store.put(item));
+                
+                tx.oncomplete = () => resolve();
+                tx.onerror = () => reject(tx.error);
+            });
+        }
+
+        function searchLocal(query) {
+            return new Promise((resolve, reject) => {
+                const tx = db.transaction(["library"], "readonly");
+                const store = tx.objectStore("library");
+                const request = store.getAll();
+                
+                request.onsuccess = () => {
+                    const results = request.result;
+                    const queryLower = query.toLowerCase();
+                    
+                    const match = results.find(item => {
+                        return item.keywords.some(kw => queryLower.includes(kw.toLowerCase()));
+                    });
+                    
+                    resolve(match || null);
+                };
+                
+                request.onerror = () => reject(request.error);
+            });
+        }
+
+        function saveToLibrary(data) {
+            return new Promise((resolve, reject) => {
+                const tx = db.transaction(["library"], "readwrite");
+                const store = tx.objectStore("library");
+                
+                const item = {
+                    id: "gen_" + Date.now() + "_" + Math.random().toString(36).substr(2, 9),
+                    objection: appState.objection,
+                    keywords: appState.objection.toLowerCase().split(" ").filter(w => w.length > 3),
+                    timestamp: new Date().toISOString(),
+                    ...data
+                };
+                
+                store.put(item);
+                
+                tx.oncomplete = () => resolve();
+                tx.onerror = () => reject(tx.error);
+            });
+        }
+
+        function logEvent(type, data) {
+            return new Promise((resolve, reject) => {
+                const tx = db.transaction(["logs"], "readwrite");
+                const store = tx.objectStore("logs");
+                
+                const log = {
+                    timestamp: new Date().toISOString(),
+                    type: type,
+                    objection: appState.objection,
+                    contexts: [...appState.contexts],
+                    data: data
+                };
+                
+                store.add(log);
+                
+                tx.oncomplete = () => resolve();
+                tx.onerror = () => reject(tx.error);
+            });
+        }
+
+        // Settings Functions
+        function loadSettings() {
+            const stored = localStorage.getItem("mehic_sales_os_v16_settings");
+            if (stored) {
+                try {
+                    appState.settings = { ...appState.settings, ...JSON.parse(stored) };
+                } catch (e) {
+                    console.error("Failed to parse settings", e);
+                }
+            }
+        }
+
+        function saveSettings() {
+            localStorage.setItem("mehic_sales_os_v16_settings", JSON.stringify(appState.settings));
+            haptic([50]);
+            showToast("Einstellungen gespeichert");
+        }
+
+        // AI API Call
+        async function callAI(objection, contexts) {
+            const { apiProvider, apiKey, modelName, proxyUrl, department, storePolicy } = appState.settings;
+            
+            if (!apiKey && !proxyUrl) {
+                throw new Error("API Key oder Proxy URL erforderlich");
+            }
+
+            const contextMods = [];
+            if (contexts.includes("hurry")) contextMods.push("- Kunde ist eilig: Ultra-kurze Antworten, max 2 Sätze pro Abschnitt");
+            if (contexts.includes("duo")) contextMods.push("- Kunde ist Paar/Gruppe: Inkludiere beide Personen ('Sie beide', 'für Sie gemeinsam')");
+            if (contexts.includes("easy")) contextMods.push("- Kunde will es einfach: Keine Technik-Details, nur Nutzen. Metaphern verwenden");
+            if (contexts.includes("techie")) contextMods.push("- Kunde ist technikaffin: Specs erlaubt, aber immer mit Nutzen verknüpfen");
+
+            const systemPrompt = `ROLE: High-End Retail Sales Expert (Austria). Abteilung: ${department}
+
+OUTPUT: STRICT JSON ONLY.
+
+LOGIC (The "Expert Matrix"):
+1. VOSS: Start with Labeling/Empathy ("Versteh ich...").
+2. CHALLENGER: Reframe the problem (Price -> Cost of Ownership).
+3. KAHNEMAN: Anchor high prices down to daily costs.
+4. CIALDINI: Use "Alternative Close" (A oder B?), never "Yes/No".
+
+GUARDRAILS:
+- Social Proof: General only ("Viele Kundinnen und Kunden..."). Never invent statistics.
+- Scarcity: Only if Store Policy has explicit date. Store Policy: "${storePolicy || "keine Aktionen definiert"}"
+- Transparency: Mandatory "Abo-Check" if subscription involved. If price unknown: status = "transparency_missing_details"
+- Tone: Austrian Professional, natural, short sentences.
+
+KONTEXT-MUTATIONEN:
+${contextMods.join("\n")}
+
+OUTPUT FORMAT (STRICT JSON):
+{
+  "meta": {
+    "status": "success | error | check_datasheet | transparency_missing_details",
+    "pattern": "price | trust | control | risk | uncertainty | comparison | subscription_aversion",
+    "safety": "clean | transparency_required | fact_check_needed"
+  },
+  "ui": {
+    "color": "success | warning | error",
+    "icon": "shield | clock | tag | info"
+  },
+  "content": {
+    "quick": {
+      "entry": "Einstieg (empathisch, validierend)",
+      "anchor": "Anker (Social Proof, Vertrauen)",
+      "question": "Frage (öffnet Dialog)",
+      "bridge": "Brücke (Mehrwert aufzeigen)",
+      "close": "Abschluss (Kontrolle zurückgeben)"
+    },
+    "smart": {
+      "text": "Kurzes, natürliches Verkaufsskript (max 4 Sätze)",
+      "closing": "Abschlussfrage"
+    },
+    "coach": {
+      "diagnosis": "Psychologische Einwand-Analyse",
+      "strategy": "Strategie-Empfehlung",
+      "behavioral_fix": "Verhaltensfix (konkreter Tipp)",
+      "drill": ["Übung 1", "Übung 2"]
+    }
+  }
+}
+
+Analysiere jetzt folgenden Einwand:
+"${objection}"`;
+
+            let apiUrl, headers, body;
+
+            if (proxyUrl) {
+                apiUrl = proxyUrl;
+                headers = { "Content-Type": "application/json" };
+                body = JSON.stringify({ provider: apiProvider, prompt: systemPrompt });
+            } else {
+                if (apiProvider === "openai") {
+                    apiUrl = "https://api.openai.com/v1/chat/completions";
+                    headers = {
+                        "Content-Type": "application/json",
+                        "Authorization": `Bearer ${apiKey}`
+                    };
+                    body = JSON.stringify({
+                        model: modelName || "gpt-4o-mini",
+                        messages: [{ role: "system", content: systemPrompt }],
+                        temperature: 0.7
+                    });
+                } else if (apiProvider === "groq") {
+                    apiUrl = "https://api.groq.com/openai/v1/chat/completions";
+                    headers = {
+                        "Content-Type": "application/json",
+                        "Authorization": `Bearer ${apiKey}`
+                    };
+                    body = JSON.stringify({
+                        model: modelName || "llama-3.3-70b-versatile",
+                        messages: [{ role: "system", content: systemPrompt }],
+                        temperature: 0.7
+                    });
+                }
+            }
+
+            const response = await fetch(apiUrl, {
+                method: "POST",
+                headers: headers,
+                body: body
+            });
+
+            if (!response.ok) {
+                throw new Error(`API Error: ${response.status}`);
+            }
+
+            const data = await response.json();
+            let content = data.choices[0].message.content;
+            content = content.replace(/```json\n?/g, "").replace(/```\n?/g, "").trim();
+
+            return JSON.parse(content);
+        }
+
+        // Main Handler
+        async function handleSubmit() {
+            if (!appState.objection.trim()) {
+                haptic([50, 50]);
+                showToast("Bitte Einwand eingeben");
+                return;
+            }
+
+            haptic([50]);
+            appState.loading = true;
+            
+            if (document.startViewTransition) {
+                document.startViewTransition(() => render());
+            } else {
+                render();
+            }
+
+            try {
+                const localMatch = await searchLocal(appState.objection);
+                
+                if (localMatch) {
+                    appState.cards = [localMatch];
+                    await logEvent("local_match", { cardId: localMatch.id });
+                    haptic([50, 30, 50]);
+                } else {
+                    const aiResponse = await callAI(appState.objection, appState.contexts);
+                    appState.cards = [aiResponse];
+                    await saveToLibrary(aiResponse);
+                    await logEvent("api_call", { provider: appState.settings.apiProvider });
+                    haptic([50, 30, 50]);
+                }
+            } catch (error) {
+                console.error("Error:", error);
+                appState.cards = [JOKER_CARD];
+                await logEvent("error_fallback", { error: error.message });
+                haptic([100, 50, 100]);
+            }
+
+            appState.loading = false;
+            
+            if (document.startViewTransition) {
+                document.startViewTransition(() => render());
+            } else {
+                render();
+            }
+        }
+
+        // UI Functions
+        function showToast(message) {
+            const toast = document.getElementById("toast");
+            toast.textContent = message;
+            toast.classList.add("show");
+            setTimeout(() => toast.classList.remove("show"), 3000);
+        }
+
+        function resetApp() {
+            haptic([50]);
+            appState.objection = "";
+            appState.contexts = [];
+            appState.cards = [];
+            document.getElementById("objectionInput").value = "";
+            document.querySelectorAll(".chip").forEach(chip => chip.classList.remove("active"));
+            
+            if (document.startViewTransition) {
+                document.startViewTransition(() => render());
+            } else {
+                render();
+            }
+        }
+
+        function toggleStealth() {
+            appState.stealthMode = !appState.stealthMode;
+            const overlay = document.getElementById("stealthOverlay");
+            
+            if (appState.stealthMode) {
+                overlay.classList.add("active");
+                haptic([50, 100, 50]);
+            } else {
+                overlay.classList.remove("active");
+                haptic([50]);
+            }
+        }
+
+        function render() {
+            document.getElementById("deptBadge").textContent = appState.settings.department;
+            
+            const container = document.getElementById("cardsContainer");
+            
+            if (appState.loading) {
+                container.innerHTML = `
+                    <div class="loading">
+                        <div class="loading-spinner">
+                            <svg viewBox="0 0 24 24">
+                                <circle cx="12" cy="12" r="10"/>
+                            </svg>
+                        </div>
+                        <div class="loading-text">Analysiere Einwand...</div>
+                    </div>
+                `;
+                return;
+            }
+
+            if (appState.cards.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-illustration">
+                            <svg viewBox="0 0 24 24" fill="none">
+                                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+                            </svg>
+                        </div>
+                        <div class="empty-title">Bereit für Kunden</div>
+                        <div class="empty-subtitle">Geben Sie einen Kundeneinwand ein, um sofort eine professionelle Antwort zu erhalten.</div>
+                    </div>
+                `;
+                return;
+            }
+
+            const iconMap = {
+                shield: '<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>',
+                clock: '<circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/>',
+                tag: '<path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/>',
+                info: '<circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/>'
+            };
+
+            const cardsHTML = appState.cards.map(card => {
+                const colorClass = card.ui.color;
+                return `
+                    <div class="card ${colorClass}">
+                        <div class="card-header">
+                            <svg class="card-icon" viewBox="0 0 24 24">${iconMap[card.ui.icon] || iconMap.info}</svg>
+                            <div class="card-title">Objection Handler</div>
+                            <div class="card-badge">${card.meta.pattern}</div>
+                        </div>
+
+                        <div class="quick-cues">
+                            <div class="cue-block">
+                                <div class="cue-label">Einstieg</div>
+                                <div class="cue-text entry">${card.content.quick.entry}</div>
+                            </div>
+                            <div class="cue-block">
+                                <div class="cue-label">Anker</div>
+                                <div class="cue-text anchor">${card.content.quick.anchor}</div>
+                            </div>
+                            <div class="cue-block">
+                                <div class="cue-label">Frage</div>
+                                <div class="cue-text question">${card.content.quick.question}</div>
+                            </div>
+                        </div>
+
+                        <div class="expandable">
+                            <div class="expand-trigger" data-target="smart-${card.id}">
+                                <div class="expand-label">Smart Script</div>
+                                <svg class="expand-icon" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>
+                            </div>
+                            <div class="expand-content" id="smart-${card.id}">
+                                <div class="cue-text" style="margin-bottom: 16px;">${card.content.smart.text}</div>
+                                <div class="cue-label">Abschlussfrage</div>
+                                <div class="cue-text">${card.content.smart.closing}</div>
+                            </div>
+                        </div>
+
+                        <div class="expandable">
+                            <div class="expand-trigger" data-target="coach-${card.id}">
+                                <div class="expand-label">Coach Mode</div>
+                                <svg class="expand-icon" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>
+                            </div>
+                            <div class="expand-content" id="coach-${card.id}">
+                                <div class="coach-block">
+                                    <div class="coach-label">Diagnose</div>
+                                    <div class="coach-text">${card.content.coach.diagnosis}</div>
+                                </div>
+                                <div class="coach-block">
+                                    <div class="coach-label">Strategie</div>
+                                    <div class="coach-text">${card.content.coach.strategy}</div>
+                                </div>
+                                <div class="coach-block">
+                                    <div class="coach-label">Verhaltensfix</div>
+                                    <div class="coach-text">${card.content.coach.behavioral_fix}</div>
+                                </div>
+                                <div class="coach-block">
+                                    <div class="coach-label">Übungen</div>
+                                    <ul class="drill-list">
+                                        ${card.content.coach.drill.map(d => `<li>${d}</li>`).join("")}
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="card-actions">
+                            <button class="feedback-btn success" data-feedback="success" data-card="${card.id}">
+                                <svg viewBox="0 0 24 24"><path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"/></svg>
+                                Erfolgreich
+                            </button>
+                            <button class="feedback-btn error" data-feedback="fail" data-card="${card.id}">
+                                <svg viewBox="0 0 24 24"><path d="M10 15v4a3 3 0 0 0 3 3l4-9V2H5.72a2 2 0 0 0-2 1.7l-1.38 9a2 2 0 0 0 2 2.3zm7-13h2.67A2.31 2.31 0 0 1 22 4v7a2.31 2.31 0 0 1-2.33 2H17"/></svg>
+                                Nicht hilfreich
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }).join("");
+
+            container.innerHTML = `<div class="cards-grid">${cardsHTML}</div>`;
+        }
+
+        // Event Listeners
+        function setupEvents() {
+            // Double-tap Header for Stealth Mode
+            document.getElementById("header").addEventListener("click", () => {
+                const now = Date.now();
+                if (now - appState.lastHeaderTap < 300) {
+                    toggleStealth();
+                }
+                appState.lastHeaderTap = now;
+            });
+
+            // Stealth Overlay (Double-tap to unlock)
+            let lastOverlayTap = 0;
+            document.getElementById("stealthOverlay").addEventListener("click", () => {
+                const now = Date.now();
+                if (now - lastOverlayTap < 300) {
+                    toggleStealth();
+                }
+                lastOverlayTap = now;
+            });
+
+            // Reset
+            document.getElementById("resetBtn").addEventListener("click", (e) => {
+                e.stopPropagation();
+                resetApp();
+            });
+
+            // Settings Modal
+            document.getElementById("settingsBtn").addEventListener("click", (e) => {
+                e.stopPropagation();
+                haptic([50]);
+                document.getElementById("apiProvider").value = appState.settings.apiProvider;
+                document.getElementById("apiKey").value = appState.settings.apiKey;
+                document.getElementById("modelName").value = appState.settings.modelName;
+                document.getElementById("proxyUrl").value = appState.settings.proxyUrl;
+                document.getElementById("department").value = appState.settings.department;
+                document.getElementById("storePolicy").value = appState.settings.storePolicy;
+                document.getElementById("settingsModal").classList.add("open");
+            });
+
+            document.getElementById("closeSettingsBtn").addEventListener("click", () => {
+                haptic([50]);
+                document.getElementById("settingsModal").classList.remove("open");
+            });
+
+            document.getElementById("saveSettingsBtn").addEventListener("click", () => {
+                appState.settings.apiProvider = document.getElementById("apiProvider").value;
+                appState.settings.apiKey = document.getElementById("apiKey").value;
+                appState.settings.modelName = document.getElementById("modelName").value;
+                appState.settings.proxyUrl = document.getElementById("proxyUrl").value;
+                appState.settings.department = document.getElementById("department").value;
+                appState.settings.storePolicy = document.getElementById("storePolicy").value;
+                saveSettings();
+                document.getElementById("settingsModal").classList.remove("open");
+                render();
+            });
+
+            // Context Chips
+            document.getElementById("contextChips").addEventListener("click", (e) => {
+                const chip = e.target.closest(".chip");
+                if (!chip) return;
+                
+                haptic([30]);
+                const context = chip.dataset.context;
+                const index = appState.contexts.indexOf(context);
+                
+                if (index > -1) {
+                    appState.contexts.splice(index, 1);
+                    chip.classList.remove("active");
+                } else {
+                    appState.contexts.push(context);
+                    chip.classList.add("active");
+                }
+            });
+
+            // Input
+            document.getElementById("objectionInput").addEventListener("input", (e) => {
+                appState.objection = e.target.value;
+            });
+
+            document.getElementById("objectionInput").addEventListener("keypress", (e) => {
+                if (e.key === "Enter") {
+                    handleSubmit();
+                }
+            });
+
+            // Mic Button
+            document.getElementById("micBtn").addEventListener("click", () => {
+                if (!("webkitSpeechRecognition" in window)) {
+                    haptic([100, 50, 100]);
+                    showToast("Spracheingabe nicht unterstützt");
+                    return;
+                }
+
+                const recognition = new webkitSpeechRecognition();
+                recognition.lang = "de-AT";
+                recognition.continuous = false;
+                recognition.interimResults = false;
+
+                const btn = document.getElementById("micBtn");
+
+                recognition.onstart = () => {
+                    btn.classList.add("recording");
+                    haptic([50]);
+                };
+
+                recognition.onresult = (event) => {
+                    const transcript = event.results[0][0].transcript;
+                    appState.objection = transcript;
+                    document.getElementById("objectionInput").value = transcript;
+                    haptic([50, 30, 50]);
+                };
+
+                recognition.onend = () => {
+                    btn.classList.remove("recording");
+                };
+
+                recognition.onerror = () => {
+                    showToast("Spracheingabe fehlgeschlagen");
+                    btn.classList.remove("recording");
+                    haptic([100, 50, 100]);
+                };
+
+                recognition.start();
+            });
+
+            // Card Interactions
+            document.getElementById("cardsContainer").addEventListener("click", (e) => {
+                const trigger = e.target.closest(".expand-trigger");
+                if (trigger) {
+                    haptic([30]);
+                    const targetId = trigger.dataset.target;
+                    const content = document.getElementById(targetId);
+                    const icon = trigger.querySelector(".expand-icon");
+                    
+                    content.classList.toggle("open");
+                    icon.classList.toggle("open");
+                }
+
+                const feedbackBtn = e.target.closest(".feedback-btn");
+                if (feedbackBtn) {
+                    haptic([50]);
+                    const feedback = feedbackBtn.dataset.feedback;
+                    const cardId = feedbackBtn.dataset.card;
+                    logEvent("feedback", { cardId, feedback });
+                    showToast(feedback === "success" ? "Feedback gespeichert" : "Danke für Ihr Feedback");
+                }
+            });
+
+            // Data Management
+            document.getElementById("exportBtn").addEventListener("click", () => {
+                haptic([50]);
+                const tx = db.transaction(["library", "logs"], "readonly");
+                const data = { version: "v1.6", exportDate: new Date().toISOString(), library: [], logs: [] };
+                
+                tx.objectStore("library").getAll().onsuccess = (e) => {
+                    data.library = e.target.result;
+                    
+                    tx.objectStore("logs").getAll().onsuccess = (e2) => {
+                        data.logs = e2.target.result;
+                        
+                        const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+                        const url = URL.createObjectURL(blob);
+                        const a = document.createElement("a");
+                        a.href = url;
+                        a.download = `mehic_sales_os_export_${Date.now()}.json`;
+                        a.click();
+                        URL.revokeObjectURL(url);
+                        
+                        showToast("Datenbank exportiert");
+                    };
+                };
+            });
+
+            document.getElementById("importBtn").addEventListener("click", () => {
+                haptic([50]);
+                document.getElementById("importFile").click();
+            });
+
+            document.getElementById("importFile").addEventListener("change", (e) => {
+                if (e.target.files.length === 0) return;
+                
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    try {
+                        const data = JSON.parse(e.target.result);
+                        const tx = db.transaction(["library", "logs"], "readwrite");
+                        
+                        data.library.forEach(item => tx.objectStore("library").put(item));
+                        data.logs.forEach(log => tx.objectStore("logs").add(log));
+                        
+                        tx.oncomplete = () => {
+                            haptic([50, 30, 50]);
+                            showToast("Datenbank importiert");
+                        };
+                    } catch (err) {
+                        haptic([100, 50, 100]);
+                        showToast("Import fehlgeschlagen");
+                        console.error(err);
+                    }
+                };
+                reader.readAsText(e.target.files[0]);
+            });
+
+            document.getElementById("clearBtn").addEventListener("click", () => {
+                if (!confirm("Alle Daten werden gelöscht. Fortfahren?")) return;
+                
+                haptic([100, 50, 100, 50, 100]);
+                const tx = db.transaction(["library", "logs"], "readwrite");
+                tx.objectStore("library").clear();
+                tx.objectStore("logs").clear();
+                
+                tx.oncomplete = () => {
+                    seedDB().then(() => {
+                        showToast("Datenbank zurückgesetzt");
+                        resetApp();
+                    });
+                };
+            });
+        }
+
+        // Init
+        async function init() {
+            try {
+                await initDB();
+                
+                const tx = db.transaction(["library"], "readonly");
+                const store = tx.objectStore("library");
+                const count = await new Promise((resolve) => {
+                    const request = store.count();
+                    request.onsuccess = () => resolve(request.result);
+                });
+                
+                if (count === 0) {
+                    await seedDB();
+                }
+
+                loadSettings();
+                setupEvents();
+                render();
+                requestWakeLock();
+
+                document.getElementById("buildInfo").textContent = `Build: ${BUILD_SIGNATURE}`;
+            } catch (error) {
+                console.error("Init error:", error);
+                document.getElementById("cardsContainer").innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-title">Fehler beim Laden</div>
+                        <div class="empty-subtitle">Bitte Seite neu laden.</div>
+                    </div>
+                `;
+            }
+        }
+
+        init();
+    </script>
+</body>
+</html>
