@@ -26,32 +26,6 @@
     }
   },
   {
-    "id": "stall_think_01",
-    "objection": "Ich muss noch überlegen",
-    "keywords": ["überlegen", "schlafen", "nachdenken", "später", "nicht sicher", "bedenkzeit"],
-    "meta": { "status": "success", "pattern": "isolation", "safety": "clean" },
-    "ui": { "color": "success", "icon": "clock" },
-    "content": {
-      "quick": {
-        "entry": "Das ist eine wichtige Anschaffung, da sollte man ein gutes Gefühl haben.",
-        "anchor": "Meistens gibt es bei meinen Kunden nur einen Punkt, der sie noch zögern lässt.",
-        "question": "Darf ich fragen: Hängt es an der Technik oder eher am Gesamtpreis?",
-        "bridge": "Oft hilft es, wenn wir diesen einen Punkt jetzt kurz klären, damit Sie nicht mit offenen Fragen gehen.",
-        "close": "Soll ich Ihnen das Angebot so für 24 Stunden im System festhalten?"
-      },
-      "smart": {
-        "text": "Absolut verständlich. Hand aufs Herz: Wenn der Preis heute keine Rolle spielen würde – wäre es dann das perfekte Gerät für Sie? (Wenn JA): Okay, dann lassen Sie uns schauen, ob wir beim Preis oder Zubehör noch eine Lösung finden.",
-        "closing": "Was müsste passieren, damit Sie das Gerät heute mit einem Lächeln mitnehmen?"
-      },
-      "coach": {
-        "diagnosis": " 'Überlegen' ist oft ein verstecktes 'Nein' oder Unsicherheit. Der Kunde will keinen Fehler machen.",
-        "strategy": "Isoliere den wahren Einwand. Ist es Geld? Oder Angst vor falscher Entscheidung?",
-        "behavioral_fix": "Kein Druck. Biete eine 'Brücke' an (Reservierung), um im Gespräch zu bleiben.",
-        "drill": ["Übe: 'Liegt es am Produkt oder am Preis?' (Offen fragen)"]
-      }
-    }
-  },
-  {
     "id": "auth_partner_01",
     "objection": "Muss Partner fragen",
     "keywords": ["frau", "mann", "partner", "besprechen", "heim", "fragen", "entscheiden"],
@@ -74,6 +48,32 @@
         "strategy": "Mach den Kunden zum Helden (Champion). Gib ihm Argumente, mit denen er vor dem Partner gut dasteht.",
         "behavioral_fix": "Respektiere die Abwesenheit des Partners. Biete Material (Flyer, Foto) an.",
         "drill": ["Übe: 'Was ist Ihrem Partner wichtig?'"]
+      }
+    }
+  },
+  {
+    "id": "stall_think_01",
+    "objection": "Ich muss noch überlegen",
+    "keywords": ["überlegen", "schlafen", "nachdenken", "später", "nicht sicher", "bedenkzeit"],
+    "meta": { "status": "success", "pattern": "isolation", "safety": "clean" },
+    "ui": { "color": "success", "icon": "clock" },
+    "content": {
+      "quick": {
+        "entry": "Das ist eine wichtige Anschaffung, da sollte man ein gutes Gefühl haben.",
+        "anchor": "Meistens gibt es bei meinen Kunden nur einen Punkt, der sie noch zögern lässt.",
+        "question": "Darf ich fragen: Hängt es an der Technik oder eher am Gesamtpreis?",
+        "bridge": "Oft hilft es, wenn wir diesen einen Punkt jetzt kurz klären, damit Sie nicht mit offenen Fragen gehen.",
+        "close": "Soll ich Ihnen das Angebot so für 24 Stunden im System festhalten?"
+      },
+      "smart": {
+        "text": "Absolut verständlich. Hand aufs Herz: Wenn der Preis heute keine Rolle spielen würde – wäre es dann das perfekte Gerät für Sie? (Wenn JA): Okay, dann lassen Sie uns schauen, ob wir beim Preis oder Zubehör noch eine Lösung finden.",
+        "closing": "Was müsste passieren, damit Sie das Gerät heute mit einem Lächeln mitnehmen?"
+      },
+      "coach": {
+        "diagnosis": " 'Überlegen' ist oft ein verstecktes 'Nein' oder Unsicherheit. Der Kunde will keinen Fehler machen.",
+        "strategy": "Isoliere den wahren Einwand. Ist es Geld? Oder Angst vor falscher Entscheidung?",
+        "behavioral_fix": "Kein Druck. Biete eine 'Brücke' an (Reservierung), um im Gespräch zu bleiben.",
+        "drill": ["Übe: 'Liegt es am Produkt oder am Preis?' (Offen fragen)"]
       }
     }
   },
