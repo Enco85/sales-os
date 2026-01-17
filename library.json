@@ -1,27 +1,105 @@
 [
   {
-    "id": "master_tv_1",
+    "id": "price_online_01",
     "objection": "Internet ist billiger",
-    "keywords": ["internet", "online", "amazon", "billiger", "preisvergleich"],
-    "meta": { "status": "success", "pattern": "price", "safety": "clean" },
+    "keywords": ["internet", "online", "amazon", "billiger", "preis", "geizhals", "vergleich", "teuer"],
+    "meta": { "status": "success", "pattern": "value_reframing", "safety": "clean" },
     "ui": { "color": "warning", "icon": "tag" },
     "content": {
       "quick": {
-        "entry": "Verstehe ich, im Internet sind die Preise oft aggressiv.",
-        "anchor": "Viele Kunden vergleichen erst, kaufen aber hier wegen der Sicherheit.",
-        "question": "Ist Ihnen wichtig, dass Sie bei einem Defekt sofort einen Ansprechpartner haben?",
-        "bridge": "Im Internet sparen Sie vielleicht 30€, aber hier haben Sie Service vor Ort.",
-        "close": "Soll ich Ihnen das Gerät gleich zur Kasse geben, damit Sie es sofort haben?"
+        "entry": "Es scheint, als hätten Sie den Markt sehr genau beobachtet. Der Preisunterschied ist natürlich da.",
+        "anchor": "Viele unserer Stammkunden standen genau vor dieser Wahl: Den absolut tiefsten Preis oder die absolute Sicherheit.",
+        "question": "Wie wichtig ist es für Sie, im Fall eines Defekts nicht erst Pakete packen und wochenlang warten zu müssen?",
+        "bridge": "Die Differenz ist im Grunde Ihre 'Service-Prämie' für sofortigen Austausch und direkte Ansprechpartner.",
+        "close": "Wollen wir sicherstellen, dass Sie das Gerät heute Abend schon entspannt nutzen können?"
       },
       "smart": {
-        "text": "Internetpreise sind oft ohne Service. Hier haben Sie 'Greifbarkeit'. Wenn was ist: Herkommen, tauschen, fertig. Kein Einschicken, kein Warten.",
-        "closing": "Wollen Sie es gleich mitnehmen?"
+        "text": "Verstehe ich absolut. Online kaufen Sie das Produkt in der Box. Hier investieren Sie in das 'Sorglos-Paket'. Wenn in 6 Monaten eine Frage auftaucht oder etwas nicht geht, sind wir Ihr Anwalt beim Hersteller. Kein Postweg, keine Hotline-Musik.",
+        "closing": "Ist Ihnen dieser Komfort und die Zeitersparnis den kleinen Aufpreis wert?"
       },
       "coach": {
-        "diagnosis": "Kunde will Bestätigung, dass der Aufpreis den Service wert ist.",
-        "strategy": "Service-Vorteil (Sofort-Mitnahme) gegen Wartezeit ausspielen.",
-        "behavioral_fix": "Nicht gegen das Internet kämpfen, sondern den Mehrwert des Ladens betonen.",
-        "drill": ["Übe: 'Der Preis ist nur ein Teil des Pakets.'"]
+        "diagnosis": "Kunde vergleicht Äpfel (Produkt) mit Birnen (Produkt + Infrastruktur).",
+        "strategy": "Vom Preis weglenken hin zum 'Schmerz' des Online-Supports (Warten, Einschicken).",
+        "behavioral_fix": "Stimme senken (Late Night DJ Voice). Nicht aggressiv dagegenhalten, sondern Verständnis zeigen.",
+        "drill": ["Übe: 'Online sparen Sie Geld, hier sparen Sie Zeit und Nerven.'"]
+      }
+    }
+  },
+  {
+    "id": "stall_think_01",
+    "objection": "Ich muss noch überlegen",
+    "keywords": ["überlegen", "schlafen", "nachdenken", "später", "nicht sicher", "bedenkzeit"],
+    "meta": { "status": "success", "pattern": "isolation", "safety": "clean" },
+    "ui": { "color": "success", "icon": "clock" },
+    "content": {
+      "quick": {
+        "entry": "Das ist eine wichtige Anschaffung, da sollte man ein gutes Gefühl haben.",
+        "anchor": "Meistens gibt es bei meinen Kunden nur einen Punkt, der sie noch zögern lässt.",
+        "question": "Darf ich fragen: Hängt es an der Technik oder eher am Gesamtpreis?",
+        "bridge": "Oft hilft es, wenn wir diesen einen Punkt jetzt kurz klären, damit Sie nicht mit offenen Fragen gehen.",
+        "close": "Soll ich Ihnen das Angebot so für 24 Stunden im System festhalten?"
+      },
+      "smart": {
+        "text": "Absolut verständlich. Hand aufs Herz: Wenn der Preis heute keine Rolle spielen würde – wäre es dann das perfekte Gerät für Sie? (Wenn JA): Okay, dann lassen Sie uns schauen, ob wir beim Preis oder Zubehör noch eine Lösung finden.",
+        "closing": "Was müsste passieren, damit Sie das Gerät heute mit einem Lächeln mitnehmen?"
+      },
+      "coach": {
+        "diagnosis": " 'Überlegen' ist oft ein verstecktes 'Nein' oder Unsicherheit. Der Kunde will keinen Fehler machen.",
+        "strategy": "Isoliere den wahren Einwand. Ist es Geld? Oder Angst vor falscher Entscheidung?",
+        "behavioral_fix": "Kein Druck. Biete eine 'Brücke' an (Reservierung), um im Gespräch zu bleiben.",
+        "drill": ["Übe: 'Liegt es am Produkt oder am Preis?' (Offen fragen)"]
+      }
+    }
+  },
+  {
+    "id": "auth_partner_01",
+    "objection": "Muss Partner fragen",
+    "keywords": ["frau", "mann", "partner", "besprechen", "heim", "fragen", "entscheiden"],
+    "meta": { "status": "success", "pattern": "champion_building", "safety": "clean" },
+    "ui": { "color": "success", "icon": "users" },
+    "content": {
+      "quick": {
+        "entry": "Sehr gut. Bei so einer Investition sollten beide happy sein.",
+        "anchor": "Es passiert oft, dass zu Hause dann die technischen Details schwer zu erklären sind.",
+        "question": "Was wäre für Ihren Partner denn das allerwichtigste Kriterium? Design oder Leistung?",
+        "bridge": "Ich gebe Ihnen die passenden Argumente mit, damit Sie zu Hause punkten können.",
+        "close": "Wollen Sie ein Foto machen, oder soll ich Ihnen die Specs kurz für Ihren Partner aufschreiben?"
+      },
+      "smart": {
+        "text": "Finde ich gut. Meistens fragt der Partner ja: 'Warum gerade das Modell?'. Damit Sie nicht mit leeren Händen kommen: Das Hauptargument hier ist [Top-Feature] und die Langlebigkeit. Das spart Ihnen langfristig eine Neuanschaffung.",
+        "closing": "Soll ich es reservieren, bis Sie das 'Go' von zu Hause haben?"
+      },
+      "coach": {
+        "diagnosis": "Der Kunde hat Angst, zu Hause Ärger zu bekommen (falsch gekauft).",
+        "strategy": "Mach den Kunden zum Helden (Champion). Gib ihm Argumente, mit denen er vor dem Partner gut dasteht.",
+        "behavioral_fix": "Respektiere die Abwesenheit des Partners. Biete Material (Flyer, Foto) an.",
+        "drill": ["Übe: 'Was ist Ihrem Partner wichtig?'"]
+      }
+    }
+  },
+  {
+    "id": "insurance_no_01",
+    "objection": "Keine Versicherung",
+    "keywords": ["versicherung", "garantie", "schutz", "extra", "kaputt", "unnötig", "abzocke"],
+    "meta": { "status": "success", "pattern": "risk_visualization", "safety": "transparency" },
+    "ui": { "color": "warning", "icon": "shield" },
+    "content": {
+      "quick": {
+        "entry": "Verstehe ich, niemand zahlt gerne für etwas, das er hoffentlich nicht braucht.",
+        "anchor": "Die meisten meiner Kunden sehen es mittlerweile weniger als Versicherung, sondern als 'Display-Flatrate'.",
+        "question": "Wissen Sie, was ein Displaytausch bei diesem Modell aktuell kostet?",
+        "bridge": "Wir reden hier von ca. 350€. Der Schutz kostet Sie umgerechnet einen Kaffee im Monat.",
+        "close": "Wollen wir den Schutz für das erste Jahr mitnehmen, damit Sie Ruhe haben?"
+      },
+      "smart": {
+        "text": "Ich bin da ganz offen: Wenn das Gerät nur auf dem Tisch steht, brauchen Sie es nicht. Aber es ist ein mobiler Gegenstand. Ein Sturz, und der wirtschaftliche Totalschaden ist da. Mit dem Schutz bekommen Sie einfach ein Neues. Kein Ärger, keine Kosten.",
+        "closing": "Soll ich es einmal unverbindlich mitrechnen, damit Sie den Endpreis sehen?"
+      },
+      "coach": {
+        "diagnosis": "Kunde hat 'Optimismus-Verzerrung' (Mir passiert das nicht).",
+        "strategy": "Konkrete Kosten des Schadens (350€) gegen kleine monatliche Rate stellen. Angst vor Verlust nutzen.",
+        "behavioral_fix": "Erwähne 'Totalschaden' oder konkrete Reparaturpreise. Das wirkt stärker als abstrakte 'Sicherheit'.",
+        "drill": ["Übe: Konkreten Reparaturpreis nennen (z.B. 'Display kostet 300€')."]
       }
     }
   }
