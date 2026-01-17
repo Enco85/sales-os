@@ -5,8 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <title>MEHIC SALES OS - Ultimate Edition v1.7</title>
-    <!-- MEHIC SALES OS Ultimate Edition v1.7 © 2026 Enes Mehic - Proprietary Software -->
+    <title>MEHIC SALES OS - Ultimate Edition v1.7.1</title>
+    <!-- MEHIC SALES OS Ultimate Edition v1.7.1 © 2026 Enes Mehic - Proprietary Software -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
@@ -1127,12 +1127,13 @@
     </div>
 
     <script>
-        const BUILD_SIGNATURE = "MEHIC_SALES_OS_ULTIMATE_v1.7__2026__" + Math.random().toString(36).substr(2, 9);
+        const BUILD_SIGNATURE = "MEHIC_SALES_OS_ULTIMATE_v1.7.1__2026__" + Math.random().toString(36).substr(2, 9);
 
         const DB_NAME = "MehicSalesOS_DB";
         const DB_VERSION = 1;
         let db = null;
         let wakeLock = null;
+        let dbReady = false;
 
         const appState = {
             objection: "",
@@ -1269,14 +1270,32 @@
             }
         };
 
+        function escapeHTML(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
         async function requestWakeLock() {
             try {
                 if ('wakeLock' in navigator) {
                     wakeLock = await navigator.wakeLock.request('screen');
+                    
+                    wakeLock.addEventListener('release', () => {
+                        console.log('Wake Lock released');
+                    });
                 }
             } catch (err) {
                 console.error('Wake Lock error:', err);
             }
+        }
+
+        function setupWakeLockReacquisition() {
+            document.addEventListener('visibilitychange', async () => {
+                if (document.visibilityState === 'visible' && wakeLock === null) {
+                    await requestWakeLock();
+                }
+            });
         }
 
         function haptic(pattern = [50]) {
@@ -1309,6 +1328,21 @@
             return matrix[b.length][a.length];
         }
 
+        function waitForDB() {
+            return new Promise((resolve) => {
+                if (dbReady) {
+                    resolve();
+                } else {
+                    const checkInterval = setInterval(() => {
+                        if (dbReady) {
+                            clearInterval(checkInterval);
+                            resolve();
+                        }
+                    }, 50);
+                }
+            });
+        }
+
         function initDB() {
             return new Promise((resolve, reject) => {
                 const request = indexedDB.open(DB_NAME, DB_VERSION);
@@ -1316,6 +1350,7 @@
                 request.onerror = () => reject(request.error);
                 request.onsuccess = () => {
                     db = request.result;
+                    dbReady = true;
                     resolve(db);
                 };
                 
@@ -1338,6 +1373,7 @@
         }
 
         async function saveSettings(settings) {
+            await waitForDB();
             const tx = db.transaction("settings", "readwrite");
             tx.objectStore("settings").put({ id: "main", ...settings });
             return new Promise((resolve) => {
@@ -1346,6 +1382,7 @@
         }
 
         async function loadSettings() {
+            await waitForDB();
             return new Promise((resolve) => {
                 const tx = db.transaction("settings", "readonly");
                 const req = tx.objectStore("settings").get("main");
@@ -1355,6 +1392,7 @@
         }
 
         async function saveCaseToLibrary(caseData) {
+            await waitForDB();
             const tx = db.transaction("cases", "readwrite");
             const store = tx.objectStore("cases");
             
@@ -1391,6 +1429,7 @@
         }
 
         async function searchLocalCases(query) {
+            await waitForDB();
             return new Promise((resolve, reject) => {
                 const tx = db.transaction("cases", "readonly");
                 const store = tx.objectStore("cases");
@@ -1438,6 +1477,7 @@
         }
 
         async function logEvent(type, data) {
+            await waitForDB();
             const tx = db.transaction("logs", "readwrite");
             const store = tx.objectStore("logs");
             
@@ -1456,6 +1496,17 @@
             });
         }
 
+        function extractJSON(text) {
+            const firstBrace = text.indexOf('{');
+            const lastBrace = text.lastIndexOf('}');
+            
+            if (firstBrace === -1 || lastBrace === -1) {
+                throw new Error("No JSON found in response");
+            }
+            
+            return text.substring(firstBrace, lastBrace + 1);
+        }
+
         async function callAI(objection, contexts) {
             const { apiProvider, apiKey, modelName, proxyUrl, department, storePolicy } = appState.settings;
             
@@ -1471,7 +1522,7 @@
 
             const systemPrompt = `ROLE: High-End Retail Sales Expert (Austria). Abteilung: ${department}
 
-OUTPUT: STRICT JSON ONLY.
+OUTPUT: STRICT JSON ONLY. NO preamble, NO markdown, NO text before or after the JSON object.
 
 LOGIC (The "Expert Matrix"):
 1. VOSS: Start with Labeling/Empathy ("Versteh ich...").
@@ -1518,17 +1569,14 @@ OUTPUT FORMAT (STRICT JSON):
       "drill": ["Übung 1", "Übung 2"]
     }
   }
-}
-
-Analysiere jetzt folgenden Einwand:
-"${objection}"`;
+}`;
 
             let apiUrl, headers, body;
 
             if (proxyUrl) {
                 apiUrl = proxyUrl;
                 headers = { "Content-Type": "application/json" };
-                body = JSON.stringify({ provider: apiProvider, prompt: systemPrompt });
+                body = JSON.stringify({ provider: apiProvider, prompt: systemPrompt, objection: objection });
             } else {
                 if (apiProvider === "openai") {
                     apiUrl = "https://api.openai.com/v1/chat/completions";
@@ -1538,7 +1586,10 @@ Analysiere jetzt folgenden Einwand:
                     };
                     body = JSON.stringify({
                         model: modelName || "gpt-4o-mini",
-                        messages: [{ role: "system", content: systemPrompt }],
+                        messages: [
+                            { role: "system", content: systemPrompt },
+                            { role: "user", content: objection }
+                        ],
                         temperature: 0.7
                     });
                 } else if (apiProvider === "groq") {
@@ -1549,9 +1600,14 @@ Analysiere jetzt folgenden Einwand:
                     };
                     body = JSON.stringify({
                         model: modelName || "llama-3.3-70b-versatile",
-                        messages: [{ role: "system", content: systemPrompt }],
+                        messages: [
+                            { role: "system", content: systemPrompt },
+                            { role: "user", content: objection }
+                        ],
                         temperature: 0.7
                     });
+                } else {
+                    throw new Error(`Unbekannter API Provider: ${apiProvider}`);
                 }
             }
 
@@ -1567,9 +1623,14 @@ Analysiere jetzt folgenden Einwand:
 
             const data = await response.json();
             let content = data.choices[0].message.content;
-            content = content.replace(/```json\n?/g, "").replace(/```\n?/g, "").trim();
-
-            return JSON.parse(content);
+            
+            content = extractJSON(content);
+            
+            const parsed = JSON.parse(content);
+            
+            parsed.id = "ai_" + Date.now() + "_" + Math.random().toString(36).substr(2, 9);
+            
+            return parsed;
         }
 
         async function handleObjectionSubmit() {
@@ -1710,74 +1771,76 @@ Analysiere jetzt folgenden Einwand:
 
             const cardsHTML = appState.cards.map(card => {
                 const colorClass = card.ui.color;
+                const safeId = card.id;
+                
                 return `
                     <div class="card ${colorClass}">
                         <div class="card-header">
                             <svg class="card-icon" viewBox="0 0 24 24">${iconMap[card.ui.icon] || iconMap.info}</svg>
                             <div class="card-title">Objection Handler</div>
-                            <div class="card-badge">${card.meta.pattern}</div>
+                            <div class="card-badge">${escapeHTML(card.meta.pattern)}</div>
                         </div>
 
                         <div class="quick-cues">
                             <div class="cue-block">
                                 <div class="cue-label">Einstieg</div>
-                                <div class="cue-text entry">${card.content.quick.entry}</div>
+                                <div class="cue-text entry">${escapeHTML(card.content.quick.entry)}</div>
                             </div>
                             <div class="cue-block">
                                 <div class="cue-label">Anker</div>
-                                <div class="cue-text anchor">${card.content.quick.anchor}</div>
+                                <div class="cue-text anchor">${escapeHTML(card.content.quick.anchor)}</div>
                             </div>
                             <div class="cue-block">
                                 <div class="cue-label">Frage</div>
-                                <div class="cue-text question">${card.content.quick.question}</div>
+                                <div class="cue-text question">${escapeHTML(card.content.quick.question)}</div>
                             </div>
                         </div>
 
                         <div class="expandable">
-                            <div class="expand-trigger" data-target="smart-${card.id}">
+                            <div class="expand-trigger" data-target="smart-${safeId}">
                                 <div class="expand-label">Smart Script</div>
                                 <svg class="expand-icon" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>
                             </div>
-                            <div class="expand-content" id="smart-${card.id}">
-                                <div class="cue-text" style="margin-bottom: 16px;">${card.content.smart.text}</div>
+                            <div class="expand-content" id="smart-${safeId}">
+                                <div class="cue-text" style="margin-bottom: 16px;">${escapeHTML(card.content.smart.text)}</div>
                                 <div class="cue-label">Abschlussfrage</div>
-                                <div class="cue-text">${card.content.smart.closing}</div>
+                                <div class="cue-text">${escapeHTML(card.content.smart.closing)}</div>
                             </div>
                         </div>
 
                         <div class="expandable">
-                            <div class="expand-trigger" data-target="coach-${card.id}">
+                            <div class="expand-trigger" data-target="coach-${safeId}">
                                 <div class="expand-label">Coach Mode</div>
                                 <svg class="expand-icon" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>
                             </div>
-                            <div class="expand-content" id="coach-${card.id}">
+                            <div class="expand-content" id="coach-${safeId}">
                                 <div class="coach-block">
                                     <div class="coach-label">Diagnose</div>
-                                    <div class="coach-text">${card.content.coach.diagnosis}</div>
+                                    <div class="coach-text">${escapeHTML(card.content.coach.diagnosis)}</div>
                                 </div>
                                 <div class="coach-block">
                                     <div class="coach-label">Strategie</div>
-                                    <div class="coach-text">${card.content.coach.strategy}</div>
+                                    <div class="coach-text">${escapeHTML(card.content.coach.strategy)}</div>
                                 </div>
                                 <div class="coach-block">
                                     <div class="coach-label">Verhaltensfix</div>
-                                    <div class="coach-text">${card.content.coach.behavioral_fix}</div>
+                                    <div class="coach-text">${escapeHTML(card.content.coach.behavioral_fix)}</div>
                                 </div>
                                 <div class="coach-block">
                                     <div class="coach-label">Übungen</div>
                                     <ul class="drill-list">
-                                        ${card.content.coach.drill.map(d => `<li>${d}</li>`).join("")}
+                                        ${card.content.coach.drill.map(d => `<li>${escapeHTML(d)}</li>`).join("")}
                                     </ul>
                                 </div>
                             </div>
                         </div>
 
                         <div class="card-actions">
-                            <button class="feedback-btn success" data-feedback="success" data-card="${card.id}">
+                            <button class="feedback-btn success" data-feedback="success" data-card="${safeId}">
                                 <svg viewBox="0 0 24 24"><path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"/></svg>
                                 Erfolgreich
                             </button>
-                            <button class="feedback-btn error" data-feedback="fail" data-card="${card.id}">
+                            <button class="feedback-btn error" data-feedback="fail" data-card="${safeId}">
                                 <svg viewBox="0 0 24 24"><path d="M10 15v4a3 3 0 0 0 3 3l4-9V2H5.72a2 2 0 0 0-2 1.7l-1.38 9a2 2 0 0 0 2 2.3zm7-13h2.67A2.31 2.31 0 0 1 22 4v7a2.31 2.31 0 0 1-2.33 2H17"/></svg>
                                 Nicht hilfreich
                             </button>
@@ -1938,9 +2001,10 @@ Analysiere jetzt folgenden Einwand:
 
             document.getElementById("exportBtn").addEventListener("click", async () => {
                 haptic([50]);
+                await waitForDB();
                 const tx = db.transaction(["cases", "logs"], "readonly");
                 const data = { 
-                    version: "v1.7", 
+                    version: "v1.7.1", 
                     exportDate: new Date().toISOString(), 
                     cases: [], 
                     logs: [] 
@@ -1970,12 +2034,13 @@ Analysiere jetzt folgenden Einwand:
                 document.getElementById("importFile").click();
             });
 
-            document.getElementById("importFile").addEventListener("change", (e) => {
+            document.getElementById("importFile").addEventListener("change", async (e) => {
                 if (e.target.files.length === 0) return;
                 
                 const reader = new FileReader();
-                reader.onload = (e) => {
+                reader.onload = async (e) => {
                     try {
+                        await waitForDB();
                         const data = JSON.parse(e.target.result);
                         const tx = db.transaction(["cases", "logs"], "readwrite");
                         
@@ -1995,10 +2060,11 @@ Analysiere jetzt folgenden Einwand:
                 reader.readAsText(e.target.files[0]);
             });
 
-            document.getElementById("clearBtn").addEventListener("click", () => {
+            document.getElementById("clearBtn").addEventListener("click", async () => {
                 if (!confirm("Alle Daten werden gelöscht. Fortfahren?")) return;
                 
                 haptic([100, 50, 100, 50, 100]);
+                await waitForDB();
                 const tx = db.transaction(["cases", "logs"], "readwrite");
                 tx.objectStore("cases").clear();
                 tx.objectStore("logs").clear();
@@ -2010,16 +2076,14 @@ Analysiere jetzt folgenden Einwand:
             });
         }
 
-        // ========================================
-        // SYNC ENGINE - Master Library Integration
-        // ========================================
-        const MASTER_URL = "library.json";
-
+        const MASTER_URL = "https://raw.githubusercontent.com/Enco85/sales-os/main/library.json";
         
         async function syncLibrary() {
             try {
                 if (!navigator.onLine) return;
 
+                await waitForDB();
+                
                 const response = await fetch(MASTER_URL + "?t=" + Date.now());
                 if (!response.ok) throw new Error("GitHub nicht erreichbar");
                 
@@ -2069,6 +2133,7 @@ Analysiere jetzt folgenden Einwand:
                 }
 
                 setupEvents();
+                setupWakeLockReacquisition();
                 render();
                 requestWakeLock();
 
