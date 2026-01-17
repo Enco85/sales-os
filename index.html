@@ -5,8 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <title>MEHIC SALES OS - Ultimate Edition v1.6</title>
-    <!-- MEHIC SALES OS Ultimate Edition v1.6 © 2026 Enes Mehic - Proprietary Software -->
+    <title>MEHIC SALES OS - Ultimate Edition v1.7</title>
+    <!-- MEHIC SALES OS Ultimate Edition v1.7 © 2026 Enes Mehic - Proprietary Software -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
@@ -53,7 +53,6 @@
             flex-direction: column;
         }
 
-        /* Header */
         .header {
             background: var(--pure-white);
             padding: 20px 24px;
@@ -142,7 +141,6 @@
             stroke-linejoin: round;
         }
 
-        /* Stealth Mode Overlay */
         .stealth-overlay {
             position: fixed;
             top: 0;
@@ -190,7 +188,6 @@
             letter-spacing: 1px;
         }
 
-        /* Main Stage */
         .stage {
             flex: 1;
             overflow-y: auto;
@@ -203,7 +200,6 @@
             width: 0;
         }
 
-        /* Masonry Grid */
         .cards-grid {
             display: grid;
             gap: 20px;
@@ -216,7 +212,6 @@
             }
         }
 
-        /* Card Design */
         .card {
             background: var(--pure-white);
             border-radius: var(--radius-card);
@@ -295,7 +290,6 @@
             text-transform: uppercase;
         }
 
-        /* Quick Cues */
         .quick-cues {
             display: flex;
             flex-direction: column;
@@ -338,7 +332,6 @@
             font-style: italic;
         }
 
-        /* Expandable Sections */
         .expandable {
             margin-top: 24px;
             padding-top: 24px;
@@ -436,7 +429,6 @@
             font-size: 18px;
         }
 
-        /* Card Actions */
         .card-actions {
             margin-top: 24px;
             padding-top: 24px;
@@ -489,7 +481,6 @@
             color: var(--accent-red);
         }
 
-        /* Control Bar (Floating Glassmorphism) */
         .control-bar {
             position: fixed;
             bottom: 0;
@@ -505,7 +496,6 @@
             z-index: 200;
         }
 
-        /* Context Chips */
         .context-chips {
             display: flex;
             gap: 8px;
@@ -560,7 +550,6 @@
             stroke-width: 2.5;
         }
 
-        /* Input Area */
         .input-area {
             display: flex;
             gap: 12px;
@@ -596,7 +585,6 @@
             font-weight: 400;
         }
 
-        /* Mic FAB */
         .mic-fab {
             width: 56px;
             height: 56px;
@@ -621,15 +609,29 @@
         }
 
         .mic-fab.recording {
-            animation: micPulse 1.5s infinite;
+            animation: micPulseRecording 1.5s infinite;
         }
 
-        @keyframes micPulse {
+        .mic-fab.processing {
+            background: linear-gradient(135deg, #F59E0B, #D97706);
+            animation: micPulseProcessing 1.5s infinite;
+        }
+
+        @keyframes micPulseRecording {
             0%, 100% {
                 box-shadow: 0 8px 24px rgba(227, 0, 15, 0.4);
             }
             50% {
                 box-shadow: 0 8px 40px rgba(227, 0, 15, 0.9);
+            }
+        }
+
+        @keyframes micPulseProcessing {
+            0%, 100% {
+                box-shadow: 0 8px 24px rgba(245, 158, 11, 0.4);
+            }
+            50% {
+                box-shadow: 0 8px 40px rgba(245, 158, 11, 0.9);
             }
         }
 
@@ -641,7 +643,6 @@
             stroke-width: 2.5;
         }
 
-        /* Modal */
         .modal {
             display: none;
             position: fixed;
@@ -728,7 +729,6 @@
             stroke-width: 2.5;
         }
 
-        /* Form Elements */
         .form-group {
             margin-bottom: 24px;
         }
@@ -796,7 +796,6 @@
             color: #92400E;
         }
 
-        /* Buttons */
         .btn-group {
             display: flex;
             gap: 12px;
@@ -849,7 +848,6 @@
             background: #B91C1C;
         }
 
-        /* Empty State */
         .empty-state {
             text-align: center;
             padding: 80px 24px;
@@ -894,7 +892,6 @@
             line-height: 1.6;
         }
 
-        /* Loading */
         .loading {
             text-align: center;
             padding: 60px 24px;
@@ -925,7 +922,6 @@
             color: var(--label-grey);
         }
 
-        /* Toast */
         .toast {
             position: fixed;
             bottom: 220px;
@@ -949,7 +945,6 @@
             transform: translateX(-50%) translateY(0);
         }
 
-        /* Footer */
         .footer {
             text-align: center;
             padding: 16px;
@@ -969,7 +964,6 @@
     </style>
 </head>
 <body>
-    <!-- Stealth Mode Overlay -->
     <div class="stealth-overlay" id="stealthOverlay">
         <svg class="stealth-icon" viewBox="0 0 24 24" fill="none">
             <rect x="2" y="2" width="20" height="20" rx="2"/>
@@ -978,7 +972,6 @@
         <div class="stealth-text">SYSTEM STANDBY</div>
     </div>
 
-    <!-- Header -->
     <div class="header" id="header">
         <div class="logo-container">
             <svg class="logo-svg" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -1010,12 +1003,10 @@
         </div>
     </div>
 
-    <!-- Main Stage -->
     <div class="stage" id="stage">
         <div id="cardsContainer"></div>
     </div>
 
-    <!-- Control Bar -->
     <div class="control-bar">
         <div class="context-chips" id="contextChips">
             <div class="chip" data-context="hurry">
@@ -1051,7 +1042,6 @@
         </div>
     </div>
 
-    <!-- Settings Modal -->
     <div class="modal" id="settingsModal">
         <div class="modal-content">
             <div class="modal-header">
@@ -1128,26 +1118,21 @@
         </div>
     </div>
 
-    <!-- Toast -->
     <div class="toast" id="toast"></div>
 
-    <!-- Footer -->
     <div class="footer">
         © 2026 Enes Mehic. All rights reserved.
         <div class="build-info" id="buildInfo"></div>
     </div>
 
     <script>
-        // Build Signature
-        const BUILD_SIGNATURE = "MEHIC_SALES_OS_ULTIMATE_v1.6__2026__" + Math.random().toString(36).substr(2, 9);
+        const BUILD_SIGNATURE = "MEHIC_SALES_OS_ULTIMATE_v1.7__2026__" + Math.random().toString(36).substr(2, 9);
 
-        // Database Configuration
         const DB_NAME = "MehicSalesOS_DB";
         const DB_VERSION = 1;
         let db = null;
         let wakeLock = null;
 
-        // App State
         const appState = {
             objection: "",
             contexts: [],
@@ -1165,12 +1150,11 @@
             lastHeaderTap: 0
         };
 
-        // Golden Standard Seeds
         const SEED_DATA = [
             {
                 id: "seed_1",
                 objection: "zu teuer",
-                keywords: ["teuer", "preis", "kostet", "viel"],
+                keywords: ["teuer", "preis", "kostet", "viel", "hoch", "expensive"],
                 meta: { status: "success", pattern: "price", safety: "clean" },
                 ui: { color: "success", icon: "tag" },
                 content: {
@@ -1199,7 +1183,7 @@
             {
                 id: "seed_2",
                 objection: "keine versicherung",
-                keywords: ["versicherung", "garantie", "schutz", "abo"],
+                keywords: ["versicherung", "garantie", "schutz", "abo", "absicherung"],
                 meta: { status: "success", pattern: "subscription_aversion", safety: "transparency_required" },
                 ui: { color: "warning", icon: "shield" },
                 content: {
@@ -1228,7 +1212,7 @@
             {
                 id: "seed_3",
                 objection: "muss überlegen",
-                keywords: ["überlegen", "bedenkzeit", "später", "nachdenken"],
+                keywords: ["überlegen", "bedenkzeit", "später", "nachdenken", "warten"],
                 meta: { status: "success", pattern: "uncertainty", safety: "clean" },
                 ui: { color: "success", icon: "clock" },
                 content: {
@@ -1256,7 +1240,6 @@
             }
         ];
 
-        // Joker Card
         const JOKER_CARD = {
             id: "joker",
             meta: { status: "success", pattern: "trust", safety: "clean" },
@@ -1285,28 +1268,46 @@
             }
         };
 
-        // Wake Lock
         async function requestWakeLock() {
             try {
                 if ('wakeLock' in navigator) {
                     wakeLock = await navigator.wakeLock.request('screen');
-                    wakeLock.addEventListener('release', () => {
-                        console.log('Wake Lock released');
-                    });
                 }
             } catch (err) {
                 console.error('Wake Lock error:', err);
             }
         }
 
-        // Haptic Feedback
         function haptic(pattern = [50]) {
             if ('vibrate' in navigator) {
                 navigator.vibrate(pattern);
             }
         }
 
-        // IndexedDB Functions
+        function levenshteinDistance(a, b) {
+            const matrix = [];
+            for (let i = 0; i <= b.length; i++) {
+                matrix[i] = [i];
+            }
+            for (let j = 0; j <= a.length; j++) {
+                matrix[0][j] = j;
+            }
+            for (let i = 1; i <= b.length; i++) {
+                for (let j = 1; j <= a.length; j++) {
+                    if (b.charAt(i - 1) === a.charAt(j - 1)) {
+                        matrix[i][j] = matrix[i - 1][j - 1];
+                    } else {
+                        matrix[i][j] = Math.min(
+                            matrix[i - 1][j - 1] + 1,
+                            matrix[i][j - 1] + 1,
+                            matrix[i - 1][j] + 1
+                        );
+                    }
+                }
+            }
+            return matrix[b.length][a.length];
+        }
+
         function initDB() {
             return new Promise((resolve, reject) => {
                 const request = indexedDB.open(DB_NAME, DB_VERSION);
@@ -1320,9 +1321,12 @@
                 request.onupgradeneeded = (event) => {
                     const db = event.target.result;
                     
-                    if (!db.objectStoreNames.contains("library")) {
-                        const store = db.createObjectStore("library", { keyPath: "id" });
-                        store.createIndex("keywords", "keywords", { multiEntry: true });
+                    if (!db.objectStoreNames.contains("settings")) {
+                        db.createObjectStore("settings", { keyPath: "id" });
+                    }
+                    
+                    if (!db.objectStoreNames.contains("cases")) {
+                        db.createObjectStore("cases", { keyPath: "id" });
                     }
                     
                     if (!db.objectStoreNames.contains("logs")) {
@@ -1332,30 +1336,80 @@
             });
         }
 
-        function seedDB() {
-            return new Promise((resolve, reject) => {
-                const tx = db.transaction(["library"], "readwrite");
-                const store = tx.objectStore("library");
-                
-                SEED_DATA.forEach(item => store.put(item));
-                
+        async function saveSettings(settings) {
+            const tx = db.transaction("settings", "readwrite");
+            tx.objectStore("settings").put({ id: "main", ...settings });
+            return new Promise((resolve) => {
                 tx.oncomplete = () => resolve();
-                tx.onerror = () => reject(tx.error);
             });
         }
 
-        function searchLocal(query) {
+        async function loadSettings() {
+            return new Promise((resolve) => {
+                const tx = db.transaction("settings", "readonly");
+                const req = tx.objectStore("settings").get("main");
+                req.onsuccess = () => resolve(req.result || null);
+                req.onerror = () => resolve(null);
+            });
+        }
+
+        async function saveCaseToLibrary(caseData) {
+            const tx = db.transaction("cases", "readwrite");
+            const store = tx.objectStore("cases");
+            
+            const baseKeywords = appState.objection.toLowerCase().split(" ").filter(w => w.length > 3);
+            const synonymMap = {
+                "teuer": ["preis", "kostet", "hoch", "viel", "expensive"],
+                "versicherung": ["garantie", "schutz", "absicherung", "abo"],
+                "überlegen": ["bedenkzeit", "später", "nachdenken", "warten"],
+                "rabatt": ["nachlass", "discount", "günstiger", "reduzierung"],
+                "vergleichen": ["andere", "konkurrenz", "woanders"],
+                "qualität": ["hochwertig", "premium", "gut"],
+                "lieferung": ["versand", "transport", "zustellung"],
+                "garantie": ["gewährleistung", "rückgabe", "umtausch"]
+            };
+            
+            const enhancedKeywords = [...new Set([
+                ...baseKeywords,
+                ...baseKeywords.flatMap(kw => synonymMap[kw] || [])
+            ])];
+            
+            const item = {
+                id: "case_" + Date.now() + "_" + Math.random().toString(36).substr(2, 9),
+                objection: appState.objection,
+                keywords: enhancedKeywords,
+                timestamp: new Date().toISOString(),
+                ...caseData
+            };
+            
+            store.put(item);
+            
+            return new Promise((resolve) => {
+                tx.oncomplete = () => resolve();
+            });
+        }
+
+        async function searchLocalCases(query) {
             return new Promise((resolve, reject) => {
-                const tx = db.transaction(["library"], "readonly");
-                const store = tx.objectStore("library");
+                const tx = db.transaction("cases", "readonly");
+                const store = tx.objectStore("cases");
                 const request = store.getAll();
                 
                 request.onsuccess = () => {
                     const results = request.result;
                     const queryLower = query.toLowerCase();
+                    const queryWords = queryLower.split(" ").filter(w => w.length > 3);
                     
                     const match = results.find(item => {
-                        return item.keywords.some(kw => queryLower.includes(kw.toLowerCase()));
+                        return item.keywords.some(kw => {
+                            return queryWords.some(qw => {
+                                if (qw.includes(kw.toLowerCase()) || kw.toLowerCase().includes(qw)) {
+                                    return true;
+                                }
+                                const distance = levenshteinDistance(qw, kw.toLowerCase());
+                                return distance <= 2;
+                            });
+                        });
                     });
                     
                     resolve(match || null);
@@ -1365,65 +1419,42 @@
             });
         }
 
-        function saveToLibrary(data) {
-            return new Promise((resolve, reject) => {
-                const tx = db.transaction(["library"], "readwrite");
-                const store = tx.objectStore("library");
-                
-                const item = {
-                    id: "gen_" + Date.now() + "_" + Math.random().toString(36).substr(2, 9),
-                    objection: appState.objection,
-                    keywords: appState.objection.toLowerCase().split(" ").filter(w => w.length > 3),
-                    timestamp: new Date().toISOString(),
-                    ...data
-                };
-                
-                store.put(item);
-                
-                tx.oncomplete = () => resolve();
-                tx.onerror = () => reject(tx.error);
+        function searchSeeds(query) {
+            const queryLower = query.toLowerCase();
+            const queryWords = queryLower.split(" ").filter(w => w.length > 3);
+            
+            return SEED_DATA.find(seed => {
+                return seed.keywords.some(kw => {
+                    return queryWords.some(qw => {
+                        if (qw.includes(kw.toLowerCase()) || kw.toLowerCase().includes(qw)) {
+                            return true;
+                        }
+                        const distance = levenshteinDistance(qw, kw.toLowerCase());
+                        return distance <= 2;
+                    });
+                });
             });
         }
 
-        function logEvent(type, data) {
-            return new Promise((resolve, reject) => {
-                const tx = db.transaction(["logs"], "readwrite");
-                const store = tx.objectStore("logs");
-                
-                const log = {
-                    timestamp: new Date().toISOString(),
-                    type: type,
-                    objection: appState.objection,
-                    contexts: [...appState.contexts],
-                    data: data
-                };
-                
-                store.add(log);
-                
+        async function logEvent(type, data) {
+            const tx = db.transaction("logs", "readwrite");
+            const store = tx.objectStore("logs");
+            
+            const log = {
+                timestamp: new Date().toISOString(),
+                type: type,
+                objection: appState.objection,
+                contexts: [...appState.contexts],
+                data: data
+            };
+            
+            store.add(log);
+            
+            return new Promise((resolve) => {
                 tx.oncomplete = () => resolve();
-                tx.onerror = () => reject(tx.error);
             });
         }
 
-        // Settings Functions
-        function loadSettings() {
-            const stored = localStorage.getItem("mehic_sales_os_v16_settings");
-            if (stored) {
-                try {
-                    appState.settings = { ...appState.settings, ...JSON.parse(stored) };
-                } catch (e) {
-                    console.error("Failed to parse settings", e);
-                }
-            }
-        }
-
-        function saveSettings() {
-            localStorage.setItem("mehic_sales_os_v16_settings", JSON.stringify(appState.settings));
-            haptic([50]);
-            showToast("Einstellungen gespeichert");
-        }
-
-        // AI API Call
         async function callAI(objection, contexts) {
             const { apiProvider, apiKey, modelName, proxyUrl, department, storePolicy } = appState.settings;
             
@@ -1540,15 +1571,19 @@ Analysiere jetzt folgenden Einwand:
             return JSON.parse(content);
         }
 
-        // Main Handler
-        async function handleSubmit() {
-            if (!appState.objection.trim()) {
+        async function handleObjectionSubmit() {
+            const objection = appState.objection.trim();
+            
+            if (!objection) {
                 haptic([50, 50]);
                 showToast("Bitte Einwand eingeben");
                 return;
             }
 
             haptic([50]);
+            const micBtn = document.getElementById("micBtn");
+            micBtn.classList.add("processing");
+            
             appState.loading = true;
             
             if (document.startViewTransition) {
@@ -1558,18 +1593,26 @@ Analysiere jetzt folgenden Einwand:
             }
 
             try {
-                const localMatch = await searchLocal(appState.objection);
+                const seedMatch = searchSeeds(objection);
                 
-                if (localMatch) {
-                    appState.cards = [localMatch];
-                    await logEvent("local_match", { cardId: localMatch.id });
+                if (seedMatch) {
+                    appState.cards = [seedMatch];
+                    await logEvent("seed_match", { cardId: seedMatch.id });
                     haptic([50, 30, 50]);
                 } else {
-                    const aiResponse = await callAI(appState.objection, appState.contexts);
-                    appState.cards = [aiResponse];
-                    await saveToLibrary(aiResponse);
-                    await logEvent("api_call", { provider: appState.settings.apiProvider });
-                    haptic([50, 30, 50]);
+                    const localMatch = await searchLocalCases(objection);
+                    
+                    if (localMatch) {
+                        appState.cards = [localMatch];
+                        await logEvent("local_match", { cardId: localMatch.id });
+                        haptic([50, 30, 50]);
+                    } else {
+                        const aiResponse = await callAI(objection, appState.contexts);
+                        appState.cards = [aiResponse];
+                        await saveCaseToLibrary(aiResponse);
+                        await logEvent("api_call", { provider: appState.settings.apiProvider });
+                        haptic([50, 30, 50]);
+                    }
                 }
             } catch (error) {
                 console.error("Error:", error);
@@ -1579,6 +1622,7 @@ Analysiere jetzt folgenden Einwand:
             }
 
             appState.loading = false;
+            micBtn.classList.remove("processing");
             
             if (document.startViewTransition) {
                 document.startViewTransition(() => render());
@@ -1587,7 +1631,6 @@ Analysiere jetzt folgenden Einwand:
             }
         }
 
-        // UI Functions
         function showToast(message) {
             const toast = document.getElementById("toast");
             toast.textContent = message;
@@ -1745,9 +1788,7 @@ Analysiere jetzt folgenden Einwand:
             container.innerHTML = `<div class="cards-grid">${cardsHTML}</div>`;
         }
 
-        // Event Listeners
         function setupEvents() {
-            // Double-tap Header for Stealth Mode
             document.getElementById("header").addEventListener("click", () => {
                 const now = Date.now();
                 if (now - appState.lastHeaderTap < 300) {
@@ -1756,7 +1797,6 @@ Analysiere jetzt folgenden Einwand:
                 appState.lastHeaderTap = now;
             });
 
-            // Stealth Overlay (Double-tap to unlock)
             let lastOverlayTap = 0;
             document.getElementById("stealthOverlay").addEventListener("click", () => {
                 const now = Date.now();
@@ -1766,16 +1806,15 @@ Analysiere jetzt folgenden Einwand:
                 lastOverlayTap = now;
             });
 
-            // Reset
             document.getElementById("resetBtn").addEventListener("click", (e) => {
                 e.stopPropagation();
                 resetApp();
             });
 
-            // Settings Modal
-            document.getElementById("settingsBtn").addEventListener("click", (e) => {
+            document.getElementById("settingsBtn").addEventListener("click", async (e) => {
                 e.stopPropagation();
                 haptic([50]);
+                
                 document.getElementById("apiProvider").value = appState.settings.apiProvider;
                 document.getElementById("apiKey").value = appState.settings.apiKey;
                 document.getElementById("modelName").value = appState.settings.modelName;
@@ -1790,19 +1829,22 @@ Analysiere jetzt folgenden Einwand:
                 document.getElementById("settingsModal").classList.remove("open");
             });
 
-            document.getElementById("saveSettingsBtn").addEventListener("click", () => {
+            document.getElementById("saveSettingsBtn").addEventListener("click", async () => {
                 appState.settings.apiProvider = document.getElementById("apiProvider").value;
                 appState.settings.apiKey = document.getElementById("apiKey").value;
                 appState.settings.modelName = document.getElementById("modelName").value;
                 appState.settings.proxyUrl = document.getElementById("proxyUrl").value;
                 appState.settings.department = document.getElementById("department").value;
                 appState.settings.storePolicy = document.getElementById("storePolicy").value;
-                saveSettings();
+                
+                await saveSettings(appState.settings);
+                
+                haptic([50]);
+                showToast("Einstellungen gespeichert");
                 document.getElementById("settingsModal").classList.remove("open");
                 render();
             });
 
-            // Context Chips
             document.getElementById("contextChips").addEventListener("click", (e) => {
                 const chip = e.target.closest(".chip");
                 if (!chip) return;
@@ -1820,58 +1862,57 @@ Analysiere jetzt folgenden Einwand:
                 }
             });
 
-            // Input
             document.getElementById("objectionInput").addEventListener("input", (e) => {
                 appState.objection = e.target.value;
             });
 
             document.getElementById("objectionInput").addEventListener("keypress", (e) => {
                 if (e.key === "Enter") {
-                    handleSubmit();
+                    handleObjectionSubmit();
                 }
             });
 
-            // Mic Button
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            let recognition = null;
+
+            if (SpeechRecognition) {
+                recognition = new SpeechRecognition();
+                recognition.lang = "de-AT";
+                recognition.interimResults = false;
+                recognition.continuous = false;
+
+                recognition.onresult = (e) => {
+                    const text = e.results[0][0].transcript;
+                    appState.objection = text;
+                    document.getElementById("objectionInput").value = text;
+                    haptic([50, 30, 50]);
+                    handleObjectionSubmit();
+                };
+
+                recognition.onend = () => {
+                    document.getElementById("micBtn").classList.remove("recording");
+                };
+
+                recognition.onerror = () => {
+                    document.getElementById("micBtn").classList.remove("recording");
+                    document.getElementById("micBtn").classList.remove("processing");
+                    haptic([100, 50, 100]);
+                    showToast("Spracheingabe fehlgeschlagen");
+                };
+            }
+
             document.getElementById("micBtn").addEventListener("click", () => {
-                if (!("webkitSpeechRecognition" in window)) {
+                if (!recognition) {
                     haptic([100, 50, 100]);
                     showToast("Spracheingabe nicht unterstützt");
                     return;
                 }
-
-                const recognition = new webkitSpeechRecognition();
-                recognition.lang = "de-AT";
-                recognition.continuous = false;
-                recognition.interimResults = false;
-
-                const btn = document.getElementById("micBtn");
-
-                recognition.onstart = () => {
-                    btn.classList.add("recording");
-                    haptic([50]);
-                };
-
-                recognition.onresult = (event) => {
-                    const transcript = event.results[0][0].transcript;
-                    appState.objection = transcript;
-                    document.getElementById("objectionInput").value = transcript;
-                    haptic([50, 30, 50]);
-                };
-
-                recognition.onend = () => {
-                    btn.classList.remove("recording");
-                };
-
-                recognition.onerror = () => {
-                    showToast("Spracheingabe fehlgeschlagen");
-                    btn.classList.remove("recording");
-                    haptic([100, 50, 100]);
-                };
-
+                
+                haptic([50]);
+                document.getElementById("micBtn").classList.add("recording");
                 recognition.start();
             });
 
-            // Card Interactions
             document.getElementById("cardsContainer").addEventListener("click", (e) => {
                 const trigger = e.target.closest(".expand-trigger");
                 if (trigger) {
@@ -1894,14 +1935,18 @@ Analysiere jetzt folgenden Einwand:
                 }
             });
 
-            // Data Management
-            document.getElementById("exportBtn").addEventListener("click", () => {
+            document.getElementById("exportBtn").addEventListener("click", async () => {
                 haptic([50]);
-                const tx = db.transaction(["library", "logs"], "readonly");
-                const data = { version: "v1.6", exportDate: new Date().toISOString(), library: [], logs: [] };
+                const tx = db.transaction(["cases", "logs"], "readonly");
+                const data = { 
+                    version: "v1.7", 
+                    exportDate: new Date().toISOString(), 
+                    cases: [], 
+                    logs: [] 
+                };
                 
-                tx.objectStore("library").getAll().onsuccess = (e) => {
-                    data.library = e.target.result;
+                tx.objectStore("cases").getAll().onsuccess = (e) => {
+                    data.cases = e.target.result;
                     
                     tx.objectStore("logs").getAll().onsuccess = (e2) => {
                         data.logs = e2.target.result;
@@ -1931,9 +1976,9 @@ Analysiere jetzt folgenden Einwand:
                 reader.onload = (e) => {
                     try {
                         const data = JSON.parse(e.target.result);
-                        const tx = db.transaction(["library", "logs"], "readwrite");
+                        const tx = db.transaction(["cases", "logs"], "readwrite");
                         
-                        data.library.forEach(item => tx.objectStore("library").put(item));
+                        data.cases.forEach(item => tx.objectStore("cases").put(item));
                         data.logs.forEach(log => tx.objectStore("logs").add(log));
                         
                         tx.oncomplete = () => {
@@ -1953,36 +1998,26 @@ Analysiere jetzt folgenden Einwand:
                 if (!confirm("Alle Daten werden gelöscht. Fortfahren?")) return;
                 
                 haptic([100, 50, 100, 50, 100]);
-                const tx = db.transaction(["library", "logs"], "readwrite");
-                tx.objectStore("library").clear();
+                const tx = db.transaction(["cases", "logs"], "readwrite");
+                tx.objectStore("cases").clear();
                 tx.objectStore("logs").clear();
                 
                 tx.oncomplete = () => {
-                    seedDB().then(() => {
-                        showToast("Datenbank zurückgesetzt");
-                        resetApp();
-                    });
+                    showToast("Datenbank zurückgesetzt");
+                    resetApp();
                 };
             });
         }
 
-        // Init
         async function init() {
             try {
                 await initDB();
                 
-                const tx = db.transaction(["library"], "readonly");
-                const store = tx.objectStore("library");
-                const count = await new Promise((resolve) => {
-                    const request = store.count();
-                    request.onsuccess = () => resolve(request.result);
-                });
-                
-                if (count === 0) {
-                    await seedDB();
+                const savedSettings = await loadSettings();
+                if (savedSettings) {
+                    appState.settings = { ...appState.settings, ...savedSettings };
                 }
 
-                loadSettings();
                 setupEvents();
                 render();
                 requestWakeLock();
