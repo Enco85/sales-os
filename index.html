@@ -107,6 +107,7 @@
             text-transform: uppercase;
             letter-spacing: 0.5px;
             box-shadow: 0 4px 12px rgba(227, 0, 15, 0.3);
+            transition: all 0.3s var(--transition-smooth);
         }
 
         .icon-btn {
@@ -2009,6 +2010,54 @@ Analysiere jetzt folgenden Einwand:
             });
         }
 
+        // ========================================
+        // SYNC ENGINE - Master Library Integration
+        // ========================================
+        const MASTER_URL = "https://raw.githubusercontent.com/Enco85/sales-os/main/library.json";
+        
+        async function syncLibrary() {
+            try {
+                if (!navigator.onLine) return;
+
+                const response = await fetch(MASTER_URL + "?t=" + Date.now());
+                if (!response.ok) throw new Error("GitHub nicht erreichbar");
+                
+                const masterCases = await response.json();
+                
+                if (!Array.isArray(masterCases)) {
+                    console.warn("Format-Fehler: GitHub JSON muss ein Array sein");
+                    return;
+                }
+                
+                const tx = db.transaction(["cases"], "readwrite");
+                const store = tx.objectStore("cases");
+                
+                masterCases.forEach(item => {
+                    item.isMaster = true;
+                    store.put(item);
+                });
+                
+                await new Promise(resolve => tx.oncomplete = resolve);
+                
+                const badge = document.getElementById("deptBadge");
+                const originalBg = badge.style.background;
+                const originalText = badge.textContent;
+                
+                badge.style.background = "#10B981";
+                badge.textContent = "SYNC OK";
+                
+                setTimeout(() => {
+                    badge.style.background = originalBg;
+                    badge.textContent = originalText;
+                }, 2000);
+                
+                console.log(`Master Sync erfolgreich: ${masterCases.length} Karten geladen.`);
+                
+            } catch (error) {
+                console.log("Sync übersprungen (Offline oder Fehler):", error);
+            }
+        }
+
         async function init() {
             try {
                 await initDB();
@@ -2023,6 +2072,11 @@ Analysiere jetzt folgenden Einwand:
                 requestWakeLock();
 
                 document.getElementById("buildInfo").textContent = `Build: ${BUILD_SIGNATURE}`;
+                
+                syncLibrary().then(() => {
+                    if(appState.objection) handleObjectionSubmit();
+                });
+                
             } catch (error) {
                 console.error("Init error:", error);
                 document.getElementById("cardsContainer").innerHTML = `
