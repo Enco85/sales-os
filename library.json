@@ -1,0 +1,28 @@
+[
+  {
+    "id": "master_tv_1",
+    "objection": "Internet ist billiger",
+    "keywords": ["internet", "online", "amazon", "billiger", "preisvergleich"],
+    "meta": { "status": "success", "pattern": "price", "safety": "clean" },
+    "ui": { "color": "warning", "icon": "tag" },
+    "content": {
+      "quick": {
+        "entry": "Verstehe ich, im Internet sind die Preise oft aggressiv.",
+        "anchor": "Viele Kunden vergleichen erst, kaufen aber hier wegen der Sicherheit.",
+        "question": "Ist Ihnen wichtig, dass Sie bei einem Defekt sofort einen Ansprechpartner haben?",
+        "bridge": "Im Internet sparen Sie vielleicht 30€, aber hier haben Sie Service vor Ort.",
+        "close": "Soll ich Ihnen das Gerät gleich zur Kasse geben, damit Sie es sofort haben?"
+      },
+      "smart": {
+        "text": "Internetpreise sind oft ohne Service. Hier haben Sie 'Greifbarkeit'. Wenn was ist: Herkommen, tauschen, fertig. Kein Einschicken, kein Warten.",
+        "closing": "Wollen Sie es gleich mitnehmen?"
+      },
+      "coach": {
+        "diagnosis": "Kunde will Bestätigung, dass der Aufpreis den Service wert ist.",
+        "strategy": "Service-Vorteil (Sofort-Mitnahme) gegen Wartezeit ausspielen.",
+        "behavioral_fix": "Nicht gegen das Internet kämpfen, sondern den Mehrwert des Ladens betonen.",
+        "drill": ["Übe: 'Der Preis ist nur ein Teil des Pakets.'"]
+      }
+    }
+  }
+]
