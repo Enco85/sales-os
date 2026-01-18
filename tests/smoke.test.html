@@ -165,7 +165,7 @@
             try {
                 if (!("indexedDB" in win)) return null;
                 return await new Promise(resolve => {
-                    const req = win.indexedDB.open("MehicSalesOS_DB", 2);
+                    const req = win.indexedDB.open("MehicSalesOS_DB", 3);
                     req.onerror = () => resolve(null);
                     req.onupgradeneeded = () => resolve(null);
                     req.onsuccess = () => {

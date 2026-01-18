@@ -1,5 +1,14 @@
 <!DOCTYPE html>
-<html lang="de" data-theme="light" data-density="comfortable" data-debug="false">
+<!--
+Executive Summary:
+- Drei Frames (Verkauf, Training, Wiki) mit persistenter Navigation und Offline-First Datastore.
+- Sales Engine liefert Quick Cues, Attach und Next Step mit Compliance-Guardrails.
+- Training Mode mit Drill, Roleplay, KPI-Übersicht und Pattern Library.
+- Produkt-Wiki erzwingt Wiki-Quellen, AI nur als unsicher markiert.
+- Security: CSP Level 1/2 Guidance, Proxy-Whitelist, Session-only Keys, XSS-harter Render.
+- A11y & Mobile: Fokus-Management, große Tap Targets, 100dvh & VisualViewport.
+-->
+<html lang="de" data-theme="light" data-density="comfortable" data-debug="false" data-frame="sales">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
@@ -10,7 +19,7 @@
     <meta name="referrer" content="no-referrer">
     <meta http-equiv="Content-Security-Policy" content="default-src 'none'; base-uri 'self'; form-action 'self'; img-src 'self' data:; font-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline'; connect-src 'self' https://api.openai.com https://api.groq.com; frame-ancestors 'none'; object-src 'none';">
     <!-- CSP Level 2 (Enterprise, hash-based, no unsafe-inline):
-         Content-Security-Policy: default-src 'none'; base-uri 'self'; form-action 'self'; img-src 'self' data:; font-src 'self'; style-src 'self' 'sha256-DfpShdlp4EVLA30rFHv1hJT4U1scXYSZsGgjcQh540U='; script-src 'self' 'sha256-sx0jgiuSguIPgxrujv4zWxp4Siu19SQLZwyb3jkKxeE='; connect-src 'self' https://api.openai.com https://api.groq.com; frame-ancestors 'none'; object-src 'none';
+         Content-Security-Policy: default-src 'none'; base-uri 'self'; form-action 'self'; img-src 'self' data:; font-src 'self'; style-src 'self' 'sha256-N9nOv4+yzMHGx8FFrGAJrUoCI4/o3Qngb44XWFPh5Ks='; script-src 'self' 'sha256-UzCqZTBr+gncfJKcj2qFP/0KsRZccruoO5cgRQJyN5o='; connect-src 'self' https://api.openai.com https://api.groq.com; frame-ancestors 'none'; object-src 'none';
          Hash calculation details: see REPORT.md
     -->
     <title>MEHIC SALES OS — Enterprise RC 2026</title>
@@ -131,6 +140,7 @@
             --control-bar-padding: 16px;
             --font-size-base: 14px;
             --input-height: 46px;
+            --tap-min: 44px;
         }
 
         html[data-density="comfortable"] {
@@ -138,6 +148,7 @@
             --control-bar-padding: 20px;
             --font-size-base: 16px;
             --input-height: 54px;
+            --tap-min: 48px;
         }
 
         body {
@@ -271,6 +282,34 @@
             gap: var(--space-2);
             flex-wrap: wrap;
             justify-content: flex-end;
+        }
+
+        .segment-control {
+            display: inline-flex;
+            align-items: center;
+            gap: var(--space-1);
+            padding: 4px;
+            border-radius: var(--radius-pill);
+            background: var(--color-elevated);
+            border: 1px solid var(--color-border);
+            min-height: var(--tap-min);
+        }
+
+        .segment-btn {
+            padding: 6px 12px;
+            border-radius: var(--radius-pill);
+            font-size: 12px;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--color-text-secondary);
+            background: transparent;
+            min-height: calc(var(--tap-min) - 10px);
+        }
+
+        .segment-btn[aria-pressed="true"] {
+            background: var(--color-accent);
+            color: #FFFFFF;
         }
 
         .status-pill {
@@ -418,6 +457,102 @@
             grid-template-columns: 1fr;
         }
 
+        .frame-container {
+            background: transparent;
+            border: none;
+            box-shadow: none;
+            padding: 0;
+        }
+
+        .frame-root {
+            display: none;
+        }
+
+        html[data-frame="sales"] #salesFrame,
+        html[data-frame="training"] #trainingFrame,
+        html[data-frame="wiki"] #wikiFrame {
+            display: block;
+        }
+
+        html[data-frame="sales"] .training-only,
+        html[data-frame="training"] .sales-only {
+            display: none !important;
+        }
+
+        html[data-frame="sales"] .bento-grid {
+            grid-template-columns: 1fr;
+        }
+
+        html[data-frame="training"] .bento-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .sales-layout,
+        .training-layout,
+        .wiki-layout {
+            display: grid;
+            gap: var(--space-4);
+            grid-template-columns: 1fr;
+        }
+
+        @media (min-width: 1024px) {
+            .sales-layout {
+                grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+                align-items: start;
+            }
+
+            .sales-history {
+                position: sticky;
+                top: calc(var(--space-6) + var(--safe-top));
+            }
+
+            .wiki-layout {
+                grid-template-columns: minmax(0, 1.1fr) minmax(0, 1.4fr);
+            }
+        }
+
+        @media (min-width: 1200px) {
+            .training-layout {
+                grid-template-columns: repeat(3, minmax(0, 1fr));
+            }
+        }
+
+        .history-section {
+            margin-top: var(--space-3);
+            display: grid;
+            gap: var(--space-2);
+        }
+
+        .history-meta {
+            font-size: 11px;
+            color: var(--color-text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.6px;
+            font-weight: 700;
+        }
+
+        .wiki-detail-grid {
+            display: grid;
+            gap: var(--space-3);
+            margin-top: var(--space-3);
+        }
+
+        .spec-grid,
+        .tag-row {
+            display: grid;
+            gap: var(--space-2);
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+        }
+
+        .spec-item,
+        .tag-item {
+            padding: 8px 10px;
+            border-radius: var(--radius-2);
+            border: 1px solid var(--color-border);
+            background: var(--color-elevated);
+            font-size: 12px;
+        }
+
         .tile {
             background: var(--color-surface);
             border: 1px solid var(--color-border);
@@ -543,6 +678,79 @@
             background: var(--color-elevated);
         }
 
+        .history-list,
+        .pattern-list {
+            display: grid;
+            gap: var(--space-2);
+            margin-top: var(--space-3);
+        }
+
+        .history-item,
+        .pattern-item {
+            text-align: left;
+            padding: 8px 10px;
+            border-radius: var(--radius-2);
+            border: 1px solid var(--color-border);
+            background: var(--color-elevated);
+            font-size: 13px;
+            color: var(--color-text-primary);
+            min-height: var(--tap-min);
+        }
+
+        .history-meta,
+        .pattern-meta {
+            font-size: 11px;
+            color: var(--color-text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.6px;
+        }
+
+        .variant-toggle {
+            display: inline-flex;
+            align-items: center;
+            gap: var(--space-2);
+            margin-bottom: var(--space-3);
+            padding: 4px;
+            border-radius: var(--radius-pill);
+            border: 1px solid var(--color-border);
+            background: var(--color-elevated);
+        }
+
+        .variant-btn {
+            padding: 6px 12px;
+            border-radius: var(--radius-pill);
+            font-size: 12px;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.4px;
+            color: var(--color-text-secondary);
+        }
+
+        .variant-btn[aria-pressed="true"] {
+            background: var(--color-accent);
+            color: #FFFFFF;
+        }
+
+        .roleplay-box {
+            margin-top: var(--space-3);
+            padding: var(--space-3);
+            border-radius: var(--radius-2);
+            background: rgba(227, 0, 15, 0.08);
+            border: 1px solid rgba(227, 0, 15, 0.2);
+            font-size: 13px;
+            color: var(--color-text-primary);
+        }
+
+        .microlearning {
+            margin-top: var(--space-3);
+            padding: var(--space-3);
+            border-radius: var(--radius-2);
+            border: 1px solid var(--color-border);
+            background: var(--color-elevated);
+            font-size: 12px;
+            color: var(--color-text-secondary);
+        }
+
         .sync-indicator {
             display: inline-flex;
             align-items: center;
@@ -664,9 +872,54 @@
             color: var(--color-text-secondary);
         }
 
+        .card-header-actions {
+            display: inline-flex;
+            align-items: center;
+            gap: var(--space-2);
+            margin-left: auto;
+        }
+
+        .favorite-btn,
+        .copy-btn {
+            padding: 6px 8px;
+            border-radius: var(--radius-2);
+            border: 1px solid var(--color-border);
+            background: var(--color-elevated);
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.4px;
+            color: var(--color-text-secondary);
+            min-height: 32px;
+        }
+
+        .favorite-btn[aria-pressed="true"] {
+            color: var(--color-accent);
+            border-color: rgba(227, 0, 15, 0.4);
+        }
+
+        .favorite-btn svg {
+            width: 14px;
+            height: 14px;
+            stroke: currentColor;
+            fill: none;
+            stroke-width: 2;
+        }
+
+        .copy-btn {
+            font-size: 10px;
+        }
+
         .quick-cues {
             display: grid;
             gap: var(--space-4);
+        }
+
+        .cue-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: var(--space-2);
         }
 
         .cue-label {
@@ -681,6 +934,10 @@
         .cue-text {
             font-size: 14px;
             color: var(--color-text-primary);
+        }
+
+        html[data-frame="sales"] .cue-text {
+            font-size: 16px;
         }
 
         .cue-text.spacing {
@@ -704,6 +961,15 @@
             text-transform: uppercase;
             letter-spacing: 1px;
             color: var(--color-text-primary);
+        }
+
+        .expand-label {
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.6px;
+            font-weight: 700;
+            color: var(--color-text-secondary);
+            margin-bottom: 6px;
         }
 
         .expand-trigger:hover {
@@ -920,6 +1186,25 @@
             align-items: center;
         }
 
+        .control-actions {
+            display: none;
+            gap: var(--space-2);
+            margin-top: var(--space-3);
+        }
+
+        .icon-btn.small {
+            width: 36px;
+            height: 36px;
+            border-radius: var(--radius-1);
+        }
+
+        @media (min-width: 1024px) {
+            .control-actions {
+                display: flex;
+                justify-content: flex-end;
+            }
+        }
+
         .input-wrapper {
             position: relative;
         }
@@ -1031,6 +1316,23 @@
 
         .form-group {
             margin-bottom: var(--space-5);
+        }
+
+        .toggle-row {
+            display: flex;
+            align-items: center;
+            gap: var(--space-2);
+            padding: 8px 10px;
+            border-radius: var(--radius-2);
+            border: 1px solid var(--color-border);
+            background: var(--color-elevated);
+            font-size: 13px;
+            color: var(--color-text-secondary);
+        }
+
+        .toggle-row input {
+            width: 18px;
+            height: 18px;
         }
 
         .form-label {
@@ -1347,6 +1649,11 @@
                 <span id="onlineStatusLabel">Online</span>
             </div>
             <div class="dept-badge" id="deptBadge">TV</div>
+            <div class="segment-control" role="tablist" aria-label="Frames">
+                <button class="segment-btn" id="frameSalesBtn" type="button" data-frame="sales" aria-pressed="true" role="tab" aria-controls="salesFrame">Verkauf</button>
+                <button class="segment-btn" id="frameTrainingBtn" type="button" data-frame="training" aria-pressed="false" role="tab" aria-controls="trainingFrame">Training</button>
+                <button class="segment-btn" id="frameWikiBtn" type="button" data-frame="wiki" aria-pressed="false" role="tab" aria-controls="wikiFrame">Wiki</button>
+            </div>
             <button class="toggle-btn" id="themeToggleBtn" type="button" aria-live="polite">
                 <svg viewBox="0 0 24 24" aria-hidden="true">
                     <path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/>
@@ -1494,7 +1801,125 @@
                 <div class="tile-desc" id="syncDesc">Letzter Sync: <span id="syncTime">–</span></div>
             </section>
 
-            <div id="cardsContainer" class="bento-cards"></div>
+            <section class="tile tile--wide frame-container" id="frameContainer">
+                <div class="frame-root sales-frame" id="salesFrame" role="tabpanel">
+                    <div class="sales-layout">
+                        <section class="tile sales-primary" id="salesPrimary">
+                            <div id="salesCardContainer"></div>
+                        </section>
+                        <aside class="tile sales-history" id="salesHistory">
+                            <div class="tile-title">Verlauf</div>
+                            <div class="history-section">
+                                <div class="history-meta">Letzte 15 Einwände</div>
+                                <div class="history-list" id="historyList"></div>
+                            </div>
+                            <div class="history-section">
+                                <div class="history-meta">Favoriten</div>
+                                <div class="history-list" id="favoriteList"></div>
+                            </div>
+                        </aside>
+                    </div>
+                </div>
+
+                <div class="frame-root training-frame" id="trainingFrame" role="tabpanel" hidden>
+                    <div class="training-layout">
+                        <section class="tile training-card" id="trainingCardPanel">
+                            <div class="tile-header">
+                                <div>
+                                    <div class="tile-title">Training Card</div>
+                                    <div class="tile-subtitle" id="trainingCardTitle">Aktueller Einwand</div>
+                                </div>
+                                <div class="variant-toggle" role="tablist" aria-label="Varianten">
+                                    <button class="variant-btn" id="variantSoftBtn" type="button" data-variant="soft" aria-pressed="false">Soft</button>
+                                    <button class="variant-btn" id="variantNeutralBtn" type="button" data-variant="neutral" aria-pressed="true">Neutral</button>
+                                    <button class="variant-btn" id="variantChallengerBtn" type="button" data-variant="challenger" aria-pressed="false">Challenger</button>
+                                </div>
+                            </div>
+                            <div id="trainingCardContainer"></div>
+                            <div class="roleplay-box" id="roleplayPrompt">Roleplay bereit. Klick auf „Kunde sagt“.</div>
+                            <div class="btn-group">
+                                <button class="btn btn-secondary" id="roleplayBtn" type="button">Kunde sagt</button>
+                                <button class="btn btn-secondary" id="roleplaySoftBtn" type="button" data-variant="soft">Antwort Soft</button>
+                                <button class="btn btn-secondary" id="roleplayNeutralBtn" type="button" data-variant="neutral">Antwort Neutral</button>
+                                <button class="btn btn-secondary" id="roleplayChallengerBtn" type="button" data-variant="challenger">Antwort Challenger</button>
+                            </div>
+                            <div class="tile-desc" id="roleplayResponse">Antwort erscheint hier.</div>
+                        </section>
+
+                        <section class="tile training-drill" id="trainingDrillPanel">
+                            <div class="tile-title">Drill Mode</div>
+                            <div class="tile-desc" id="drillText">Kein Drill geladen.</div>
+                            <div class="btn-group">
+                                <button class="btn btn-secondary" id="nextDrillBtn" type="button">Next Drill</button>
+                                <button class="btn btn-primary" id="drillDoneBtn" type="button">Done</button>
+                            </div>
+                            <div class="history-meta">Self-Rating</div>
+                            <div class="pill-row" id="ratingButtons">
+                                <button class="pill rating-btn" type="button" data-rating="1">1</button>
+                                <button class="pill rating-btn" type="button" data-rating="2">2</button>
+                                <button class="pill rating-btn" type="button" data-rating="3">3</button>
+                                <button class="pill rating-btn" type="button" data-rating="4">4</button>
+                                <button class="pill rating-btn" type="button" data-rating="5">5</button>
+                            </div>
+                        </section>
+
+                        <section class="tile training-pattern" id="trainingPatternPanel">
+                            <div class="tile-title">Pattern Library</div>
+                            <select class="form-select" id="patternFilter" aria-label="Pattern Filter"></select>
+                            <div class="pattern-list" id="patternList"></div>
+                            <div class="microlearning" id="microlearningBox">Microlearning erscheint hier.</div>
+                            <div class="history-section">
+                                <div class="history-meta">Training KPIs</div>
+                                <div class="stat-grid" id="trainingStats"></div>
+                            </div>
+                            <div class="history-section">
+                                <div class="history-meta">Letzte 10 Einwände</div>
+                                <div class="history-list" id="trainingHistoryList"></div>
+                            </div>
+                        </section>
+                    </div>
+                </div>
+
+                <div class="frame-root wiki-frame" id="wikiFrame" role="tabpanel" hidden>
+                    <div class="wiki-layout">
+                        <section class="tile wiki-search-panel">
+                            <div class="tile-title">Produkt Wiki</div>
+                            <input class="form-input" id="wikiSearchInput" type="text" placeholder="Produkt suchen..." autocomplete="off">
+                            <div class="context-chips" id="wikiFilterChips" role="group" aria-label="Wiki Filter"></div>
+                            <div class="btn-group">
+                                <button class="btn btn-secondary" id="wikiSyncBtn" type="button">Wiki Sync</button>
+                                <button class="btn btn-secondary" id="wikiClearBtn" type="button">Filter zurücksetzen</button>
+                            </div>
+                        </section>
+
+                        <section class="tile wiki-results-panel">
+                            <div class="tile-title">Treffer</div>
+                            <div class="history-list" id="wikiResults"></div>
+                        </section>
+
+                        <section class="tile wiki-detail-panel">
+                            <div class="tile-title">Produktdetails</div>
+                            <div id="wikiDetail"></div>
+                        </section>
+
+                        <section class="tile wiki-qa-panel">
+                            <div class="tile-title">Product Q&A</div>
+                            <input class="form-input" id="wikiQuestionInput" type="text" placeholder="Frage zum Produkt..." autocomplete="off">
+                            <div class="btn-group">
+                                <button class="btn btn-primary" id="wikiQuestionBtn" type="button">Antwort holen</button>
+                            </div>
+                            <div class="history-meta" id="wikiAnswerStatus">–</div>
+                            <div class="tile-desc" id="wikiAnswerText"></div>
+                            <div class="pattern-list" id="wikiCitations"></div>
+                        </section>
+
+                        <section class="tile wiki-compare-panel">
+                            <div class="tile-title">Vergleich</div>
+                            <div class="history-list" id="wikiCompareList"></div>
+                        </section>
+                    </div>
+                </div>
+            </section>
         </div>
     </main>
 
@@ -1535,6 +1960,23 @@
                     <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
                     <line x1="12" y1="19" x2="12" y2="23"/>
                     <line x1="8" y1="23" x2="16" y2="23"/>
+                </svg>
+            </button>
+        </div>
+        <div class="control-actions" aria-label="Quick Actions">
+            <button class="icon-btn small" id="quickClearBtn" type="button" title="Clear" aria-label="Clear">
+                <svg viewBox="0 0 24 24">
+                    <path d="M3 6h18"/>
+                    <path d="M8 6v14"/>
+                    <path d="M16 6v14"/>
+                    <path d="M5 6l1-3h12l1 3"/>
+                </svg>
+            </button>
+            <button class="icon-btn small" id="quickExportBtn" type="button" title="Export" aria-label="Export">
+                <svg viewBox="0 0 24 24">
+                    <path d="M12 3v12"/>
+                    <path d="M7 8l5-5 5 5"/>
+                    <path d="M5 21h14"/>
                 </svg>
             </button>
         </div>
@@ -1607,6 +2049,15 @@
             </div>
 
             <div class="form-group">
+                <label class="form-label" for="sessionOnlyKey">API Key Modus</label>
+                <label class="toggle-row">
+                    <input type="checkbox" id="sessionOnlyKey">
+                    Session Only (nicht speichern)
+                </label>
+                <div class="helper-text">Wenn aktiv, bleibt der Key nur im RAM und wird nicht persistiert.</div>
+            </div>
+
+            <div class="form-group">
                 <label class="form-label" for="passphraseInput">Passphrase (optional)</label>
                 <input type="password" class="form-input" id="passphraseInput" placeholder="Nur lokal verwendet" autocomplete="off" />
                 <div class="helper-text" id="lockStatus">Lock deaktiviert</div>
@@ -1625,6 +2076,12 @@
                 <label class="form-label" for="proxyUrl">API Proxy URL (optional)</label>
                 <input type="text" class="form-input" id="proxyUrl" placeholder="https://your-proxy.example" />
                 <div class="helper-text">Nur Same-Origin Proxies erlaubt (CSP-konform).</div>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="wikiSourceUrl">Wiki Source URL (optional)</label>
+                <input type="text" class="form-input" id="wikiSourceUrl" placeholder="https://example.com/wiki.json" />
+                <div class="helper-text">Wiki Sync nutzt diese Quelle (same-origin empfohlen).</div>
             </div>
 
             <div class="form-group">
@@ -1687,18 +2144,136 @@
     </footer>
 
     <script>
-        const APP_VERSION = "2026.1.0-rc1";
+        const APP_VERSION = "2026.2.1-rc";
         const BUILD_DATE = "2026-01-18";
         const BUILD_SIGNATURE = `MEHIC_SALES_OS_RC_${APP_VERSION}__${BUILD_DATE}`;
 
         const DB_NAME = "MehicSalesOS_DB";
-        const DB_VERSION = 2;
-        const LIBRARY_URL = "./library.json";
+        const DB_VERSION = 3;
+        const MASTER_LIBRARY_URL = "./library.json";
         const LIBRARY_SHA256 = "pM/qq9A97C8i/Bgtyx2UG/8gtFdRzlangPRZbIYFbUQ=";
 
         const MODEL_DEFAULTS = {
             openai: "gpt-4o-mini",
             groq: "llama-3.3-70b-versatile"
+        };
+
+        const FRAME_MODES = ["sales", "training", "wiki"];
+        const MAX_HISTORY = 15;
+
+        const PATTERN_RULES = {
+            price: {
+                attach: {
+                    suggestion: "Servicepaket oder Zubehör mit klarem Mehrwert",
+                    why: "Hilft, den Nutzen sichtbar zu machen, ohne Preis zu verteidigen.",
+                    how_to_offer: "Optional und transparent anbieten, ohne Druck."
+                },
+                next_step: {
+                    cta: "Direktvergleich starten",
+                    two_options: ["Modelle nebeneinander zeigen", "Bedarf kurz abklären"]
+                },
+                microlearning: {
+                    rule: "Wert vor Preis. Erst Nutzen, dann Zahlen.",
+                    do: "Vergleich auf konkrete Vorteile lenken.",
+                    dont: "Preis rechtfertigen oder diskutieren."
+                }
+            },
+            trust: {
+                attach: {
+                    suggestion: "Transparente Dokumentation oder Service-Zusage",
+                    why: "Stärkt Vertrauen ohne leere Versprechen.",
+                    how_to_offer: "Sicherheiten zeigen, keine Behauptungen."
+                },
+                next_step: {
+                    cta: "Transparenz anbieten",
+                    two_options: ["Ablauf erklären", "Serviceprozess zeigen"]
+                },
+                microlearning: {
+                    rule: "Vertrauen wächst durch Klarheit, nicht durch Druck.",
+                    do: "Offen erklären und nachfragen.",
+                    dont: "Mit Zahlen oder Versprechen übertreiben."
+                }
+            },
+            risk: {
+                attach: {
+                    suggestion: "Schutz oder Garantie optional",
+                    why: "Reduziert Risiko, wenn sauber erklärt.",
+                    how_to_offer: "Transparenzsatz immer nennen."
+                },
+                next_step: {
+                    cta: "Risiko klären",
+                    two_options: ["Transparenz zu Schutz zeigen", "Alternativen prüfen"]
+                },
+                microlearning: {
+                    rule: "Risiko konkret machen, aber nie Angst erzeugen.",
+                    do: "Konkrete Szenarien ruhig erklären.",
+                    dont: "Druck oder Angsttrigger."
+                }
+            },
+            comparison: {
+                attach: {
+                    suggestion: "Live-Demo oder Side-by-Side Vergleich",
+                    why: "Kontrolle entsteht durch Sichtbarkeit.",
+                    how_to_offer: "Direkt am Floor zeigen."
+                },
+                next_step: {
+                    cta: "Side-by-Side zeigen",
+                    two_options: ["Kurzvergleich starten", "Features priorisieren"]
+                },
+                microlearning: {
+                    rule: "Vergleich auf Kundenziele fokussieren.",
+                    do: "Prioritäten erfragen.",
+                    dont: "Feature-Overload."
+                }
+            },
+            uncertainty: {
+                attach: {
+                    suggestion: "Reservierung oder Testlauf anbieten",
+                    why: "Gibt Sicherheit ohne Druck.",
+                    how_to_offer: "Zeit geben, aber Klarheit herstellen."
+                },
+                next_step: {
+                    cta: "Bedenkzeit strukturieren",
+                    two_options: ["Reservierung anbieten", "Offene Fragen klären"]
+                },
+                microlearning: {
+                    rule: "Unsicherheit heißt: offene Frage finden.",
+                    do: "Offen nachfragen.",
+                    dont: "Zwangsabschluss."
+                }
+            },
+            control: {
+                attach: {
+                    suggestion: "Alternative Close A/B",
+                    why: "Kontrolle bleibt beim Kunden.",
+                    how_to_offer: "Zwei klare Wege anbieten."
+                },
+                next_step: {
+                    cta: "Alternative anbieten",
+                    two_options: ["Option A wählen", "Option B wählen"]
+                },
+                microlearning: {
+                    rule: "Kontrolle zurückgeben, nicht übernehmen.",
+                    do: "A/B Frage stellen.",
+                    dont: "Ja/Nein Frage."
+                }
+            },
+            subscription_aversion: {
+                attach: {
+                    suggestion: "Transparenz-Check für Abo/Versicherung",
+                    why: "Vermeidet Misstrauen.",
+                    how_to_offer: "Konditionen offen zeigen, keine versteckten Kosten."
+                },
+                next_step: {
+                    cta: "Transparenz zeigen",
+                    two_options: ["Konditionen durchgehen", "Ohne Abo rechnen"]
+                },
+                microlearning: {
+                    rule: "Transparenz zuerst, Verkauf später.",
+                    do: "Monatlich und jährlich nennen.",
+                    dont: "Abo als Pflicht darstellen."
+                }
+            }
         };
 
         const appState = {
@@ -1708,6 +2283,30 @@
             loading: false,
             stealthMode: false,
             lastFocused: null,
+            frame: "sales",
+            history: [],
+            favorites: [],
+            training: {
+                drillIndex: 0,
+                roleplayStep: 0,
+                selectedPattern: "all",
+                variant: "neutral",
+                sessions: 0,
+                streak: 0,
+                lastSessionDate: "",
+                ratingSum: 0,
+                ratingCount: 0
+            },
+            wiki: {
+                products: [],
+                faq: [],
+                notes: [],
+                comparisons: [],
+                filters: { category: "all", brand: "all", feature: "all" },
+                selectedProductId: null,
+                searchQuery: "",
+                answer: null
+            },
             settings: {
                 apiProvider: "openai",
                 apiKey: "",
@@ -1715,19 +2314,25 @@
                 apiKeyIv: "",
                 apiKeySalt: "",
                 apiKeyLocked: false,
+                sessionOnlyKey: false,
                 modelName: "gpt-4o-mini",
                 proxyUrl: "",
                 department: "TV",
                 storePolicy: "",
                 themeMode: "auto",
                 densityMode: "",
-                densityUserSet: false
+                densityUserSet: false,
+                frameMode: "sales",
+                wikiSourceUrl: "",
+                lastSyncAt: "",
+                lastWikiSyncAt: ""
             },
             ui: {
                 online: navigator.onLine,
                 syncStatus: "idle",
-            lastSync: null,
-            debug: false
+                lastSync: null,
+                lastWikiSync: null,
+                debug: false
             },
             stats: {
                 cases: 0,
@@ -1754,93 +2359,171 @@
 
         const elements = {};
 
-        const SEED_DATA = [
+        const SEED_CASES = [
             {
-                id: "seed_1",
+                id: "seed_price_1",
                 objection: "zu teuer",
                 keywords: ["teuer", "preis", "kostet", "viel", "hoch", "expensive"],
                 meta: { status: "success", pattern: "price", safety: "clean" },
                 ui: { color: "success", icon: "tag" },
                 content: {
                     quick: {
-                        entry: "Ich verstehe, dass der Preis im ersten Moment hoch erscheint.",
-                        anchor: "Viele Kundinnen und Kunden haben anfangs dieselbe Reaktion und sind dann sehr zufrieden mit ihrer Entscheidung.",
-                        question: "Darf ich Ihnen kurz zeigen, was dieses Gerät von günstigeren Modellen unterscheidet?",
-                        bridge: "Langfristig gesehen investieren Sie hier in Qualität, die sich rechnet.",
-                        close: "Wenn wir gemeinsam schauen, welche Features Sie wirklich brauchen, finden wir das beste Preis-Leistungs-Verhältnis für Sie."
+                        neutral: {
+                            entry: "Ich verstehe, dass der Preis im ersten Moment hoch erscheint.",
+                            anchor: "Viele Kundinnen und Kunden achten zuerst auf den Preis und entscheiden sich dann für den Nutzen.",
+                            question: "Darf ich Ihnen kurz zeigen, was dieses Modell im Alltag besser macht?",
+                            bridge: "So sehen Sie, ob der Mehrwert den Aufpreis für Sie rechtfertigt.",
+                            close: "Welche Option passt besser zu Ihrem Bedarf: Fokus auf Preis oder Fokus auf Nutzen?"
+                        },
+                        soft: {
+                            entry: "Völlig nachvollziehbar, der Preis wirkt im ersten Moment hoch.",
+                            anchor: "Viele Kundinnen und Kunden fühlen sich am Anfang genauso.",
+                            question: "Darf ich Ihnen die wichtigsten Vorteile in Ruhe zeigen?",
+                            bridge: "Dann entscheiden Sie entspannt, ob es für Sie passt.",
+                            close: "Was wäre Ihnen wichtiger: eine sichere Lösung oder ein günstiger Einstieg?"
+                        },
+                        challenger: {
+                            entry: "Lassen Sie uns kurz anders drauf schauen: Es geht weniger um den Preis als um den Nutzen.",
+                            anchor: "Viele Kundinnen und Kunden unterschätzen den Unterschied im Alltag.",
+                            question: "Darf ich Ihnen den konkreten Unterschied in zwei Punkten zeigen?",
+                            bridge: "Damit wird klar, ob das Gerät die bessere Investition ist.",
+                            close: "Wollen wir nach Nutzen entscheiden: A) Alltag, B) Preis?"
+                        }
                     },
                     smart: {
-                        text: "Verstehe ich absolut. Preis ist wichtig. Lassen Sie uns kurz vergleichen: Das günstigere Modell hat X, unser Modell bietet zusätzlich Y und Z. Das bedeutet für Sie konkret [Vorteile]. Viele Kundinnen und Kunden entscheiden sich letztlich für die höhere Investition, weil sie langfristig profitieren.",
-                        closing: "Möchten Sie beide Modelle nebeneinander sehen, damit Sie selbst entscheiden können?"
+                        text: "Preis ist wichtig. Der Unterschied ist: Das günstigere Modell hat X, unser Modell bietet zusätzlich Y und Z. Das wirkt sich im Alltag direkt aus. Viele entscheiden sich deshalb für die Lösung, die länger sinnvoll bleibt.",
+                        closing: "Sollen wir beide Modelle kurz nebeneinander ansehen?"
                     },
                     coach: {
-                        diagnosis: "Preiseinwand ist oft ein Kontrolleinwand. Kunde sucht Rechtfertigung für Investition.",
-                        strategy: "Nicht verteidigen, sondern Wert aufbauen. Von Preis auf Wert shiften.",
-                        behavioral_fix: "Anchor-Technik: 'Viele Kundinnen und Kunden...' schafft Social Proof. Frage am Ende gibt Kontrolle zurück.",
+                        diagnosis: "Preiseinwand ist ein Kontrolleinwand.",
+                        strategy: "Von Preis auf Nutzen shiften, ohne zu verteidigen.",
+                        behavioral_fix: "Value-Frame vor Zahlen.",
                         drill: [
-                            "Üben: 'Verstehe ich. Darf ich fragen, was Ihnen an diesem Modell gefällt?' (Commitment verstärken)",
-                            "Üben: Preisvergleich immer mit konkretem Mehrwert verknüpfen, nie nur Zahlen nennen"
+                            "Übe: Nutzen in 2 Sätzen erklären.",
+                            "Übe: Alternative Close statt Ja/Nein."
                         ]
+                    },
+                    attach: {
+                        suggestion: "Servicepaket oder Zubehör mit klarem Mehrwert",
+                        why: "Macht Nutzen sichtbar und reduziert Preissensibilität.",
+                        how_to_offer: "Optional anbieten, transparent bleiben."
+                    },
+                    next_step: {
+                        cta: "Direktvergleich starten",
+                        two_options: ["Modelle nebeneinander zeigen", "Bedarf kurz abklären"]
                     }
-                }
+                },
+                createdAt: Date.now()
             },
             {
-                id: "seed_2",
+                id: "seed_sub_1",
                 objection: "keine versicherung",
                 keywords: ["versicherung", "garantie", "schutz", "abo", "absicherung"],
                 meta: { status: "success", pattern: "subscription_aversion", safety: "transparency_required" },
                 ui: { color: "warning", icon: "shield" },
                 content: {
                     quick: {
-                        entry: "Verstehe ich vollkommen, Versicherungen sind nicht jedermanns Sache.",
-                        anchor: "Viele Kundinnen und Kunden denken anfangs ähnlich, bis sie die erste Reparatur brauchen.",
-                        question: "Darf ich Ihnen transparent zeigen, was genau abgedeckt wäre und wie sich das rechnet?",
-                        bridge: "Wichtig: Sie entscheiden natürlich selbst. Mir geht es nur darum, dass Sie alle Infos haben.",
-                        close: "Wenn wir einmal durchrechnen, können Sie in Ruhe entscheiden, ob es sich für Sie lohnt."
+                        neutral: {
+                            entry: "Verstehe ich vollkommen, Versicherungen sind nicht jedermanns Sache.",
+                            anchor: "Viele Kundinnen und Kunden überlegen erst genau, bevor sie so etwas wählen.",
+                            question: "Darf ich Ihnen transparent zeigen, was abgedeckt wäre und was nicht?",
+                            bridge: "Transparenz: Alle Kosten und Bedingungen sind offen, keine versteckten Gebühren.",
+                            close: "Wollen Sie die Konditionen sehen oder lieber ohne Schutz rechnen?"
+                        },
+                        soft: {
+                            entry: "Das ist verständlich. Sie wollen keine unnötigen Zusatzkosten.",
+                            anchor: "Viele Kundinnen und Kunden denken ähnlich, bevor sie die Details sehen.",
+                            question: "Darf ich Ihnen die Konditionen ganz offen zeigen?",
+                            bridge: "Transparenz: Sie sehen alle Kosten und Bedingungen klar auf einen Blick.",
+                            close: "Welche Variante ist für Sie angenehmer: mit Schutz oder ohne?"
+                        },
+                        challenger: {
+                            entry: "Lassen Sie uns kurz klar unterscheiden: Schutz ist keine Pflicht, sondern ein Tool.",
+                            anchor: "Viele Kundinnen und Kunden entscheiden erst nach dem Fakten-Check.",
+                            question: "Darf ich Ihnen die Fakten kurz zeigen?",
+                            bridge: "Transparenz: Keine versteckten Kosten, alle Bedingungen offen.",
+                            close: "Welche Option passt besser: volle Absicherung oder maximaler Preisfokus?"
+                        }
                     },
                     smart: {
-                        text: "Alles klar, kein Problem. Viele verzichten darauf und kommen dann doch zurück. Die Versicherung deckt [konkrete Leistungen] ab. Das bedeutet: [Beispiel Schadensfall]. Hinweis: Alle Konditionen stehen transparent im Vertrag, keine versteckten Kosten.",
-                        closing: "Möchten Sie die Unterlagen mitnehmen und in Ruhe entscheiden?"
+                        text: "Kein Problem. Der Schutz deckt konkrete Fälle ab und ist optional. Wichtig ist, dass Sie alle Details sehen und dann selbst entscheiden.",
+                        closing: "Möchten Sie die Konditionen kurz ansehen?"
                     },
                     coach: {
-                        diagnosis: "Versicherungs-Aversion ist häufig. Oft fehlt Vertrauen oder Transparenz.",
-                        strategy: "Transparenz vor Verkauf. Konkrete Beispiele statt Angstmache.",
-                        behavioral_fix: "Niemals Druck aufbauen. 'Sie entscheiden' gibt Kontrolle zurück und baut Vertrauen auf.",
+                        diagnosis: "Abo-Abwehr wegen Misstrauen oder Unklarheit.",
+                        strategy: "Transparenz zuerst, Druck vermeiden.",
+                        behavioral_fix: "Kosten offen zeigen, Entscheidung zurückgeben.",
                         drill: [
-                            "Üben: Schadensfall-Beispiel parat haben (konkret, realistisch, keine Übertreibung)",
-                            "Üben: Kosten transparent darstellen (monatlich UND jährlich nennen)"
+                            "Übe: Transparenzsatz in einem Satz.",
+                            "Übe: A/B Frage ohne Druck."
                         ]
+                    },
+                    attach: {
+                        suggestion: "Transparenz-Check für Schutz/Versicherung",
+                        why: "Reduziert Misstrauen durch Klarheit.",
+                        how_to_offer: "Konditionen offen zeigen, keine Behauptungen."
+                    },
+                    next_step: {
+                        cta: "Transparenz zeigen",
+                        two_options: ["Konditionen durchgehen", "Ohne Schutz rechnen"]
                     }
-                }
+                },
+                createdAt: Date.now()
             },
             {
-                id: "seed_3",
+                id: "seed_uncertainty_1",
                 objection: "muss überlegen",
                 keywords: ["überlegen", "bedenkzeit", "später", "nachdenken", "warten"],
                 meta: { status: "success", pattern: "uncertainty", safety: "clean" },
                 ui: { color: "success", icon: "clock" },
                 content: {
                     quick: {
-                        entry: "Natürlich, das ist eine wichtige Entscheidung. Nehmen Sie sich ruhig Zeit.",
-                        anchor: "Viele Kundinnen und Kunden gehen das genauso an und überlegen in Ruhe.",
-                        question: "Darf ich fragen, worüber Sie noch nachdenken möchten? Vielleicht kann ich noch etwas klären?",
-                        bridge: "Mir ist wichtig, dass Sie sich sicher fühlen mit Ihrer Entscheidung.",
-                        close: "Wenn Sie mögen, reserviere ich das Gerät für Sie, damit Sie in Ruhe überlegen können, ohne dass es weg ist."
+                        neutral: {
+                            entry: "Natürlich, das ist eine wichtige Entscheidung.",
+                            anchor: "Viele Kundinnen und Kunden nehmen sich dafür bewusst Zeit.",
+                            question: "Darf ich fragen, was Ihnen noch unklar ist?",
+                            bridge: "Wenn wir den Punkt klären, fällt die Entscheidung leichter.",
+                            close: "Wollen Sie reservieren oder zuerst die offenen Punkte klären?"
+                        },
+                        soft: {
+                            entry: "Das ist absolut okay. Sie wollen Sicherheit.",
+                            anchor: "Viele nehmen sich genau dafür Zeit.",
+                            question: "Was wäre der wichtigste Punkt, den wir klären sollten?",
+                            bridge: "Dann gehen Sie mit einem guten Gefühl.",
+                            close: "Möchten Sie eine Reservierung oder lieber eine kurze Klärung?"
+                        },
+                        challenger: {
+                            entry: "Lassen Sie uns den einen Punkt finden, der Sie noch bremst.",
+                            anchor: "Viele Kundinnen und Kunden zögern wegen genau einer Sache.",
+                            question: "Liegt es eher an Technik, Preis oder Nutzung?",
+                            bridge: "Wenn wir das klären, ist die Entscheidung klarer.",
+                            close: "Sollen wir klären oder reservieren?"
+                        }
                     },
                     smart: {
-                        text: "Absolut verständlich. Ist eine Investition und die sollte gut überlegt sein. Viele vergleichen erst noch online oder besprechen es zu Hause. Gibt es noch einen speziellen Punkt, den ich klären kann?",
-                        closing: "Möchten Sie, dass ich das Gerät für 24 Stunden reserviere?"
+                        text: "Verständlich. Die Frage ist meist: Passt das Gerät wirklich zu Ihrem Alltag? Wenn wir den Punkt klären, wird die Entscheidung leichter.",
+                        closing: "Soll ich es für Sie reservieren?"
                     },
                     coach: {
-                        diagnosis: "Bedenkzeit ist legitim, aber oft versteckt sich ein ungelöster Einwand dahinter.",
-                        strategy: "Respektieren, aber nachfragen. Offene Frage stellen, um echten Grund zu finden.",
-                        behavioral_fix: "Reservierungs-Offer gibt Kontrolle und schafft sanften Commitment-Anker ohne Druck.",
+                        diagnosis: "Unklarheit oder verdeckter Einwand.",
+                        strategy: "Offene Frage stellen, Klarheit schaffen.",
+                        behavioral_fix: "Zeit geben, aber strukturieren.",
                         drill: [
-                            "Üben: 'Worüber möchten Sie noch nachdenken?' (offene Frage, kein Druck)",
-                            "Üben: Reservierungsangebot als Service-Geste positionieren, nicht als Druck"
+                            "Übe: Offene Frage statt Druck.",
+                            "Übe: Reservierung als Service."
                         ]
+                    },
+                    attach: {
+                        suggestion: "Reservierung oder Testlauf anbieten",
+                        why: "Gibt Sicherheit ohne Druck.",
+                        how_to_offer: "Als Service anbieten."
+                    },
+                    next_step: {
+                        cta: "Bedenkzeit strukturieren",
+                        two_options: ["Reservierung anbieten", "Offene Fragen klären"]
                     }
-                }
+                },
+                createdAt: Date.now()
             }
         ];
 
@@ -1850,26 +2533,52 @@
             ui: { color: "success", icon: "info" },
             content: {
                 quick: {
-                    entry: "Ich verstehe Ihre Bedenken vollkommen.",
-                    anchor: "Viele Kundinnen und Kunden stellen diese Frage, und das ist auch richtig so.",
-                    question: "Darf ich Ihnen erklären, wie wir das bei uns handhaben?",
-                    bridge: "Mir ist wichtig, dass Sie sich gut informiert fühlen.",
-                    close: "Lassen Sie uns gemeinsam schauen, was für Sie die beste Lösung ist."
+                    neutral: {
+                        entry: "Ich verstehe Ihre Bedenken vollkommen.",
+                        anchor: "Viele Kundinnen und Kunden stellen diese Frage, und das ist richtig so.",
+                        question: "Darf ich Ihnen kurz zeigen, wie wir das handhaben?",
+                        bridge: "Mir ist wichtig, dass Sie sich gut informiert fühlen.",
+                        close: "Welche Info hilft Ihnen jetzt am meisten?"
+                    },
+                    soft: {
+                        entry: "Das ist absolut verständlich.",
+                        anchor: "Viele möchten genau diese Klarheit.",
+                        question: "Darf ich Ihnen die wichtigsten Infos dazu geben?",
+                        bridge: "Dann entscheiden Sie mit Sicherheit.",
+                        close: "Welche Info wäre für Sie am hilfreichsten?"
+                    },
+                    challenger: {
+                        entry: "Lassen Sie uns das klar einordnen.",
+                        anchor: "Viele Kundinnen und Kunden fragen genau das.",
+                        question: "Darf ich die Fakten kurz ordnen?",
+                        bridge: "So bleibt die Entscheidung transparent.",
+                        close: "Was ist wichtiger: Klarheit oder Geschwindigkeit?"
+                    }
                 },
                 smart: {
-                    text: "Das ist eine berechtigte Frage. In meiner Erfahrung hilft es, wenn wir das ganz konkret durchgehen. Viele Kundinnen und Kunden sind dann beruhigt.",
-                    closing: "Welche Informationen brauchen Sie noch, um sich sicher zu fühlen?"
+                    text: "Das ist eine berechtigte Frage. Wenn wir das kurz klären, fühlen Sie sich sicherer.",
+                    closing: "Welche Info brauchen Sie jetzt konkret?"
                 },
                 coach: {
-                    diagnosis: "Unbekannter Einwand. Empathie und Nachfragen ist der Schlüssel.",
-                    strategy: "Aktives Zuhören, offene Fragen stellen, Vertrauen aufbauen.",
-                    behavioral_fix: "Niemals defensive Position. Kunde hat immer einen guten Grund für seinen Einwand.",
+                    diagnosis: "Unbekannter Einwand, Bedarf an Klarheit.",
+                    strategy: "Empathie + offene Frage.",
+                    behavioral_fix: "Keine Defensive, Fokus auf Dialog.",
                     drill: [
-                        "Üben: Pausentechnik - 2 Sekunden warten nach Kundenaussage, dann erst antworten",
-                        "Üben: 'Verstehe ich richtig, dass...' (Reformulierung zum Validieren)"
+                        "Übe: 2 Sekunden Pause vor Antwort.",
+                        "Übe: Rückfrage zum Bedarf."
                     ]
+                },
+                attach: {
+                    suggestion: "Transparenz-Check",
+                    why: "Erhöht Vertrauen.",
+                    how_to_offer: "Fakten kurz strukturieren."
+                },
+                next_step: {
+                    cta: "Dialog öffnen",
+                    two_options: ["Fakten klären", "Alternativen prüfen"]
                 }
-            }
+            },
+            createdAt: Date.now()
         };
 
         function cacheElements() {
@@ -1883,17 +2592,59 @@
             elements.themeToggleLabel = document.getElementById("themeToggleLabel");
             elements.densityToggleBtn = document.getElementById("densityToggleBtn");
             elements.densityToggleLabel = document.getElementById("densityToggleLabel");
+            elements.frameSalesBtn = document.getElementById("frameSalesBtn");
+            elements.frameTrainingBtn = document.getElementById("frameTrainingBtn");
+            elements.frameWikiBtn = document.getElementById("frameWikiBtn");
             elements.syncBtn = document.getElementById("syncBtn");
             elements.stealthBtn = document.getElementById("stealthBtn");
             elements.resetBtn = document.getElementById("resetBtn");
             elements.settingsBtn = document.getElementById("settingsBtn");
             elements.offlineBanner = document.getElementById("offlineBanner");
-            elements.cardsContainer = document.getElementById("cardsContainer");
+            elements.salesFrame = document.getElementById("salesFrame");
+            elements.trainingFrame = document.getElementById("trainingFrame");
+            elements.wikiFrame = document.getElementById("wikiFrame");
+            elements.salesCardContainer = document.getElementById("salesCardContainer");
+            elements.historyList = document.getElementById("historyList");
+            elements.favoriteList = document.getElementById("favoriteList");
+            elements.trainingCardContainer = document.getElementById("trainingCardContainer");
+            elements.trainingCardTitle = document.getElementById("trainingCardTitle");
+            elements.variantSoftBtn = document.getElementById("variantSoftBtn");
+            elements.variantNeutralBtn = document.getElementById("variantNeutralBtn");
+            elements.variantChallengerBtn = document.getElementById("variantChallengerBtn");
+            elements.roleplayPrompt = document.getElementById("roleplayPrompt");
+            elements.roleplayResponse = document.getElementById("roleplayResponse");
+            elements.roleplayBtn = document.getElementById("roleplayBtn");
+            elements.roleplaySoftBtn = document.getElementById("roleplaySoftBtn");
+            elements.roleplayNeutralBtn = document.getElementById("roleplayNeutralBtn");
+            elements.roleplayChallengerBtn = document.getElementById("roleplayChallengerBtn");
+            elements.drillText = document.getElementById("drillText");
+            elements.nextDrillBtn = document.getElementById("nextDrillBtn");
+            elements.drillDoneBtn = document.getElementById("drillDoneBtn");
+            elements.ratingButtons = document.getElementById("ratingButtons");
+            elements.patternFilter = document.getElementById("patternFilter");
+            elements.patternList = document.getElementById("patternList");
+            elements.microlearningBox = document.getElementById("microlearningBox");
+            elements.trainingStats = document.getElementById("trainingStats");
+            elements.trainingHistoryList = document.getElementById("trainingHistoryList");
+            elements.wikiSearchInput = document.getElementById("wikiSearchInput");
+            elements.wikiFilterChips = document.getElementById("wikiFilterChips");
+            elements.wikiSyncBtn = document.getElementById("wikiSyncBtn");
+            elements.wikiClearBtn = document.getElementById("wikiClearBtn");
+            elements.wikiResults = document.getElementById("wikiResults");
+            elements.wikiDetail = document.getElementById("wikiDetail");
+            elements.wikiQuestionInput = document.getElementById("wikiQuestionInput");
+            elements.wikiQuestionBtn = document.getElementById("wikiQuestionBtn");
+            elements.wikiAnswerStatus = document.getElementById("wikiAnswerStatus");
+            elements.wikiAnswerText = document.getElementById("wikiAnswerText");
+            elements.wikiCitations = document.getElementById("wikiCitations");
+            elements.wikiCompareList = document.getElementById("wikiCompareList");
             elements.objectionInput = document.getElementById("objectionInput");
             elements.submitBtn = document.getElementById("submitBtn");
             elements.micBtn = document.getElementById("micBtn");
             elements.contextChips = document.getElementById("contextChips");
             elements.controlBar = document.getElementById("controlBar");
+            elements.quickClearBtn = document.getElementById("quickClearBtn");
+            elements.quickExportBtn = document.getElementById("quickExportBtn");
             elements.buildInfo = document.getElementById("buildInfo");
             elements.toast = document.getElementById("toast");
             elements.settingsModal = document.getElementById("settingsModal");
@@ -1901,12 +2652,14 @@
             elements.saveSettingsBtn = document.getElementById("saveSettingsBtn");
             elements.apiProvider = document.getElementById("apiProvider");
             elements.apiKey = document.getElementById("apiKey");
+            elements.sessionOnlyKey = document.getElementById("sessionOnlyKey");
             elements.passphraseInput = document.getElementById("passphraseInput");
             elements.lockToggleBtn = document.getElementById("lockToggleBtn");
             elements.unlockBtn = document.getElementById("unlockBtn");
             elements.lockStatus = document.getElementById("lockStatus");
             elements.modelName = document.getElementById("modelName");
             elements.proxyUrl = document.getElementById("proxyUrl");
+            elements.wikiSourceUrl = document.getElementById("wikiSourceUrl");
             elements.department = document.getElementById("department");
             elements.storePolicy = document.getElementById("storePolicy");
             elements.exportBtn = document.getElementById("exportBtn");
@@ -1977,9 +2730,33 @@
             if (!raw) return fallback;
             try {
                 return JSON.parse(raw);
-            } catch (error) {
+            } catch {
                 return fallback;
             }
+        }
+
+        function sanitizeImportSettings(settings) {
+            if (!settings || typeof settings !== "object") return null;
+            return {
+                apiProvider: sanitizeEnum(settings.apiProvider, ["openai", "groq"], "openai"),
+                apiKey: sanitizeString(settings.apiKey, 200),
+                apiKeyEncrypted: sanitizeString(settings.apiKeyEncrypted, 2000),
+                apiKeyIv: sanitizeString(settings.apiKeyIv, 200),
+                apiKeySalt: sanitizeString(settings.apiKeySalt, 200),
+                apiKeyLocked: Boolean(settings.apiKeyLocked),
+                sessionOnlyKey: Boolean(settings.sessionOnlyKey),
+                modelName: sanitizeString(settings.modelName, 80) || MODEL_DEFAULTS.openai,
+                proxyUrl: sanitizeString(settings.proxyUrl, 200),
+                department: sanitizeString(settings.department, 40) || "TV",
+                storePolicy: sanitizeString(settings.storePolicy, 400),
+                themeMode: sanitizeEnum(settings.themeMode, ["auto", "light", "dark"], "auto"),
+                densityMode: sanitizeEnum(settings.densityMode, ["compact", "comfortable"], ""),
+                densityUserSet: Boolean(settings.densityUserSet),
+                frameMode: sanitizeEnum(settings.frameMode, FRAME_MODES, "sales"),
+                wikiSourceUrl: sanitizeString(settings.wikiSourceUrl, 200),
+                lastSyncAt: sanitizeString(settings.lastSyncAt, 40),
+                lastWikiSyncAt: sanitizeString(settings.lastWikiSyncAt, 40)
+            };
         }
 
         function showToast(message, options = {}) {
@@ -1988,9 +2765,7 @@
                 duration: options.duration || 3000
             };
             toastQueue.push(entry);
-            if (!toastActive) {
-                displayNextToast();
-            }
+            if (!toastActive) displayNextToast();
         }
 
         function displayNextToast() {
@@ -2033,9 +2808,7 @@
             elements.themeToggleLabel.textContent = `Theme: ${mode === "auto" ? "Auto" : resolved.charAt(0).toUpperCase() + resolved.slice(1)}`;
             elements.statTheme.textContent = `Theme: ${mode === "auto" ? "Auto" : resolved.charAt(0).toUpperCase() + resolved.slice(1)}`;
             updateThemeColorMeta();
-            if (persist) {
-                saveSettings(buildPersistedSettings());
-            }
+            if (persist) saveSettings(buildPersistedSettings());
             updateDiagnostics();
         }
 
@@ -2045,17 +2818,29 @@
 
         function applyDensity(mode, userSet = false, persist = true) {
             appState.settings.densityMode = mode;
-            if (userSet) {
-                appState.settings.densityUserSet = true;
-            }
+            if (userSet) appState.settings.densityUserSet = true;
             document.documentElement.setAttribute("data-density", mode);
             const label = mode === "compact" ? "Kompakt" : "Comfort";
             elements.densityToggleLabel.textContent = `Dichte: ${label}`;
             elements.statDensity.textContent = `Dichte: ${label}`;
+            if (persist) saveSettings(buildPersistedSettings());
+            updateDiagnostics();
+        }
+
+        function setFrame(mode, persist = true) {
+            if (!FRAME_MODES.includes(mode)) return;
+            appState.frame = mode;
+            document.documentElement.setAttribute("data-frame", mode);
+            elements.frameSalesBtn.setAttribute("aria-pressed", String(mode === "sales"));
+            elements.frameTrainingBtn.setAttribute("aria-pressed", String(mode === "training"));
+            elements.frameWikiBtn.setAttribute("aria-pressed", String(mode === "wiki"));
+            elements.salesFrame.hidden = mode !== "sales";
+            elements.trainingFrame.hidden = mode !== "training";
+            elements.wikiFrame.hidden = mode !== "wiki";
             if (persist) {
+                appState.settings.frameMode = mode;
                 saveSettings(buildPersistedSettings());
             }
-            updateDiagnostics();
         }
 
         function updateContextStatus() {
@@ -2143,8 +2928,14 @@
 
         function buildPersistedSettings() {
             const settings = { ...appState.settings };
-            if (settings.apiKeyLocked) {
+            if (settings.apiKeyLocked || settings.sessionOnlyKey) {
                 settings.apiKey = "";
+            }
+            if (settings.sessionOnlyKey) {
+                settings.apiKeyEncrypted = "";
+                settings.apiKeyIv = "";
+                settings.apiKeySalt = "";
+                settings.apiKeyLocked = false;
             }
             return settings;
         }
@@ -2273,81 +3064,201 @@
             });
         }
 
-        function sanitizeImportSettings(settings) {
-            if (!settings || typeof settings !== "object") return null;
+        function extractJSON(text) {
+            let start = -1;
+            let depth = 0;
+            let inString = false;
+            let escape = false;
+            for (let i = 0; i < text.length; i++) {
+                const char = text[i];
+                if (inString) {
+                    if (escape) {
+                        escape = false;
+                    } else if (char === "\\") {
+                        escape = true;
+                    } else if (char === "\"") {
+                        inString = false;
+                    }
+                    continue;
+                }
+                if (char === "\"") {
+                    inString = true;
+                    continue;
+                }
+                if (char === "{") {
+                    if (depth === 0) start = i;
+                    depth += 1;
+                } else if (char === "}") {
+                    depth -= 1;
+                    if (depth === 0 && start !== -1) {
+                        return text.slice(start, i + 1);
+                    }
+                }
+            }
+            throw new Error("No JSON found in response");
+        }
+
+        function ensureQuestion(text) {
+            if (!text) return "Welche Option passt besser für Sie?";
+            const trimmed = text.trim();
+            if (trimmed.endsWith("?")) return trimmed;
+            return `${trimmed}?`;
+        }
+
+        function normalizeQuickBlock(block) {
             return {
-                apiProvider: sanitizeEnum(settings.apiProvider, ["openai", "groq"], "openai"),
-                apiKey: sanitizeString(settings.apiKey, 200),
-                apiKeyEncrypted: sanitizeString(settings.apiKeyEncrypted, 2000),
-                apiKeyIv: sanitizeString(settings.apiKeyIv, 200),
-                apiKeySalt: sanitizeString(settings.apiKeySalt, 200),
-                apiKeyLocked: Boolean(settings.apiKeyLocked),
-                modelName: sanitizeString(settings.modelName, 80) || MODEL_DEFAULTS.openai,
-                proxyUrl: sanitizeString(settings.proxyUrl, 200),
-                department: sanitizeString(settings.department, 40) || "TV",
-                storePolicy: sanitizeString(settings.storePolicy, 400),
-                themeMode: sanitizeEnum(settings.themeMode, ["auto", "light", "dark"], "auto"),
-                densityMode: sanitizeEnum(settings.densityMode, ["compact", "comfortable"], ""),
-                densityUserSet: Boolean(settings.densityUserSet)
+                entry: sanitizeString(block.entry, 400),
+                anchor: sanitizeString(block.anchor, 400),
+                question: ensureQuestion(sanitizeString(block.question, 400)),
+                bridge: sanitizeString(block.bridge, 400),
+                close: ensureQuestion(sanitizeString(block.close, 400))
             };
         }
 
-        function sanitizeCaseItem(item) {
-            if (!item || typeof item !== "object") return null;
-            const safeId = sanitizeString(item.id || `import_${Date.now()}`, 80);
-            const quick = item.content && item.content.quick ? item.content.quick : {};
-            const smart = item.content && item.content.smart ? item.content.smart : {};
-            const coach = item.content && item.content.coach ? item.content.coach : {};
+        function deriveVariant(variant, neutral) {
+            if (!neutral) return normalizeQuickBlock({});
+            const intro = variant === "soft"
+                ? "Verstehe ich gut. "
+                : variant === "challenger"
+                    ? "Lassen Sie uns das kurz neu einordnen. "
+                    : "";
             return {
-                id: safeId,
-                objection: sanitizeString(item.objection, 200),
-                keywords: sanitizeArray(item.keywords, 40),
-                timestamp: sanitizeString(item.timestamp, 60) || new Date().toISOString(),
+                entry: `${intro}${neutral.entry}`.trim(),
+                anchor: variant === "challenger"
+                    ? `Viele Kundinnen und Kunden unterschätzen den Nutzen. ${neutral.anchor}`.trim()
+                    : neutral.anchor,
+                question: neutral.question,
+                bridge: variant === "soft"
+                    ? `${neutral.bridge} Mir ist wichtig, dass Sie sich sicher fühlen.`.trim()
+                    : neutral.bridge,
+                close: neutral.close
+            };
+        }
+
+        function needsTransparency(card) {
+            const keywords = (card.keywords || []).join(" ");
+            return keywords.includes("versicherung") || keywords.includes("abo") || card.meta.pattern === "subscription_aversion";
+        }
+
+        function ensureTransparency(card) {
+            if (!needsTransparency(card)) return card;
+            const transparencySentence = "Transparenz: Alle Kosten und Bedingungen sind offen, keine versteckten Gebühren.";
+            ["neutral", "soft", "challenger"].forEach(variant => {
+                const bridge = card.content.quick[variant].bridge || "";
+                if (!bridge.includes("Transparenz")) {
+                    card.content.quick[variant].bridge = `${bridge} ${transparencySentence}`.trim();
+                }
+            });
+            card.meta.safety = "transparency_required";
+            return card;
+        }
+
+        function ensureAttachAndNextStep(card) {
+            const rule = PATTERN_RULES[card.meta.pattern] || PATTERN_RULES.trust;
+            if (!card.content.attach) {
+                card.content.attach = rule.attach;
+            }
+            if (!card.content.next_step) {
+                card.content.next_step = rule.next_step;
+            }
+            return card;
+        }
+
+        function normalizeCaseCard(raw) {
+            const quick = raw.content && raw.content.quick ? raw.content.quick : {};
+            const neutral = quick.neutral ? normalizeQuickBlock(quick.neutral) : normalizeQuickBlock(quick);
+            const soft = quick.soft ? normalizeQuickBlock(quick.soft) : deriveVariant("soft", neutral);
+            const challenger = quick.challenger ? normalizeQuickBlock(quick.challenger) : deriveVariant("challenger", neutral);
+            const smart = raw.content && raw.content.smart ? raw.content.smart : {};
+            const coach = raw.content && raw.content.coach ? raw.content.coach : {};
+
+            const normalized = {
+                id: sanitizeString(raw.id || `case_${Date.now()}`, 80),
+                objection: sanitizeString(raw.objection, 200),
+                keywords: sanitizeArray(raw.keywords, 50),
+                createdAt: typeof raw.createdAt === "number" ? raw.createdAt : Date.now(),
                 meta: {
-                    status: sanitizeEnum(item.meta && item.meta.status, ["success", "error", "check_datasheet", "transparency_missing_details"], "success"),
-                    pattern: sanitizeString(item.meta && item.meta.pattern, 40) || "trust",
-                    safety: sanitizeEnum(item.meta && item.meta.safety, ["clean", "transparency_required", "fact_check_needed"], "clean")
+                    status: sanitizeEnum(raw.meta && raw.meta.status, ["success", "warning", "error", "check_datasheet", "fact_check_needed", "transparency_missing_details"], "success"),
+                    pattern: sanitizeString(raw.meta && raw.meta.pattern, 40) || "trust",
+                    safety: sanitizeEnum(raw.meta && raw.meta.safety, ["clean", "transparency_required", "fact_check_needed"], "clean")
                 },
                 ui: {
-                    color: sanitizeEnum(item.ui && item.ui.color, ["success", "warning", "error"], "success"),
-                    icon: sanitizeEnum(item.ui && item.ui.icon, ["shield", "clock", "tag", "info", "users"], "info")
+                    color: sanitizeEnum(raw.ui && raw.ui.color, ["success", "warning", "error"], "success"),
+                    icon: sanitizeEnum(raw.ui && raw.ui.icon, ["shield", "clock", "tag", "info"], "info")
                 },
                 content: {
-                    quick: {
-                        entry: sanitizeString(quick.entry, 400),
-                        anchor: sanitizeString(quick.anchor, 400),
-                        question: sanitizeString(quick.question, 400),
-                        bridge: sanitizeString(quick.bridge, 400),
-                        close: sanitizeString(quick.close, 400)
-                    },
+                    quick: { neutral, soft, challenger },
                     smart: {
-                        text: sanitizeString(smart.text, 600),
-                        closing: sanitizeString(smart.closing, 400)
+                        text: sanitizeString(smart.text, 800),
+                        closing: ensureQuestion(sanitizeString(smart.closing, 300))
                     },
                     coach: {
-                        diagnosis: sanitizeString(coach.diagnosis, 400),
-                        strategy: sanitizeString(coach.strategy, 400),
-                        behavioral_fix: sanitizeString(coach.behavioral_fix, 400),
+                        diagnosis: sanitizeString(coach.diagnosis, 300) || "Einwandtyp unklar.",
+                        strategy: sanitizeString(coach.strategy, 300),
+                        behavioral_fix: sanitizeString(coach.behavioral_fix, 300),
                         drill: sanitizeArray(coach.drill, 200)
-                    }
-                },
-                isMaster: Boolean(item.isMaster)
+                    },
+                    attach: raw.content ? raw.content.attach : null,
+                    next_step: raw.content ? raw.content.next_step : null
+                }
             };
+
+            ensureAttachAndNextStep(normalized);
+            ensureTransparency(normalized);
+            return normalized;
         }
 
-        function sanitizeLogItem(log) {
-            if (!log || typeof log !== "object") return null;
+        function normalizeProduct(item) {
+            if (!item || typeof item !== "object") return null;
             return {
-                id: sanitizeString(log.id, 80) || undefined,
-                timestamp: sanitizeString(log.timestamp, 60) || new Date().toISOString(),
-                type: sanitizeString(log.type, 40) || "event",
-                objection: sanitizeString(log.objection, 200),
-                contexts: sanitizeArray(log.contexts, 40),
-                data: log.data && typeof log.data === "object" ? log.data : {}
+                id: sanitizeString(item.id || `product_${Date.now()}`, 80),
+                name: sanitizeString(item.name, 120),
+                brand: sanitizeString(item.brand, 80),
+                category: sanitizeString(item.category, 80),
+                tags: sanitizeArray(item.tags, 40),
+                specs: item.specs && typeof item.specs === "object" ? item.specs : {},
+                accessories: sanitizeArray(item.accessories, 120),
+                warnings: sanitizeArray(item.warnings, 120),
+                updatedAt: item.updatedAt || new Date().toISOString()
             };
         }
 
-        function initDB() {
+        function normalizeFaq(item) {
+            if (!item || typeof item !== "object") return null;
+            return {
+                id: sanitizeString(item.id || `faq_${Date.now()}`, 80),
+                productId: sanitizeString(item.productId, 80),
+                question: sanitizeString(item.question, 200),
+                answer: sanitizeString(item.answer, 400)
+            };
+        }
+
+        function normalizeNote(item) {
+            if (!item || typeof item !== "object") return null;
+            return {
+                id: sanitizeString(item.id || `note_${Date.now()}`, 80),
+                productId: sanitizeString(item.productId, 80),
+                note: sanitizeString(item.note, 400)
+            };
+        }
+
+        function validateProxyUrl(value) {
+            if (!value) return { ok: false };
+            try {
+                const url = new URL(value, window.location.origin);
+                const isSameOrigin = url.origin === window.location.origin && window.location.origin !== "null";
+                if (!isSameOrigin) return { ok: false, reason: "same_origin_required" };
+                if (url.protocol !== "https:") return { ok: false, reason: "https_only" };
+                if (["localhost", "127.0.0.1", "[::1]"].includes(url.hostname)) {
+                    return { ok: false, reason: "localhost_blocked" };
+                }
+                return { ok: true, url: url.toString() };
+            } catch {
+                return { ok: false, reason: "invalid" };
+            }
+        }
+
+        async function initDB() {
             return new Promise(resolve => {
                 if (!("indexedDB" in window)) {
                     storage.mode = "local";
@@ -2368,15 +3279,14 @@
                 };
                 request.onupgradeneeded = (event) => {
                     const db = event.target.result;
-                    if (!db.objectStoreNames.contains("settings")) {
-                        db.createObjectStore("settings", { keyPath: "id" });
-                    }
-                    if (!db.objectStoreNames.contains("cases")) {
-                        db.createObjectStore("cases", { keyPath: "id" });
-                    }
-                    if (!db.objectStoreNames.contains("logs")) {
-                        db.createObjectStore("logs", { keyPath: "id", autoIncrement: true });
-                    }
+                    if (!db.objectStoreNames.contains("settings")) db.createObjectStore("settings", { keyPath: "id" });
+                    if (!db.objectStoreNames.contains("cases")) db.createObjectStore("cases", { keyPath: "id" });
+                    if (!db.objectStoreNames.contains("logs")) db.createObjectStore("logs", { keyPath: "id", autoIncrement: true });
+                    if (!db.objectStoreNames.contains("products")) db.createObjectStore("products", { keyPath: "id" });
+                    if (!db.objectStoreNames.contains("productFaq")) db.createObjectStore("productFaq", { keyPath: "id" });
+                    if (!db.objectStoreNames.contains("productNotes")) db.createObjectStore("productNotes", { keyPath: "id" });
+                    if (!db.objectStoreNames.contains("comparisons")) db.createObjectStore("comparisons", { keyPath: "id" });
+                    if (!db.objectStoreNames.contains("seller")) db.createObjectStore("seller", { keyPath: "id" });
                 };
             });
         }
@@ -2412,8 +3322,7 @@
         async function loadSettings() {
             await waitForDB();
             if (storage.mode === "local") {
-                const raw = localStorage.getItem("msos_settings");
-                return safeParseJSON(raw, null);
+                return safeParseJSON(localStorage.getItem("msos_settings"), null);
             }
             return new Promise(resolve => {
                 const tx = storage.db.transaction("settings", "readonly");
@@ -2423,81 +3332,63 @@
             });
         }
 
-        async function saveCaseToLibrary(caseData) {
+        async function saveSellerState() {
             await waitForDB();
-            const baseKeywords = appState.objection.toLowerCase().split(" ").filter(word => word.length > 3);
-            const synonymMap = {
-                teuer: ["preis", "kostet", "hoch", "viel", "expensive"],
-                versicherung: ["garantie", "schutz", "absicherung", "abo"],
-                überlegen: ["bedenkzeit", "später", "nachdenken", "warten"],
-                rabatt: ["nachlass", "discount", "günstiger", "reduzierung"],
-                vergleichen: ["andere", "konkurrenz", "woanders"],
-                qualität: ["hochwertig", "premium", "gut"],
-                lieferung: ["versand", "transport", "zustellung"],
-                garantie: ["gewährleistung", "rückgabe", "umtausch"]
+            const payload = {
+                id: "main",
+                history: appState.history,
+                favorites: appState.favorites,
+                training: appState.training
             };
-
-            const enhancedKeywords = [...new Set([
-                ...baseKeywords,
-                ...baseKeywords.flatMap(keyword => synonymMap[keyword] || [])
-            ])];
-
-            const item = {
-                id: "case_" + Date.now() + "_" + Math.random().toString(36).slice(2, 9),
-                objection: appState.objection,
-                keywords: enhancedKeywords,
-                timestamp: new Date().toISOString(),
-                ...caseData
-            };
-
             if (storage.mode === "local") {
-                const raw = localStorage.getItem("msos_cases");
-                const data = safeParseJSON(raw, []);
-                data.push(item);
-                localStorage.setItem("msos_cases", JSON.stringify(data));
+                localStorage.setItem("msos_seller", JSON.stringify(payload));
                 return;
             }
-
-            const tx = storage.db.transaction("cases", "readwrite");
-            tx.objectStore("cases").put(item);
+            const tx = storage.db.transaction("seller", "readwrite");
+            tx.objectStore("seller").put(payload);
             return new Promise(resolve => {
                 tx.oncomplete = () => resolve();
             });
         }
 
-        async function searchLocalCases(query) {
+        async function loadSellerState() {
             await waitForDB();
-            const queryLower = query.toLowerCase();
-            const queryWords = queryLower.split(" ").filter(word => word.length > 3);
             if (storage.mode === "local") {
-                const raw = localStorage.getItem("msos_cases");
-                const results = safeParseJSON(raw, []);
-                return findBestMatch(results, queryWords);
+                return safeParseJSON(localStorage.getItem("msos_seller"), null);
             }
-            return new Promise((resolve, reject) => {
-                const tx = storage.db.transaction("cases", "readonly");
-                const store = tx.objectStore("cases");
-                const request = store.getAll();
-                request.onsuccess = () => {
-                    resolve(findBestMatch(request.result, queryWords));
-                };
-                request.onerror = () => reject(request.error);
+            return new Promise(resolve => {
+                const tx = storage.db.transaction("seller", "readonly");
+                const req = tx.objectStore("seller").get("main");
+                req.onsuccess = () => resolve(req.result || null);
+                req.onerror = () => resolve(null);
             });
         }
 
-        function findBestMatch(results, queryWords) {
-            return results.find(item => {
-                const keywords = Array.isArray(item.keywords) ? item.keywords : [];
-                return keywords.some(keyword => {
-                    return queryWords.some(qw => {
-                        if (qw.includes(keyword.toLowerCase()) || keyword.toLowerCase().includes(qw)) {
-                            return true;
-                        }
-                        const distance = levenshteinDistance(qw, keyword.toLowerCase());
-                        return distance <= 2;
-                    });
-                });
-            }) || null;
+        async function getAllFromStore(storeName, fallbackKey) {
+            await waitForDB();
+            if (storage.mode === "local") {
+                return safeParseJSON(localStorage.getItem(fallbackKey), []);
+            }
+            return new Promise(resolve => {
+                const tx = storage.db.transaction(storeName, "readonly");
+                const req = tx.objectStore(storeName).getAll();
+                req.onsuccess = () => resolve(req.result || []);
+                req.onerror = () => resolve([]);
+            });
+        }
+
+        async function saveAllToStore(storeName, fallbackKey, items) {
+            await waitForDB();
+            if (storage.mode === "local") {
+                localStorage.setItem(fallbackKey, JSON.stringify(items));
+                return;
+            }
+            const tx = storage.db.transaction(storeName, "readwrite");
+            const store = tx.objectStore(storeName);
+            items.forEach(item => store.put(item));
+            return new Promise(resolve => {
+                tx.oncomplete = () => resolve();
+            });
         }
 
         async function logEvent(type, data) {
@@ -2510,8 +3401,7 @@
                 data: data || {}
             };
             if (storage.mode === "local") {
-                const raw = localStorage.getItem("msos_logs");
-                const logs = safeParseJSON(raw, []);
+                const logs = safeParseJSON(localStorage.getItem("msos_logs"), []);
                 logs.push(log);
                 localStorage.setItem("msos_logs", JSON.stringify(logs));
                 return;
@@ -2524,43 +3414,42 @@
         }
 
         async function getAllCases() {
-            await waitForDB();
-            if (storage.mode === "local") {
-                const raw = localStorage.getItem("msos_cases");
-                return safeParseJSON(raw, []);
-            }
-            return new Promise(resolve => {
-                const tx = storage.db.transaction("cases", "readonly");
-                const req = tx.objectStore("cases").getAll();
-                req.onsuccess = () => resolve(req.result || []);
-                req.onerror = () => resolve([]);
-            });
+            return getAllFromStore("cases", "msos_cases");
         }
 
         async function getAllLogs() {
-            await waitForDB();
-            if (storage.mode === "local") {
-                const raw = localStorage.getItem("msos_logs");
-                return safeParseJSON(raw, []);
-            }
-            return new Promise(resolve => {
-                const tx = storage.db.transaction("logs", "readonly");
-                const req = tx.objectStore("logs").getAll();
-                req.onsuccess = () => resolve(req.result || []);
-                req.onerror = () => resolve([]);
-            });
+            return getAllFromStore("logs", "msos_logs");
+        }
+
+        async function getAllProducts() {
+            return getAllFromStore("products", "msos_products");
+        }
+
+        async function getAllFaq() {
+            return getAllFromStore("productFaq", "msos_product_faq");
+        }
+
+        async function getAllNotes() {
+            return getAllFromStore("productNotes", "msos_product_notes");
+        }
+
+        async function getAllComparisons() {
+            return getAllFromStore("comparisons", "msos_comparisons");
         }
 
         async function clearDataStores() {
             await waitForDB();
             if (storage.mode === "local") {
-                localStorage.removeItem("msos_cases");
-                localStorage.removeItem("msos_logs");
+                ["msos_cases", "msos_logs", "msos_products", "msos_product_faq", "msos_product_notes", "msos_comparisons"].forEach(key => localStorage.removeItem(key));
                 return;
             }
-            const tx = storage.db.transaction(["cases", "logs"], "readwrite");
+            const tx = storage.db.transaction(["cases", "logs", "products", "productFaq", "productNotes", "comparisons"], "readwrite");
             tx.objectStore("cases").clear();
             tx.objectStore("logs").clear();
+            tx.objectStore("products").clear();
+            tx.objectStore("productFaq").clear();
+            tx.objectStore("productNotes").clear();
+            tx.objectStore("comparisons").clear();
             return new Promise(resolve => {
                 tx.oncomplete = () => resolve();
             });
@@ -2595,109 +3484,133 @@
             return matrix[b.length][a.length];
         }
 
-        function extractJSON(text) {
-            const firstBrace = text.indexOf("{");
-            const lastBrace = text.lastIndexOf("}");
-            if (firstBrace === -1 || lastBrace === -1) {
-                throw new Error("No JSON found in response");
+        async function saveCaseToLibrary(card) {
+            await waitForDB();
+            const baseKeywords = appState.objection.toLowerCase().split(" ").filter(word => word.length > 3);
+            const synonymMap = {
+                teuer: ["preis", "kostet", "hoch", "viel", "expensive"],
+                versicherung: ["garantie", "schutz", "absicherung", "abo"],
+                überlegen: ["bedenkzeit", "später", "nachdenken", "warten"],
+                rabatt: ["nachlass", "discount", "günstiger", "reduzierung"],
+                vergleichen: ["andere", "konkurrenz", "woanders"],
+                qualität: ["hochwertig", "premium", "gut"],
+                lieferung: ["versand", "transport", "zustellung"],
+                garantie: ["gewährleistung", "rückgabe", "umtausch"]
+            };
+
+            const enhancedKeywords = [...new Set([
+                ...baseKeywords,
+                ...baseKeywords.flatMap(keyword => synonymMap[keyword] || [])
+            ])];
+
+            const item = {
+                ...card,
+                id: card.id || `case_${Date.now()}`,
+                objection: appState.objection,
+                keywords: enhancedKeywords,
+                createdAt: card.createdAt || Date.now()
+            };
+
+            if (storage.mode === "local") {
+                const data = safeParseJSON(localStorage.getItem("msos_cases"), []);
+                data.push(item);
+                localStorage.setItem("msos_cases", JSON.stringify(data));
+                return;
             }
-            return text.substring(firstBrace, lastBrace + 1);
+            const tx = storage.db.transaction("cases", "readwrite");
+            tx.objectStore("cases").put(item);
+            return new Promise(resolve => {
+                tx.oncomplete = () => resolve();
+            });
         }
 
-        function validateProxyUrl(value) {
-            if (!value) return { ok: false };
-            try {
-                const url = new URL(value, window.location.origin);
-                const isSameOrigin = url.origin === window.location.origin && window.location.origin !== "null";
-                if (!isSameOrigin) {
-                    return { ok: false, reason: "same_origin_required" };
-                }
-                if (url.protocol !== "https:" && url.protocol !== "http:") {
-                    return { ok: false, reason: "protocol" };
-                }
-                return { ok: true, url: url.toString() };
-            } catch (error) {
-                return { ok: false, reason: "invalid" };
-            }
+        async function searchLocalCases(query) {
+            const queryLower = query.toLowerCase();
+            const queryWords = queryLower.split(" ").filter(word => word.length > 3);
+            const results = await getAllCases();
+            return results.find(item => {
+                const keywords = Array.isArray(item.keywords) ? item.keywords : [];
+                return keywords.some(keyword => {
+                    return queryWords.some(qw => {
+                        if (qw.includes(keyword.toLowerCase()) || keyword.toLowerCase().includes(qw)) {
+                            return true;
+                        }
+                        const distance = levenshteinDistance(qw, keyword.toLowerCase());
+                        return distance <= 2;
+                    });
+                });
+            }) || null;
+        }
+
+        function searchSeeds(query) {
+            const queryLower = query.toLowerCase();
+            const queryWords = queryLower.split(" ").filter(word => word.length > 3);
+            return SEED_CASES.find(seed => {
+                return seed.keywords.some(keyword => {
+                    return queryWords.some(qw => {
+                        if (qw.includes(keyword.toLowerCase()) || keyword.toLowerCase().includes(qw)) {
+                            return true;
+                        }
+                        const distance = levenshteinDistance(qw, keyword.toLowerCase());
+                        return distance <= 2;
+                    });
+                });
+            });
         }
 
         async function callAI(objection, contexts) {
             const { apiProvider, apiKey, modelName, proxyUrl, department, storePolicy } = appState.settings;
-            if (!apiKey && !proxyUrl) {
-                throw new Error("API Key oder Proxy URL erforderlich");
-            }
-            if (appState.settings.apiKeyLocked) {
-                throw new Error("API Key gesperrt");
-            }
+            if (!apiKey && !proxyUrl) throw new Error("API Key oder Proxy URL erforderlich");
+            if (appState.settings.apiKeyLocked) throw new Error("API Key gesperrt");
+            if (!navigator.onLine) throw new Error("Offline");
 
             const contextMods = [];
             if (contexts.includes("hurry")) contextMods.push("- Kunde ist eilig: Ultra-kurze Antworten, max 2 Sätze pro Abschnitt");
             if (contexts.includes("duo")) contextMods.push("- Kunde ist Paar/Gruppe: Inkludiere beide Personen ('Sie beide', 'für Sie gemeinsam')");
-            if (contexts.includes("easy")) contextMods.push("- Kunde will es einfach: Keine Technik-Details, nur Nutzen. Metaphern verwenden");
-            if (contexts.includes("techie")) contextMods.push("- Kunde ist technikaffin: Specs erlaubt, aber immer mit Nutzen verknüpfen");
+            if (contexts.includes("easy")) contextMods.push("- Kunde will es einfach: Keine Technik-Details, nur Nutzen.");
+            if (contexts.includes("techie")) contextMods.push("- Kunde ist technikaffin: Specs nur wenn sicher, sonst auf Datenblatt verweisen.");
 
-            const systemPrompt = `ROLE: High-End Retail Sales Expert (Austria). Abteilung: ${department}
-
-OUTPUT: STRICT JSON ONLY. NO preamble, NO markdown, NO text before or after the JSON object.
-
-LOGIC (The "Expert Matrix"):
-1. VOSS: Start with Labeling/Empathy ("Versteh ich...").
-2. CHALLENGER: Reframe the problem (Price -> Cost of Ownership).
-3. KAHNEMAN: Anchor high prices down to daily costs.
-4. CIALDINI: Use "Alternative Close" (A oder B?), never "Yes/No".
-
+            const systemPrompt = `ROLE: Retail Sales Expert (Austria). Abteilung: ${department}
+OUTPUT: STRICT JSON ONLY. NO preamble, NO markdown, NO text before or after JSON.
+EXPERT MATRIX: VOSS, Challenger, Kahneman, Cialdini, SPIN, Sandler.
 GUARDRAILS:
-- Social Proof: General only ("Viele Kundinnen und Kunden..."). Never invent statistics.
-- Scarcity: Only if Store Policy has explicit date. Store Policy: "${storePolicy || "keine Aktionen definiert"}"
-- Transparency: Mandatory "Abo-Check" if subscription involved. If price unknown: status = "transparency_missing_details"
-- Tone: Austrian Professional, natural, short sentences.
+- Social Proof ohne Zahlen.
+- Keine Scarcity ohne Store-Policy-Datum. Store Policy: "${storePolicy || "keine Aktionen definiert"}"
+- Versicherung/Abo: Transparenzsatz zwingend.
+- Keine erfundenen Fakten. Wenn Details fehlen: status="transparency_missing_details".
 
-KONTEXT-MUTATIONEN:
+KONTEXT:
 ${contextMods.join("\n")}
 
-OUTPUT FORMAT (STRICT JSON):
+OUTPUT SCHEMA:
 {
-  "meta": {
-    "status": "success | error | check_datasheet | transparency_missing_details",
-    "pattern": "price | trust | control | risk | uncertainty | comparison | subscription_aversion",
-    "safety": "clean | transparency_required | fact_check_needed"
-  },
-  "ui": {
-    "color": "success | warning | error",
-    "icon": "shield | clock | tag | info"
-  },
-  "content": {
-    "quick": {
-      "entry": "Einstieg (empathisch, validierend)",
-      "anchor": "Anker (Social Proof, Vertrauen)",
-      "question": "Frage (öffnet Dialog)",
-      "bridge": "Brücke (Mehrwert aufzeigen)",
-      "close": "Abschluss (Kontrolle zurückgeben)"
+  "id":"str",
+  "meta":{"status":"success|warning|error|check_datasheet|transparency_missing_details","pattern":"price|trust|risk|comparison|uncertainty|control|subscription_aversion","safety":"clean|transparency_required|fact_check_needed"},
+  "ui":{"color":"success|warning|error","icon":"tag|shield|clock|info"},
+  "content":{
+    "quick":{
+      "neutral":{"entry":"str","anchor":"str","question":"str","bridge":"str","close":"str"},
+      "soft":{"entry":"str","anchor":"str","question":"str","bridge":"str","close":"str"},
+      "challenger":{"entry":"str","anchor":"str","question":"str","bridge":"str","close":"str"}
     },
-    "smart": {
-      "text": "Kurzes, natürliches Verkaufsskript (max 4 Sätze)",
-      "closing": "Abschlussfrage"
-    },
-    "coach": {
-      "diagnosis": "Psychologische Einwand-Analyse",
-      "strategy": "Strategie-Empfehlung",
-      "behavioral_fix": "Verhaltensfix (konkreter Tipp)",
-      "drill": ["Übung 1", "Übung 2"]
-    }
-  }
+    "smart":{"text":"str","closing":"str"},
+    "coach":{"diagnosis":"str (1 Satz)","strategy":"str","behavioral_fix":"str","drill":["str","str"]},
+    "attach":{"suggestion":"str","why":"str","how_to_offer":"str"},
+    "next_step":{"cta":"str","two_options":["str","str"]}
+  },
+  "keywords":["str"],
+  "createdAt": 0
 }`;
 
+            const controller = new AbortController();
+            const timeout = setTimeout(() => controller.abort(), 15000);
             let apiUrl;
             let headers;
             let body;
-            const controller = new AbortController();
-            const timeout = setTimeout(() => controller.abort(), 15000);
 
             if (proxyUrl) {
                 const validated = validateProxyUrl(proxyUrl);
-                if (!validated.ok) {
-                    throw new Error("Proxy URL muss Same-Origin sein");
-                }
+                if (!validated.ok) throw new Error("Proxy URL nicht erlaubt");
                 apiUrl = validated.url;
                 headers = { "Content-Type": "application/json" };
                 body = JSON.stringify({ provider: apiProvider, prompt: systemPrompt, objection });
@@ -2730,7 +3643,7 @@ OUTPUT FORMAT (STRICT JSON):
                     temperature: 0.7
                 });
             } else {
-                throw new Error(`Unbekannter API Provider: ${apiProvider}`);
+                throw new Error("Unbekannter Provider");
             }
 
             const response = await fetch(apiUrl, {
@@ -2741,70 +3654,253 @@ OUTPUT FORMAT (STRICT JSON):
                 referrerPolicy: "no-referrer",
                 credentials: "omit"
             });
-
             clearTimeout(timeout);
-
-            if (!response.ok) {
-                throw new Error(`API Error: ${response.status}`);
-            }
-
+            if (!response.ok) throw new Error(`API Error: ${response.status}`);
             const data = await response.json();
-            const rawContent = data.choices && data.choices[0] && data.choices[0].message ? data.choices[0].message.content : "";
+            const rawContent = data.choices?.[0]?.message?.content || "";
             const content = extractJSON(rawContent);
             const parsed = JSON.parse(content);
-            parsed.id = "ai_" + Date.now() + "_" + Math.random().toString(36).slice(2, 9);
-            return parsed;
+            parsed.id = `ai_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`;
+            parsed.createdAt = Date.now();
+            return normalizeCaseCard(parsed);
         }
 
-        function searchSeeds(query) {
-            const queryLower = query.toLowerCase();
-            const queryWords = queryLower.split(" ").filter(word => word.length > 3);
-            return SEED_DATA.find(seed => seed.keywords.some(keyword => {
-                return queryWords.some(qw => {
-                    if (qw.includes(keyword.toLowerCase()) || keyword.toLowerCase().includes(qw)) {
-                        return true;
-                    }
-                    const distance = levenshteinDistance(qw, keyword.toLowerCase());
-                    return distance <= 2;
+        async function callAIProduct(question, product) {
+            const { apiProvider, apiKey, modelName, proxyUrl } = appState.settings;
+            if (!apiKey && !proxyUrl) throw new Error("API Key oder Proxy URL erforderlich");
+            if (appState.settings.apiKeyLocked) throw new Error("API Key gesperrt");
+            if (!navigator.onLine) throw new Error("Offline");
+
+            const productContext = product
+                ? `Produkt: ${product.name} (${product.brand})\\nKategorie: ${product.category}\\nSichere Daten: ${JSON.stringify(product.specs)}`
+                : "Kein Produkt gefunden.";
+
+            const systemPrompt = `ROLE: Product Knowledge Assistant.
+RULES:
+- Keine Spezifikationen erfinden.
+- Wenn keine sicheren Daten: status="fact_check_needed".
+- Antworte kurz, klar, ohne Marketing.
+
+OUTPUT JSON ONLY:
+{
+  "type":"product_answer",
+  "productId":"str|null",
+  "confidence":"high|medium|low",
+  "source":"wiki|mixed|ai_only",
+  "status":"success|check_datasheet|fact_check_needed",
+  "answer":"str",
+  "citations":[{"field":"str","value":"str","origin":"spec|faq|note"}],
+  "nextAction":"str"
+}`;
+
+            const controller = new AbortController();
+            const timeout = setTimeout(() => controller.abort(), 12000);
+            let apiUrl;
+            let headers;
+            let body;
+
+            if (proxyUrl) {
+                const validated = validateProxyUrl(proxyUrl);
+                if (!validated.ok) throw new Error("Proxy URL nicht erlaubt");
+                apiUrl = validated.url;
+                headers = { "Content-Type": "application/json" };
+                body = JSON.stringify({ provider: apiProvider, prompt: systemPrompt, question, context: productContext });
+            } else if (apiProvider === "openai") {
+                apiUrl = "https://api.openai.com/v1/chat/completions";
+                headers = {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${apiKey}`
+                };
+                body = JSON.stringify({
+                    model: modelName || MODEL_DEFAULTS.openai,
+                    messages: [
+                        { role: "system", content: systemPrompt },
+                        { role: "user", content: `FRAGE: ${question}\\n${productContext}` }
+                    ],
+                    temperature: 0.4
                 });
-            }));
+            } else if (apiProvider === "groq") {
+                apiUrl = "https://api.groq.com/openai/v1/chat/completions";
+                headers = {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${apiKey}`
+                };
+                body = JSON.stringify({
+                    model: modelName || MODEL_DEFAULTS.groq,
+                    messages: [
+                        { role: "system", content: systemPrompt },
+                        { role: "user", content: `FRAGE: ${question}\\n${productContext}` }
+                    ],
+                    temperature: 0.4
+                });
+            } else {
+                throw new Error("Unbekannter Provider");
+            }
+
+            const response = await fetch(apiUrl, {
+                method: "POST",
+                headers,
+                body,
+                signal: controller.signal,
+                referrerPolicy: "no-referrer",
+                credentials: "omit"
+            });
+            clearTimeout(timeout);
+            if (!response.ok) throw new Error("API Error");
+            const data = await response.json();
+            const rawContent = data.choices?.[0]?.message?.content || "";
+            const content = extractJSON(rawContent);
+            const parsed = JSON.parse(content);
+            return normalizeProductAnswer(parsed, product);
+        }
+
+        function normalizeProductAnswer(answer, product) {
+            const normalized = {
+                type: "product_answer",
+                productId: answer.productId || (product ? product.id : null),
+                confidence: sanitizeEnum(answer.confidence, ["high", "medium", "low"], "low"),
+                source: sanitizeEnum(answer.source, ["wiki", "mixed", "ai_only"], "ai_only"),
+                status: sanitizeEnum(answer.status, ["success", "check_datasheet", "fact_check_needed"], "fact_check_needed"),
+                answer: sanitizeString(answer.answer, 600),
+                citations: Array.isArray(answer.citations) ? answer.citations.map(c => ({
+                    field: sanitizeString(c.field, 80),
+                    value: sanitizeString(c.value, 200),
+                    origin: sanitizeEnum(c.origin, ["spec", "faq", "note"], "note")
+                })) : [],
+                nextAction: sanitizeString(answer.nextAction, 200) || "Bitte Datenblatt prüfen."
+            };
+
+            if (normalized.source === "ai_only") {
+                normalized.status = "fact_check_needed";
+                if (!normalized.answer.includes("nicht sicher")) {
+                    normalized.answer = `Nicht sicher: ${normalized.answer}`;
+                }
+            }
+            return normalized;
+        }
+
+        async function answerProductQuestion(question) {
+            const trimmed = sanitizeString(question, 300);
+            if (!trimmed) return null;
+            const product = appState.wiki.products.find(item => item.id === appState.wiki.selectedProductId);
+            const citations = [];
+            if (product) {
+                Object.entries(product.specs || {}).forEach(([field, value]) => {
+                    const val = String(value);
+                    if (trimmed.toLowerCase().includes(field.toLowerCase())) {
+                        citations.push({ field, value: val, origin: "spec" });
+                    }
+                });
+                appState.wiki.faq.filter(faq => faq.productId === product.id).forEach(faq => {
+                    if (trimmed.toLowerCase().includes(faq.question.toLowerCase())) {
+                        citations.push({ field: faq.question, value: faq.answer, origin: "faq" });
+                    }
+                });
+                appState.wiki.notes.filter(note => note.productId === product.id).forEach(note => {
+                    if (trimmed.toLowerCase().includes(note.note.toLowerCase())) {
+                        citations.push({ field: "Hinweis", value: note.note, origin: "note" });
+                    }
+                });
+            }
+            if (citations.length > 0) {
+                const answerText = citations.map(item => `${item.field}: ${item.value}`).join(" | ");
+                return {
+                    type: "product_answer",
+                    productId: product ? product.id : null,
+                    confidence: "high",
+                    source: "wiki",
+                    status: "success",
+                    answer: answerText,
+                    citations,
+                    nextAction: "Bei Bedarf Datenblatt öffnen."
+                };
+            }
+            if (product) {
+                const fallbackCitations = [];
+                Object.entries(product.specs || {}).slice(0, 3).forEach(([field, value]) => {
+                    fallbackCitations.push({ field, value: String(value), origin: "spec" });
+                });
+                appState.wiki.faq.filter(faq => faq.productId === product.id).slice(0, 2).forEach(faq => {
+                    fallbackCitations.push({ field: faq.question, value: faq.answer, origin: "faq" });
+                });
+                if (fallbackCitations.length) {
+                    return {
+                        type: "product_answer",
+                        productId: product.id,
+                        confidence: "medium",
+                        source: "wiki",
+                        status: "success",
+                        answer: fallbackCitations.map(item => `${item.field}: ${item.value}`).join(" | "),
+                        citations: fallbackCitations,
+                        nextAction: "Bei Bedarf Datenblatt öffnen."
+                    };
+                }
+            }
+            try {
+                const aiAnswer = await callAIProduct(trimmed, product);
+                return aiAnswer;
+            } catch (error) {
+                return {
+                    type: "product_answer",
+                    productId: product ? product.id : null,
+                    confidence: "low",
+                    source: "ai_only",
+                    status: product ? "check_datasheet" : "fact_check_needed",
+                    answer: "Keine gesicherten Wiki-Daten gefunden. Bitte Datenblatt prüfen.",
+                    citations: [],
+                    nextAction: "Datenblatt öffnen oder Produktseite prüfen."
+                };
+            }
         }
 
         async function handleObjectionSubmit() {
-            const objection = elements.objectionInput.value.trim();
+            const objection = sanitizeString(elements.objectionInput.value, 200);
             appState.objection = objection;
             if (!objection) {
                 haptic([40, 40]);
                 showToast("Bitte Einwand eingeben");
                 return;
             }
-
             appState.loading = true;
             setInputBusy(true);
             render();
 
             try {
-                const seedMatch = searchSeeds(objection);
-                if (seedMatch) {
-                    appState.cards = [seedMatch];
-                    await logEvent("seed_match", { cardId: seedMatch.id });
-                } else {
+                let card = null;
+                if (!navigator.onLine || (!appState.settings.apiKey && !appState.settings.proxyUrl)) {
                     const localMatch = await searchLocalCases(objection);
-                    if (localMatch) {
-                        appState.cards = [localMatch];
-                        await logEvent("local_match", { cardId: localMatch.id });
+                    card = localMatch ? normalizeCaseCard(localMatch) : null;
+                    if (!card) {
+                        const seedMatch = searchSeeds(objection);
+                        card = seedMatch ? normalizeCaseCard(seedMatch) : null;
+                    }
+                } else {
+                    const seedMatch = searchSeeds(objection);
+                    if (seedMatch) {
+                        card = normalizeCaseCard(seedMatch);
                     } else {
-                        const aiResponse = await callAI(objection, appState.contexts);
-                        appState.cards = [aiResponse];
-                        await saveCaseToLibrary(aiResponse);
-                        await logEvent("api_call", { provider: appState.settings.apiProvider });
-                        await updateStats();
+                        const localMatch = await searchLocalCases(objection);
+                        if (localMatch) {
+                            card = normalizeCaseCard(localMatch);
+                        } else {
+                            card = await callAI(objection, appState.contexts);
+                            await saveCaseToLibrary(card);
+                            await logEvent("api_call", { provider: appState.settings.apiProvider });
+                        }
                     }
                 }
+
+                if (!card) {
+                    card = normalizeCaseCard(JOKER_CARD);
+                }
+
+                setActiveCard(card);
+                await logEvent("case_resolved", { cardId: card.id, pattern: card.meta.pattern });
             } catch (error) {
-                appState.cards = [JOKER_CARD];
-                await logEvent("error_fallback", { code: error.message });
-                showToast("Fehler beim Abruf, Fallback geladen");
+                const fallback = normalizeCaseCard(JOKER_CARD);
+                setActiveCard(fallback);
+                await logEvent("error_fallback", { error: error.message });
+                showToast("Fallback geladen");
             }
 
             appState.loading = false;
@@ -2817,6 +3913,48 @@ OUTPUT FORMAT (STRICT JSON):
             elements.objectionInput.disabled = isBusy;
             elements.submitBtn.disabled = isBusy;
             elements.micBtn.disabled = isBusy || !recognition;
+        }
+
+        function setActiveCard(card, options = {}) {
+            appState.cards = [card];
+            appState.training.variant = appState.training.variant || "neutral";
+            if (options.addToHistory !== false) {
+                addHistoryEntry(card);
+            }
+        }
+
+        function addHistoryEntry(card) {
+            const entry = {
+                id: `hist_${Date.now()}`,
+                objection: appState.objection || card.objection,
+                cardId: card.id,
+                pattern: card.meta.pattern,
+                timestamp: new Date().toISOString(),
+                result: "",
+                card
+            };
+            appState.history.unshift(entry);
+            appState.history = appState.history.slice(0, MAX_HISTORY);
+            saveSellerState();
+        }
+
+        function updateHistoryResult(cardId, result) {
+            const entry = appState.history.find(item => item.cardId === cardId);
+            if (entry) {
+                entry.result = result;
+            }
+            saveSellerState();
+        }
+
+        function toggleFavorite(cardId) {
+            const index = appState.favorites.indexOf(cardId);
+            if (index > -1) {
+                appState.favorites.splice(index, 1);
+            } else {
+                appState.favorites.unshift(cardId);
+            }
+            saveSellerState();
+            renderSalesHistory();
         }
 
         function resetApp() {
@@ -2832,128 +3970,426 @@ OUTPUT FORMAT (STRICT JSON):
             render();
         }
 
-        function renderCards() {
-            if (appState.loading) {
-                elements.cardsContainer.innerHTML = `
-                    <section class="tile loading-state" aria-busy="true">
-                        <div class="skeleton-line wide"></div>
-                        <div class="skeleton-line"></div>
-                        <div class="skeleton-line"></div>
-                        <div class="skeleton-line"></div>
-                    </section>
-                    <section class="tile loading-state" aria-busy="true">
-                        <div class="skeleton-line wide"></div>
-                        <div class="skeleton-line"></div>
-                        <div class="skeleton-line"></div>
-                        <div class="skeleton-line"></div>
-                    </section>
-                `;
-                return;
-            }
+        function getActiveCard() {
+            return appState.cards.length ? appState.cards[0] : null;
+        }
 
-            if (appState.cards.length === 0) {
-                elements.cardsContainer.innerHTML = `
+        function buildQuickBlock(label, text, cardId, field, variant = "neutral") {
+            return `
+                <div class="cue-block">
+                    <div class="cue-header">
+                        <div class="cue-label">${label}</div>
+                        <button class="copy-btn" type="button" data-card="${cardId}" data-copy="${field}" data-variant="${variant}">Copy</button>
+                    </div>
+                    <div class="cue-text">${escapeHTML(text)}</div>
+                </div>
+            `;
+        }
+
+        function renderSalesCard(card) {
+            if (!card) {
+                return `
                     <section class="tile empty-state">
                         <div class="empty-title">Bereit für Kunden</div>
-                        <div class="empty-subtitle">Geben Sie einen Kundeneinwand ein, um sofort eine professionelle Antwort zu erhalten.</div>
+                        <div class="empty-subtitle">Geben Sie einen Kundeneinwand ein, um sofort eine Antwort zu erhalten.</div>
+                    </section>
+                `;
+            }
+            const quick = card.content.quick.neutral;
+            const isFavorite = appState.favorites.includes(card.id);
+            const attach = card.content.attach;
+            const nextStep = card.content.next_step;
+            const transparency = card.meta.safety === "transparency_required" ? "Transparenz Pflicht: Konditionen offen nennen." : "";
+            const safeId = card.id.replace(/[^a-zA-Z0-9_-]/g, "");
+
+            return `
+                <section class="tile card ${card.ui.color}">
+                    <div class="card-header">
+                        <svg class="card-icon" viewBox="0 0 24 24">${getIcon(card.ui.icon)}</svg>
+                        <div class="card-title">Sales Frame</div>
+                        <div class="card-header-actions">
+                            <button class="favorite-btn" type="button" data-favorite="${card.id}" aria-pressed="${isFavorite}">
+                                <svg viewBox="0 0 24 24"><path d="M12 17.3l-6.2 3.7 1.6-7-5.4-4.7 7.1-.6L12 2l2.9 6.7 7.1.6-5.4 4.7 1.6 7z"/></svg>
+                            </button>
+                        </div>
+                        <div class="card-badge">${escapeHTML(card.meta.pattern)}</div>
+                    </div>
+
+                    <div class="quick-cues">
+                        ${buildQuickBlock("Einstieg", quick.entry, card.id, "entry", "neutral")}
+                        ${buildQuickBlock("Anker", quick.anchor, card.id, "anchor", "neutral")}
+                        ${buildQuickBlock("Frage", quick.question, card.id, "question", "neutral")}
+                        ${buildQuickBlock("Bridge", quick.bridge, card.id, "bridge", "neutral")}
+                        ${buildQuickBlock("Close", quick.close, card.id, "close", "neutral")}
+                        <button class="copy-btn" type="button" data-card="${card.id}" data-copy="full" data-variant="neutral">Copy Full Quick</button>
+                    </div>
+
+                    <div class="expandable">
+                        <button class="expand-trigger" type="button" aria-expanded="false" aria-controls="smart-${safeId}" data-target="smart-${safeId}">
+                            Smart Script
+                            <svg class="expand-icon" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>
+                        </button>
+                        <div class="expand-content" id="smart-${safeId}" hidden>
+                            <div class="cue-text spacing">${escapeHTML(card.content.smart.text)}</div>
+                            <div class="cue-label">Abschlussfrage</div>
+                            <div class="cue-text">${escapeHTML(card.content.smart.closing)}</div>
+                        </div>
+                    </div>
+
+                    <div class="expandable">
+                        <button class="expand-trigger" type="button" aria-expanded="false" aria-controls="coach-${safeId}" data-target="coach-${safeId}">
+                            Coach Mode
+                            <svg class="expand-icon" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>
+                        </button>
+                        <div class="expand-content" id="coach-${safeId}" hidden>
+                            <div class="coach-block">
+                                <div class="coach-label">Diagnose</div>
+                                <div class="coach-text">${escapeHTML(card.content.coach.diagnosis)}</div>
+                            </div>
+                            <div class="coach-block">
+                                <div class="coach-label">Strategie</div>
+                                <div class="coach-text">${escapeHTML(card.content.coach.strategy)}</div>
+                            </div>
+                            <div class="coach-block">
+                                <div class="coach-label">Verhaltensfix</div>
+                                <div class="coach-text">${escapeHTML(card.content.coach.behavioral_fix)}</div>
+                            </div>
+                            <div class="coach-block">
+                                <div class="coach-label">Übungen</div>
+                                <ul class="drill-list">
+                                    ${card.content.coach.drill.map(item => `<li>${escapeHTML(item)}</li>`).join("")}
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="expandable">
+                        <div class="expand-label">Attach Vorschlag</div>
+                        <div class="cue-text">${escapeHTML(attach.suggestion)}</div>
+                        <div class="cue-text">${escapeHTML(attach.why)}</div>
+                        <div class="cue-text">${escapeHTML(attach.how_to_offer)}</div>
+                        ${transparency ? `<div class="cue-text">${escapeHTML(transparency)}</div>` : ""}
+                    </div>
+
+                    <div class="expandable">
+                        <div class="expand-label">Next Step</div>
+                        <div class="cue-text">${escapeHTML(nextStep.cta)}</div>
+                        <div class="pill-row">
+                            ${nextStep.two_options.map(option => `<span class="pill">${escapeHTML(option)}</span>`).join("")}
+                        </div>
+                    </div>
+
+                    <div class="card-actions">
+                        <button class="feedback-btn success" type="button" data-feedback="success" data-card="${card.id}">
+                            <svg viewBox="0 0 24 24"><path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"/></svg>
+                            Erfolgreich
+                        </button>
+                        <button class="feedback-btn error" type="button" data-feedback="fail" data-card="${card.id}">
+                            <svg viewBox="0 0 24 24"><path d="M10 15v4a3 3 0 0 0 3 3l4-9V2H5.72a2 2 0 0 0-2 1.7l-1.38 9a2 2 0 0 0 2 2.3zm7-13h2.67A2.31 2.31 0 0 1 22 4v7a2.31 2.31 0 0 1-2.33 2H17"/></svg>
+                            Nicht hilfreich
+                        </button>
+                        <button class="feedback-btn" type="button" data-train="${card.id}">Train this</button>
+                    </div>
+                </section>
+            `;
+        }
+
+        function renderSalesFrame() {
+            if (appState.loading) {
+                elements.salesCardContainer.innerHTML = `
+                    <section class="tile loading-state" aria-busy="true">
+                        <div class="skeleton-line wide"></div>
+                        <div class="skeleton-line"></div>
+                        <div class="skeleton-line"></div>
+                        <div class="skeleton-line"></div>
                     </section>
                 `;
                 return;
             }
+            elements.salesCardContainer.innerHTML = renderSalesCard(getActiveCard());
+            renderSalesHistory();
+        }
 
-            const iconMap = {
+        function renderSalesHistory() {
+            if (!elements.historyList) return;
+            const historyItems = appState.history.map(item => {
+                return `
+                    <button class="history-item" type="button" data-history="${item.id}">
+                        <div>${escapeHTML(item.objection || "Einwand")}</div>
+                        <div class="history-meta">${escapeHTML(item.pattern || "pattern")}</div>
+                    </button>
+                `;
+            }).join("");
+            elements.historyList.innerHTML = historyItems || `<div class="tile-desc">Noch kein Verlauf.</div>`;
+
+            const favorites = appState.favorites.map(id => {
+                const entry = appState.history.find(item => item.cardId === id);
+                const title = entry ? entry.objection : id;
+                return `
+                    <button class="history-item" type="button" data-favorite-item="${id}">
+                        <div>${escapeHTML(title)}</div>
+                        <div class="history-meta">Favorit</div>
+                    </button>
+                `;
+            }).join("");
+            elements.favoriteList.innerHTML = favorites || `<div class="tile-desc">Keine Favoriten.</div>`;
+        }
+
+        function renderTrainingFrame() {
+            const card = getActiveCard();
+            if (!card) {
+                elements.trainingCardContainer.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-title">Training bereit</div>
+                        <div class="empty-subtitle">Wähle eine Karte aus dem Verkauf.</div>
+                    </div>
+                `;
+                return;
+            }
+            elements.trainingCardTitle.textContent = `Pattern: ${card.meta.pattern}`;
+            const variant = appState.training.variant || "neutral";
+            updateVariantButtons(variant);
+            const quick = card.content.quick[variant];
+            elements.trainingCardContainer.innerHTML = `
+                <div class="quick-cues">
+                    <div class="cue-block">
+                        <div class="cue-label">Diagnose</div>
+                        <div class="cue-text">${escapeHTML(card.content.coach.diagnosis)}</div>
+                    </div>
+                    ${buildQuickBlock("Einstieg", quick.entry, card.id, "entry", variant)}
+                    ${buildQuickBlock("Anker", quick.anchor, card.id, "anchor", variant)}
+                    ${buildQuickBlock("Frage", quick.question, card.id, "question", variant)}
+                    ${buildQuickBlock("Bridge", quick.bridge, card.id, "bridge", variant)}
+                    ${buildQuickBlock("Close", quick.close, card.id, "close", variant)}
+                </div>
+            `;
+            renderDrill(card);
+            renderTrainingStats();
+            renderPatternLibrary();
+        }
+
+        function updateVariantButtons(active) {
+            elements.variantSoftBtn.setAttribute("aria-pressed", String(active === "soft"));
+            elements.variantNeutralBtn.setAttribute("aria-pressed", String(active === "neutral"));
+            elements.variantChallengerBtn.setAttribute("aria-pressed", String(active === "challenger"));
+        }
+
+        function renderDrill(card) {
+            const drills = card.content.coach.drill || [];
+            if (!drills.length) {
+                elements.drillText.textContent = "Kein Drill vorhanden.";
+                return;
+            }
+            const index = appState.training.drillIndex % drills.length;
+            elements.drillText.textContent = drills[index];
+        }
+
+        function renderTrainingStats() {
+            const lastTen = appState.history.slice(0, 10);
+            const successCount = appState.history.filter(item => item.result === "success").length;
+            const totalFeedback = appState.history.filter(item => item.result).length;
+            const successRate = totalFeedback ? Math.round((successCount / totalFeedback) * 100) : 0;
+            const patternCounts = {};
+            lastTen.forEach(item => {
+                patternCounts[item.pattern] = (patternCounts[item.pattern] || 0) + 1;
+            });
+            const topPatterns = Object.entries(patternCounts).sort((a, b) => b[1] - a[1]).slice(0, 2);
+            const patternText = topPatterns.map(([pattern, count]) => `${pattern} (${count})`).join(", ") || "–";
+            const patternScores = {};
+            appState.history.filter(item => item.result).forEach(item => {
+                if (!patternScores[item.pattern]) {
+                    patternScores[item.pattern] = { total: 0, success: 0 };
+                }
+                patternScores[item.pattern].total += 1;
+                if (item.result === "success") {
+                    patternScores[item.pattern].success += 1;
+                }
+            });
+            const weakness = Object.entries(patternScores)
+                .map(([pattern, stat]) => ({ pattern, rate: stat.total ? stat.success / stat.total : 1 }))
+                .sort((a, b) => a.rate - b.rate)[0];
+            const weaknessLabel = weakness ? `${weakness.pattern} (${Math.round(weakness.rate * 100)}%)` : "–";
+
+            elements.trainingStats.innerHTML = `
+                <div class="stat">
+                    <div class="stat-label">Last 10</div>
+                    <div class="stat-value">${lastTen.length}</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-label">Success</div>
+                    <div class="stat-value">${successRate}%</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-label">Top Pattern</div>
+                    <div class="stat-value">${escapeHTML(patternText)}</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-label">Weakness</div>
+                    <div class="stat-value">${escapeHTML(weaknessLabel)}</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-label">Sessions</div>
+                    <div class="stat-value">${appState.training.sessions}</div>
+                </div>
+            `;
+
+            elements.trainingHistoryList.innerHTML = lastTen.map(item => `
+                <div class="history-item">
+                    <div>${escapeHTML(item.objection)}</div>
+                    <div class="history-meta">${escapeHTML(item.pattern)} ${item.result ? `• ${item.result}` : ""}</div>
+                </div>
+            `).join("") || `<div class="tile-desc">Keine Einträge.</div>`;
+        }
+
+        function renderPatternLibrary() {
+            const patterns = Object.keys(PATTERN_RULES);
+            if (!elements.patternFilter.options.length) {
+                const options = ["all", ...patterns];
+                elements.patternFilter.innerHTML = options.map(pattern => `<option value="${pattern}">${pattern}</option>`).join("");
+            }
+            const selected = appState.training.selectedPattern;
+            elements.patternFilter.value = selected;
+            const cards = [ ...SEED_CASES, ...appState.cards ].map(normalizeCaseCard);
+            const filtered = selected === "all" ? cards : cards.filter(card => card.meta.pattern === selected);
+            elements.patternList.innerHTML = filtered.map(card => `
+                <div class="pattern-item">
+                    <div>${escapeHTML(card.objection || card.meta.pattern)}</div>
+                    <div class="pattern-meta">${escapeHTML(card.meta.pattern)}</div>
+                </div>
+            `).join("") || `<div class="tile-desc">Keine Patterns.</div>`;
+            const rule = PATTERN_RULES[selected] || PATTERN_RULES.trust;
+            elements.microlearningBox.textContent = `Regel: ${rule.microlearning.rule} | Do: ${rule.microlearning.do} | Don't: ${rule.microlearning.dont}`;
+        }
+
+        function renderWikiFrame() {
+            const query = appState.wiki.searchQuery.toLowerCase();
+            const products = appState.wiki.products.filter(item => {
+                const matchesQuery = !query || item.name.toLowerCase().includes(query) || item.brand.toLowerCase().includes(query);
+                const filterCategory = appState.wiki.filters.category === "all" || item.category === appState.wiki.filters.category;
+                const filterBrand = appState.wiki.filters.brand === "all" || item.brand === appState.wiki.filters.brand;
+                const filterFeature = appState.wiki.filters.feature === "all" || item.tags.includes(appState.wiki.filters.feature);
+                return matchesQuery && filterCategory && filterBrand && filterFeature;
+            });
+
+            elements.wikiResults.innerHTML = products.map(item => `
+                <button class="history-item" type="button" data-product="${item.id}">
+                    <div>${escapeHTML(item.name)}</div>
+                    <div class="history-meta">${escapeHTML(item.brand)} • ${escapeHTML(item.category)}</div>
+                </button>
+            `).join("") || `<div class="tile-desc">Keine Produkte gefunden.</div>`;
+
+            renderWikiFilters();
+            renderWikiDetail();
+            renderWikiAnswer();
+            renderWikiCompare();
+        }
+
+        function renderWikiFilters() {
+            const categories = new Set(appState.wiki.products.map(p => p.category).filter(Boolean));
+            const brands = new Set(appState.wiki.products.map(p => p.brand).filter(Boolean));
+            const features = new Set(appState.wiki.products.flatMap(p => p.tags || []));
+            const chips = [
+                { type: "category", value: "all", label: "Kategorie" },
+                ...Array.from(categories).map(value => ({ type: "category", value, label: value })),
+                { type: "brand", value: "all", label: "Brand" },
+                ...Array.from(brands).map(value => ({ type: "brand", value, label: value })),
+                { type: "feature", value: "all", label: "Feature" },
+                ...Array.from(features).map(value => ({ type: "feature", value, label: value }))
+            ];
+            elements.wikiFilterChips.innerHTML = chips.map(chip => {
+                const active = appState.wiki.filters[chip.type] === chip.value;
+                return `
+                    <button class="chip" type="button" data-filter="${chip.type}" data-value="${chip.value}" aria-pressed="${active}">
+                        ${escapeHTML(chip.label)}
+                    </button>
+                `;
+            }).join("");
+        }
+
+        function renderWikiDetail() {
+            const product = appState.wiki.products.find(item => item.id === appState.wiki.selectedProductId);
+            if (!product) {
+                elements.wikiDetail.innerHTML = `<div class="tile-desc">Kein Produkt ausgewählt.</div>`;
+                return;
+            }
+            const faq = appState.wiki.faq.filter(item => item.productId === product.id);
+            const notes = appState.wiki.notes.filter(item => item.productId === product.id);
+            const specs = Object.entries(product.specs || {});
+            elements.wikiDetail.innerHTML = `
+                <div class="wiki-detail-grid">
+                    <div class="diag-row">
+                        <span class="diag-key">Produkt</span>
+                        <span class="diag-value">${escapeHTML(product.name)}</span>
+                    </div>
+                    <div class="diag-row">
+                        <span class="diag-key">Brand</span>
+                        <span class="diag-value">${escapeHTML(product.brand)}</span>
+                    </div>
+                    <div class="diag-row">
+                        <span class="diag-key">Kategorie</span>
+                        <span class="diag-value">${escapeHTML(product.category)}</span>
+                    </div>
+                    <div class="history-meta">Specs</div>
+                    <div class="spec-grid">
+                        ${specs.map(([field, value]) => `<div class="spec-item">${escapeHTML(field)}: ${escapeHTML(String(value))}</div>`).join("") || `<div class="tile-desc">Keine Specs hinterlegt.</div>`}
+                    </div>
+                    <div class="history-meta">FAQ</div>
+                    <div class="pattern-list">
+                        ${faq.map(item => `<div class="pattern-item">${escapeHTML(item.question)} – ${escapeHTML(item.answer)}</div>`).join("") || `<div class="tile-desc">Keine FAQ.</div>`}
+                    </div>
+                    <div class="history-meta">Zubehör</div>
+                    <div class="tag-row">
+                        ${product.accessories.map(item => `<div class="tag-item">${escapeHTML(item)}</div>`).join("") || `<div class="tile-desc">Keine Zubehörliste.</div>`}
+                    </div>
+                    <div class="history-meta">Warnungen</div>
+                    <div class="tag-row">
+                        ${product.warnings.map(item => `<div class="tag-item">${escapeHTML(item)}</div>`).join("") || `<div class="tile-desc">Keine Warnungen.</div>`}
+                    </div>
+                    <div class="history-meta">Notizen</div>
+                    <div class="pattern-list">
+                        ${notes.map(item => `<div class="pattern-item">${escapeHTML(item.note)}</div>`).join("") || `<div class="tile-desc">Keine Notizen.</div>`}
+                    </div>
+                    <button class="btn btn-secondary" type="button" data-compare="${product.id}">Zum Vergleich</button>
+                </div>
+            `;
+        }
+
+        function renderWikiAnswer() {
+            const answer = appState.wiki.answer;
+            if (!answer) {
+                elements.wikiAnswerStatus.textContent = "–";
+                elements.wikiAnswerText.textContent = "";
+                elements.wikiCitations.innerHTML = "";
+                return;
+            }
+            elements.wikiAnswerStatus.textContent = `${answer.status} • ${answer.source}`;
+            elements.wikiAnswerText.textContent = `${answer.answer} Nächster Schritt: ${answer.nextAction}`;
+            elements.wikiCitations.innerHTML = answer.citations.map(item => `
+                <div class="pattern-item">
+                    <div>${escapeHTML(item.field)}</div>
+                    <div class="pattern-meta">${escapeHTML(item.value)} (${item.origin})</div>
+                </div>
+            `).join("") || `<div class="tile-desc">Keine Zitate.</div>`;
+        }
+
+        function renderWikiCompare() {
+            const compareItems = appState.wiki.comparisons.map(id => appState.wiki.products.find(p => p.id === id)).filter(Boolean);
+            elements.wikiCompareList.innerHTML = compareItems.map(item => `
+                <div class="history-item">
+                    <div>${escapeHTML(item.name)}</div>
+                    <div class="history-meta">${escapeHTML(item.brand)}</div>
+                </div>
+            `).join("") || `<div class="tile-desc">Kein Vergleich aktiv.</div>`;
+        }
+
+        function getIcon(iconName) {
+            const map = {
                 shield: '<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>',
                 clock: '<circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/>',
                 tag: '<path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/>',
-                info: '<circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/>',
-                users: '<path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/>'
+                info: '<circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/>'
             };
-
-            const cardsHTML = appState.cards.map(card => {
-                const safeId = String(card.id || Date.now()).replace(/[^a-zA-Z0-9_-]/g, "");
-                const colorClass = sanitizeEnum(card.ui && card.ui.color, ["success", "warning", "error"], "success");
-                const icon = iconMap[card.ui && card.ui.icon] || iconMap.info;
-                const quick = card.content && card.content.quick ? card.content.quick : {};
-                const smart = card.content && card.content.smart ? card.content.smart : {};
-                const coach = card.content && card.content.coach ? card.content.coach : {};
-                const drillList = Array.isArray(coach.drill) ? coach.drill : [];
-                return `
-                    <section class="tile card ${colorClass}">
-                        <div class="card-header">
-                            <svg class="card-icon" viewBox="0 0 24 24">${icon}</svg>
-                            <div class="card-title">Objection Handler</div>
-                            <div class="card-badge">${escapeHTML((card.meta && card.meta.pattern) || "trust")}</div>
-                        </div>
-
-                        <div class="quick-cues">
-                            <div class="cue-block">
-                                <div class="cue-label">Einstieg</div>
-                                <div class="cue-text">${escapeHTML(quick.entry || "")}</div>
-                            </div>
-                            <div class="cue-block">
-                                <div class="cue-label">Anker</div>
-                                <div class="cue-text">${escapeHTML(quick.anchor || "")}</div>
-                            </div>
-                            <div class="cue-block">
-                                <div class="cue-label">Frage</div>
-                                <div class="cue-text">${escapeHTML(quick.question || "")}</div>
-                            </div>
-                        </div>
-
-                        <div class="expandable">
-                            <button class="expand-trigger" type="button" aria-expanded="false" aria-controls="smart-${safeId}" data-target="smart-${safeId}">
-                                Smart Script
-                                <svg class="expand-icon" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>
-                            </button>
-                            <div class="expand-content" id="smart-${safeId}" hidden>
-                                <div class="cue-text spacing">${escapeHTML(smart.text || "")}</div>
-                                <div class="cue-label">Abschlussfrage</div>
-                                <div class="cue-text">${escapeHTML(smart.closing || "")}</div>
-                            </div>
-                        </div>
-
-                        <div class="expandable">
-                            <button class="expand-trigger" type="button" aria-expanded="false" aria-controls="coach-${safeId}" data-target="coach-${safeId}">
-                                Coach Mode
-                                <svg class="expand-icon" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>
-                            </button>
-                            <div class="expand-content" id="coach-${safeId}" hidden>
-                                <div class="coach-block">
-                                    <div class="coach-label">Diagnose</div>
-                                    <div class="coach-text">${escapeHTML(coach.diagnosis || "")}</div>
-                                </div>
-                                <div class="coach-block">
-                                    <div class="coach-label">Strategie</div>
-                                    <div class="coach-text">${escapeHTML(coach.strategy || "")}</div>
-                                </div>
-                                <div class="coach-block">
-                                    <div class="coach-label">Verhaltensfix</div>
-                                    <div class="coach-text">${escapeHTML(coach.behavioral_fix || "")}</div>
-                                </div>
-                                <div class="coach-block">
-                                    <div class="coach-label">Übungen</div>
-                                    <ul class="drill-list">
-                                        ${drillList.map(item => `<li>${escapeHTML(item)}</li>`).join("")}
-                                    </ul>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="card-actions">
-                            <button class="feedback-btn success" type="button" data-feedback="success" data-card="${safeId}">
-                                <svg viewBox="0 0 24 24"><path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"/></svg>
-                                Erfolgreich
-                            </button>
-                            <button class="feedback-btn error" type="button" data-feedback="fail" data-card="${safeId}">
-                                <svg viewBox="0 0 24 24"><path d="M10 15v4a3 3 0 0 0 3 3l4-9V2H5.72a2 2 0 0 0-2 1.7l-1.38 9a2 2 0 0 0 2 2.3zm7-13h2.67A2.31 2.31 0 0 1 22 4v7a2.31 2.31 0 0 1-2.33 2H17"/></svg>
-                                Nicht hilfreich
-                            </button>
-                        </div>
-                    </section>
-                `;
-            }).join("");
-
-            elements.cardsContainer.innerHTML = cardsHTML;
+            return map[iconName] || map.info;
         }
 
         function render() {
@@ -2963,7 +4399,25 @@ OUTPUT FORMAT (STRICT JSON):
             updateTrustStatus();
             updatePolicyTile();
             updateDiagnostics();
-            renderCards();
+            renderSalesFrame();
+            renderTrainingFrame();
+            renderWikiFrame();
+        }
+
+        function copyToClipboard(text) {
+            const value = text.trim();
+            if (!value) return;
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(value).then(() => showToast("Kopiert"));
+                return;
+            }
+            const textarea = document.createElement("textarea");
+            textarea.value = value;
+            document.body.appendChild(textarea);
+            textarea.select();
+            document.execCommand("copy");
+            document.body.removeChild(textarea);
+            showToast("Kopiert");
         }
 
         function setupSpeechRecognition() {
@@ -3000,9 +4454,7 @@ OUTPUT FORMAT (STRICT JSON):
         }
 
         async function encryptSecret(secret, passphrase) {
-            if (!window.crypto || !window.crypto.subtle) {
-                throw new Error("Crypto not supported");
-            }
+            if (!window.crypto || !window.crypto.subtle) throw new Error("Crypto not supported");
             const enc = new TextEncoder();
             const salt = window.crypto.getRandomValues(new Uint8Array(16));
             const iv = window.crypto.getRandomValues(new Uint8Array(12));
@@ -3023,9 +4475,7 @@ OUTPUT FORMAT (STRICT JSON):
         }
 
         async function decryptSecret(encrypted, passphrase, iv, salt) {
-            if (!window.crypto || !window.crypto.subtle) {
-                throw new Error("Crypto not supported");
-            }
+            if (!window.crypto || !window.crypto.subtle) throw new Error("Crypto not supported");
             const enc = new TextEncoder();
             const data = Uint8Array.from(atob(encrypted), c => c.charCodeAt(0));
             const ivBytes = Uint8Array.from(atob(iv), c => c.charCodeAt(0));
@@ -3047,14 +4497,8 @@ OUTPUT FORMAT (STRICT JSON):
             if (!isLocked) {
                 const passphrase = elements.passphraseInput.value.trim();
                 const keyValue = elements.apiKey.value.trim();
-                if (!passphrase) {
-                    showToast("Passphrase fehlt");
-                    return;
-                }
-                if (!keyValue) {
-                    showToast("API Key fehlt");
-                    return;
-                }
+                if (!passphrase) return showToast("Passphrase fehlt");
+                if (!keyValue) return showToast("API Key fehlt");
                 try {
                     const encrypted = await encryptSecret(keyValue, passphrase);
                     appState.settings.apiKeyEncrypted = encrypted.cipher;
@@ -3068,7 +4512,7 @@ OUTPUT FORMAT (STRICT JSON):
                     showToast("Key gesperrt");
                     await saveSettings(buildPersistedSettings());
                     updateTrustStatus();
-                } catch (error) {
+                } catch {
                     showToast("Passphrase-Lock fehlgeschlagen");
                 }
             } else {
@@ -3085,15 +4529,9 @@ OUTPUT FORMAT (STRICT JSON):
         }
 
         async function handleUnlock() {
-            if (!appState.settings.apiKeyLocked) {
-                showToast("Key ist nicht gesperrt");
-                return;
-            }
+            if (!appState.settings.apiKeyLocked) return showToast("Key ist nicht gesperrt");
             const passphrase = elements.passphraseInput.value.trim();
-            if (!passphrase) {
-                showToast("Passphrase fehlt");
-                return;
-            }
+            if (!passphrase) return showToast("Passphrase fehlt");
             try {
                 const decrypted = await decryptSecret(
                     appState.settings.apiKeyEncrypted,
@@ -3105,7 +4543,7 @@ OUTPUT FORMAT (STRICT JSON):
                 elements.lockStatus.textContent = "Key entsperrt (Session)";
                 showToast("Key entsperrt");
                 updateTrustStatus();
-            } catch (error) {
+            } catch {
                 showToast("Passphrase falsch");
             }
         }
@@ -3114,57 +4552,70 @@ OUTPUT FORMAT (STRICT JSON):
             const settings = buildPersistedSettings();
             const cases = await getAllCases();
             const logs = await getAllLogs();
+            const products = await getAllProducts();
+            const faq = await getAllFaq();
+            const notes = await getAllNotes();
+            const comparisons = await getAllComparisons();
+            const seller = await loadSellerState();
             return {
                 version: APP_VERSION,
                 exportDate: new Date().toISOString(),
                 settings,
                 cases,
-                logs
+                logs,
+                products,
+                faq,
+                notes,
+                comparisons,
+                seller
             };
         }
 
         async function importData(file) {
             const raw = await file.text();
             const parsed = JSON.parse(raw);
-            if (!parsed || typeof parsed !== "object") {
-                throw new Error("Invalid import");
-            }
+            if (!parsed || typeof parsed !== "object") throw new Error("Invalid import");
 
             const settings = sanitizeImportSettings(parsed.settings);
-            const cases = Array.isArray(parsed.cases) ? parsed.cases.map(sanitizeCaseItem).filter(Boolean) : [];
-            const logs = Array.isArray(parsed.logs) ? parsed.logs.map(sanitizeLogItem).filter(Boolean) : [];
-
             if (settings) {
                 appState.settings = { ...appState.settings, ...settings };
                 applyTheme(appState.settings.themeMode, false);
                 if (appState.settings.densityMode) {
                     applyDensity(appState.settings.densityMode, appState.settings.densityUserSet, false);
                 }
+                setFrame(appState.settings.frameMode || "sales", false);
                 await saveSettings(buildPersistedSettings());
             }
 
-            if (storage.mode === "local") {
-                const existingCases = await getAllCases();
-                const existingLogs = await getAllLogs();
-                localStorage.setItem("msos_cases", JSON.stringify([...existingCases, ...cases]));
-                localStorage.setItem("msos_logs", JSON.stringify([...existingLogs, ...logs]));
-            } else {
-                const tx = storage.db.transaction(["cases", "logs"], "readwrite");
-                const caseStore = tx.objectStore("cases");
-                cases.forEach(item => caseStore.put(item));
-                const logStore = tx.objectStore("logs");
-                logs.forEach(item => logStore.add(item));
-                await new Promise(resolve => {
-                    tx.oncomplete = () => resolve();
-                });
+            const cases = Array.isArray(parsed.cases) ? parsed.cases.map(normalizeCaseCard) : [];
+            const logs = Array.isArray(parsed.logs) ? parsed.logs : [];
+            const products = Array.isArray(parsed.products) ? parsed.products.map(normalizeProduct).filter(Boolean) : [];
+            const faq = Array.isArray(parsed.faq) ? parsed.faq.map(normalizeFaq).filter(Boolean) : [];
+            const notes = Array.isArray(parsed.notes) ? parsed.notes.map(normalizeNote).filter(Boolean) : [];
+            const comparisons = Array.isArray(parsed.comparisons)
+                ? parsed.comparisons.map(item => (typeof item === "string" ? { id: item } : item)).filter(Boolean)
+                : [];
+            const seller = parsed.seller || null;
+
+            await saveAllToStore("cases", "msos_cases", cases);
+            await saveAllToStore("logs", "msos_logs", logs);
+            await saveAllToStore("products", "msos_products", products);
+            await saveAllToStore("productFaq", "msos_product_faq", faq);
+            await saveAllToStore("productNotes", "msos_product_notes", notes);
+            await saveAllToStore("comparisons", "msos_comparisons", comparisons);
+
+            if (seller) {
+                appState.history = seller.history || [];
+                appState.favorites = seller.favorites || [];
+                appState.training = { ...appState.training, ...seller.training };
+                await saveSellerState();
             }
+            await refreshWikiData();
             await updateStats();
         }
 
         async function verifyLibraryHash(buffer) {
-            if (!window.crypto || !window.crypto.subtle) {
-                return false;
-            }
+            if (!window.crypto || !window.crypto.subtle) return false;
             const hashBuffer = await window.crypto.subtle.digest("SHA-256", buffer);
             const hashArray = Array.from(new Uint8Array(hashBuffer));
             const hashBase64 = btoa(String.fromCharCode(...hashArray));
@@ -3174,69 +4625,82 @@ OUTPUT FORMAT (STRICT JSON):
         async function syncLibrary(manual = false) {
             if (!navigator.onLine) {
                 setSyncStatus("offline", "Offline");
-                if (manual) {
-                    showToast("Offline – Sync pausiert");
-                }
+                if (manual) showToast("Offline – Sync pausiert");
                 return;
             }
             setSyncStatus("syncing", "Syncing");
             try {
-                const response = await fetch(LIBRARY_URL, {
+                const controller = new AbortController();
+                const timeout = setTimeout(() => controller.abort(), 10000);
+                const response = await fetch(MASTER_LIBRARY_URL, {
                     cache: "no-store",
                     credentials: "omit",
-                    referrerPolicy: "no-referrer"
+                    referrerPolicy: "no-referrer",
+                    signal: controller.signal
                 });
-                if (!response.ok) {
-                    throw new Error("Sync failed");
-                }
+                clearTimeout(timeout);
+                if (!response.ok) throw new Error("Sync failed");
                 const buffer = await response.arrayBuffer();
                 const hashOk = await verifyLibraryHash(buffer);
-                if (!hashOk) {
-                    throw new Error("Integrity failed");
-                }
+                if (!hashOk) throw new Error("Integrity failed");
                 const text = new TextDecoder().decode(buffer);
                 const data = JSON.parse(text);
-                if (!Array.isArray(data)) {
-                    throw new Error("Format invalid");
-                }
-                if (storage.mode === "local") {
-                    const existing = await getAllCases();
-                    const byId = new Map(existing.map(item => [item.id, item]));
-                    data.forEach(item => {
-                        const sanitized = sanitizeCaseItem(item);
-                        if (sanitized) {
-                            sanitized.isMaster = true;
-                            byId.set(sanitized.id, sanitized);
-                        }
-                    });
-                    localStorage.setItem("msos_cases", JSON.stringify(Array.from(byId.values())));
-                } else {
-                    const tx = storage.db.transaction("cases", "readwrite");
-                    const store = tx.objectStore("cases");
-                    data.forEach(item => {
-                        const sanitized = sanitizeCaseItem(item);
-                        if (sanitized) {
-                            sanitized.isMaster = true;
-                            store.put(sanitized);
-                        }
-                    });
-                    await new Promise(resolve => {
-                        tx.oncomplete = () => resolve();
-                    });
-                }
+                if (!Array.isArray(data)) throw new Error("Format invalid");
+                const normalized = data.map(normalizeCaseCard);
+                await saveAllToStore("cases", "msos_cases", normalized);
                 appState.ui.lastSync = new Date().toISOString();
+                appState.settings.lastSyncAt = appState.ui.lastSync;
+                await saveSettings(buildPersistedSettings());
                 setSyncStatus("ok", "Sync OK");
                 updateSyncTime();
                 await updateStats();
-                if (manual) {
-                    showToast("Sync abgeschlossen");
-                }
-            } catch (error) {
+                if (manual) showToast("Sync abgeschlossen");
+            } catch {
                 setSyncStatus("error", "Sync Fehler");
-                if (manual) {
-                    showToast("Sync fehlgeschlagen");
-                }
+                if (manual) showToast("Sync fehlgeschlagen");
             }
+        }
+
+        async function syncWiki(manual = false) {
+            const url = appState.settings.wikiSourceUrl;
+            if (!url) {
+                if (manual) showToast("Keine Wiki URL gesetzt");
+                return;
+            }
+            if (!navigator.onLine) {
+                if (manual) showToast("Offline – Wiki Sync pausiert");
+                return;
+            }
+            try {
+                const controller = new AbortController();
+                const timeout = setTimeout(() => controller.abort(), 10000);
+                const response = await fetch(url, { cache: "no-store", credentials: "omit", signal: controller.signal });
+                clearTimeout(timeout);
+                if (!response.ok) throw new Error("Wiki Sync failed");
+                const data = await response.json();
+                const products = Array.isArray(data.products) ? data.products.map(normalizeProduct).filter(Boolean) : (Array.isArray(data) ? data.map(normalizeProduct).filter(Boolean) : []);
+                const faq = Array.isArray(data.faq) ? data.faq.map(normalizeFaq).filter(Boolean) : [];
+                const notes = Array.isArray(data.notes) ? data.notes.map(normalizeNote).filter(Boolean) : [];
+                await saveAllToStore("products", "msos_products", products);
+                await saveAllToStore("productFaq", "msos_product_faq", faq);
+                await saveAllToStore("productNotes", "msos_product_notes", notes);
+                appState.ui.lastWikiSync = new Date().toISOString();
+                appState.settings.lastWikiSyncAt = appState.ui.lastWikiSync;
+                await saveSettings(buildPersistedSettings());
+                await refreshWikiData();
+                if (manual) showToast("Wiki Sync abgeschlossen");
+            } catch {
+                if (manual) showToast("Wiki Sync fehlgeschlagen");
+            }
+        }
+
+        async function refreshWikiData() {
+            appState.wiki.products = (await getAllProducts()).map(normalizeProduct).filter(Boolean);
+            appState.wiki.faq = (await getAllFaq()).map(normalizeFaq).filter(Boolean);
+            appState.wiki.notes = (await getAllNotes()).map(normalizeNote).filter(Boolean);
+            const comparisons = await getAllComparisons();
+            appState.wiki.comparisons = comparisons.map(item => item.id || item);
+            renderWikiFrame();
         }
 
         function setupViewportHandling() {
@@ -3268,25 +4732,18 @@ OUTPUT FORMAT (STRICT JSON):
                 resetApp();
             });
 
-            elements.settingsBtn.addEventListener("click", () => {
-                openSettings();
-            });
-
-            elements.closeSettingsBtn.addEventListener("click", () => {
-                closeModal(elements.settingsModal);
-            });
-
+            elements.settingsBtn.addEventListener("click", () => openSettings());
+            elements.closeSettingsBtn.addEventListener("click", () => closeModal(elements.settingsModal));
             elements.settingsModal.addEventListener("click", (event) => {
-                if (event.target === elements.settingsModal) {
-                    closeModal(elements.settingsModal);
-                }
+                if (event.target === elements.settingsModal) closeModal(elements.settingsModal);
+            });
+            elements.confirmModal.addEventListener("click", (event) => {
+                if (event.target === elements.confirmModal) closeModal(elements.confirmModal);
             });
 
-            elements.confirmModal.addEventListener("click", (event) => {
-                if (event.target === elements.confirmModal) {
-                    closeModal(elements.confirmModal);
-                }
-            });
+            elements.frameSalesBtn.addEventListener("click", () => setFrame("sales"));
+            elements.frameTrainingBtn.addEventListener("click", () => setFrame("training"));
+            elements.frameWikiBtn.addEventListener("click", () => setFrame("wiki"));
 
             elements.themeToggleBtn.addEventListener("click", () => {
                 const cycle = ["auto", "light", "dark"];
@@ -3301,8 +4758,13 @@ OUTPUT FORMAT (STRICT JSON):
                 applyDensity(next, true);
             });
 
-            elements.syncBtn.addEventListener("click", () => {
-                syncLibrary(true);
+            elements.syncBtn.addEventListener("click", () => syncLibrary(true));
+            elements.wikiSyncBtn.addEventListener("click", () => syncWiki(true));
+            elements.wikiClearBtn.addEventListener("click", () => {
+                appState.wiki.filters = { category: "all", brand: "all", feature: "all" };
+                appState.wiki.searchQuery = "";
+                elements.wikiSearchInput.value = "";
+                renderWikiFrame();
             });
 
             elements.stealthBtn.addEventListener("click", async () => {
@@ -3311,9 +4773,7 @@ OUTPUT FORMAT (STRICT JSON):
                     message: "Display wird abgedunkelt. Zweimal tippen oder ESC beendet den Modus.",
                     confirmLabel: "Aktivieren"
                 });
-                if (confirmed) {
-                    setStealthMode(true);
-                }
+                if (confirmed) setStealthMode(true);
             });
 
             elements.contextChips.addEventListener("click", (event) => {
@@ -3334,23 +4794,15 @@ OUTPUT FORMAT (STRICT JSON):
             elements.objectionInput.addEventListener("input", (event) => {
                 appState.objection = event.target.value;
             });
-
             elements.objectionInput.addEventListener("keydown", (event) => {
                 if (event.key === "Enter" && !event.isComposing) {
                     event.preventDefault();
                     handleObjectionSubmit();
                 }
             });
-
-            elements.submitBtn.addEventListener("click", () => {
-                handleObjectionSubmit();
-            });
-
+            elements.submitBtn.addEventListener("click", () => handleObjectionSubmit());
             elements.micBtn.addEventListener("click", () => {
-                if (!recognition) {
-                    showToast("Spracheingabe nicht unterstützt");
-                    return;
-                }
+                if (!recognition) return showToast("Spracheingabe nicht unterstützt");
                 if (elements.micBtn.classList.contains("recording")) {
                     recognition.stop();
                     return;
@@ -3360,7 +4812,20 @@ OUTPUT FORMAT (STRICT JSON):
                 recognition.start();
             });
 
-            elements.cardsContainer.addEventListener("click", (event) => {
+            elements.quickClearBtn.addEventListener("click", () => resetApp());
+            elements.quickExportBtn.addEventListener("click", async () => {
+                const data = await exportData();
+                const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+                const url = URL.createObjectURL(blob);
+                const anchor = document.createElement("a");
+                anchor.href = url;
+                anchor.download = `mehic_sales_os_export_${Date.now()}.json`;
+                anchor.click();
+                URL.revokeObjectURL(url);
+                showToast("Export abgeschlossen");
+            });
+
+            elements.salesCardContainer.addEventListener("click", (event) => {
                 const trigger = event.target.closest(".expand-trigger");
                 if (trigger) {
                     const targetId = trigger.dataset.target;
@@ -3377,10 +4842,174 @@ OUTPUT FORMAT (STRICT JSON):
                 if (feedbackBtn) {
                     const feedback = feedbackBtn.dataset.feedback;
                     const cardId = feedbackBtn.dataset.card;
+                    updateHistoryResult(cardId, feedback);
                     logEvent("feedback", { cardId, feedback });
                     showToast(feedback === "success" ? "Feedback gespeichert" : "Danke für Ihr Feedback");
+                    renderTrainingStats();
+                }
+
+                const favoriteBtn = event.target.closest(".favorite-btn");
+                if (favoriteBtn) {
+                    toggleFavorite(favoriteBtn.dataset.favorite);
+                }
+
+                const copyBtn = event.target.closest(".copy-btn");
+                if (copyBtn) {
+                    const card = getActiveCard();
+                    if (!card) return;
+                    const field = copyBtn.dataset.copy;
+                    const variant = copyBtn.dataset.variant || "neutral";
+                    const quick = card.content.quick[variant] || card.content.quick.neutral;
+                    if (field === "full") {
+                        copyToClipboard([quick.entry, quick.anchor, quick.question, quick.bridge, quick.close].join(" "));
+                    } else {
+                        copyToClipboard(quick[field] || "");
+                    }
+                }
+
+                const trainBtn = event.target.closest("[data-train]");
+                if (trainBtn) {
+                    setFrame("training");
+                    renderTrainingFrame();
                 }
             });
+
+            elements.trainingCardContainer.addEventListener("click", (event) => {
+                const copyBtn = event.target.closest(".copy-btn");
+                if (!copyBtn) return;
+                const card = getActiveCard();
+                if (!card) return;
+                const field = copyBtn.dataset.copy;
+                const variant = copyBtn.dataset.variant || "neutral";
+                const quick = card.content.quick[variant] || card.content.quick.neutral;
+                if (field === "full") {
+                    copyToClipboard([quick.entry, quick.anchor, quick.question, quick.bridge, quick.close].join(" "));
+                } else {
+                    copyToClipboard(quick[field] || "");
+                }
+            });
+
+            elements.historyList.addEventListener("click", (event) => {
+                const item = event.target.closest("[data-history]");
+                if (!item) return;
+                const entry = appState.history.find(h => h.id === item.dataset.history);
+                if (entry && entry.card) {
+                    setActiveCard(normalizeCaseCard(entry.card), { addToHistory: false });
+                    render();
+                }
+            });
+
+            elements.favoriteList.addEventListener("click", (event) => {
+                const item = event.target.closest("[data-favorite-item]");
+                if (!item) return;
+                const entry = appState.history.find(h => h.cardId === item.dataset.favoriteItem);
+                if (entry && entry.card) {
+                    setActiveCard(normalizeCaseCard(entry.card), { addToHistory: false });
+                    render();
+                }
+            });
+
+            [elements.variantSoftBtn, elements.variantNeutralBtn, elements.variantChallengerBtn].forEach(btn => {
+                btn.addEventListener("click", () => {
+                    appState.training.variant = btn.dataset.variant;
+                    renderTrainingFrame();
+                });
+            });
+
+            elements.roleplayBtn.addEventListener("click", () => {
+                const card = getActiveCard();
+                if (!card) return;
+                elements.roleplayPrompt.textContent = `Kunde sagt: "${card.content.quick.neutral.question}"`;
+                elements.roleplayResponse.textContent = "Antwort wählen.";
+            });
+
+            [elements.roleplaySoftBtn, elements.roleplayNeutralBtn, elements.roleplayChallengerBtn].forEach(btn => {
+                btn.addEventListener("click", () => {
+                    const card = getActiveCard();
+                    if (!card) return;
+                    const variant = btn.dataset.variant;
+                    const quick = card.content.quick[variant];
+                    elements.roleplayResponse.textContent = `${quick.entry} ${quick.anchor} ${quick.question} ${quick.bridge} ${quick.close}`;
+                    logEvent("roleplay_response", { variant, cardId: card.id });
+                });
+            });
+
+            elements.nextDrillBtn.addEventListener("click", () => {
+                appState.training.drillIndex += 1;
+                renderTrainingFrame();
+            });
+
+            elements.drillDoneBtn.addEventListener("click", () => {
+                const today = new Date().toISOString().slice(0, 10);
+                if (appState.training.lastSessionDate === today) {
+                    appState.training.streak += 1;
+                } else {
+                    appState.training.streak = 1;
+                    appState.training.lastSessionDate = today;
+                }
+                appState.training.sessions += 1;
+                saveSellerState();
+                renderTrainingStats();
+                showToast("Drill Session gespeichert");
+            });
+
+            elements.ratingButtons.addEventListener("click", (event) => {
+                const button = event.target.closest(".rating-btn");
+                if (!button) return;
+                const rating = Number(button.dataset.rating);
+                appState.training.ratingSum += rating;
+                appState.training.ratingCount += 1;
+                saveSellerState();
+                showToast("Rating gespeichert");
+            });
+
+            elements.patternFilter.addEventListener("change", (event) => {
+                appState.training.selectedPattern = event.target.value;
+                renderPatternLibrary();
+            });
+
+            elements.wikiSearchInput.addEventListener("input", (event) => {
+                appState.wiki.searchQuery = event.target.value;
+                renderWikiFrame();
+            });
+
+            elements.wikiFilterChips.addEventListener("click", (event) => {
+                const chip = event.target.closest(".chip");
+                if (!chip) return;
+                const type = chip.dataset.filter;
+                const value = chip.dataset.value;
+                appState.wiki.filters[type] = value;
+                renderWikiFrame();
+            });
+
+            elements.wikiResults.addEventListener("click", (event) => {
+                const item = event.target.closest("[data-product]");
+                if (!item) return;
+                appState.wiki.selectedProductId = item.dataset.product;
+                renderWikiDetail();
+            });
+
+            elements.wikiDetail.addEventListener("click", (event) => {
+                const btn = event.target.closest("[data-compare]");
+                if (!btn) return;
+                const id = btn.dataset.compare;
+                const index = appState.wiki.comparisons.indexOf(id);
+                if (index > -1) {
+                    appState.wiki.comparisons.splice(index, 1);
+                } else {
+                    appState.wiki.comparisons.push(id);
+                }
+                saveAllToStore("comparisons", "msos_comparisons", appState.wiki.comparisons.map(idValue => ({ id: idValue })));
+                renderWikiCompare();
+            });
+
+            elements.wikiQuestionInput.addEventListener("keydown", (event) => {
+                if (event.key === "Enter") {
+                    event.preventDefault();
+                    handleWikiQuestion();
+                }
+            });
+            elements.wikiQuestionBtn.addEventListener("click", () => handleWikiQuestion());
 
             elements.apiProvider.addEventListener("change", () => {
                 const previous = appState.settings.apiProvider;
@@ -3392,18 +5021,13 @@ OUTPUT FORMAT (STRICT JSON):
                 }
             });
 
-            elements.lockToggleBtn.addEventListener("click", () => {
-                handleLockToggle();
-            });
-
-            elements.unlockBtn.addEventListener("click", () => {
-                handleUnlock();
-            });
+            elements.lockToggleBtn.addEventListener("click", () => handleLockToggle());
+            elements.unlockBtn.addEventListener("click", () => handleUnlock());
 
             elements.exportBtn.addEventListener("click", async () => {
                 const confirmed = await confirmAction({
                     title: "Export starten?",
-                    message: "Export enthält Settings, Cases und Logs. API Key nur, wenn nicht gesperrt.",
+                    message: "Export enthält Settings, Cases, Logs und Wiki.",
                     confirmLabel: "Exportieren"
                 });
                 if (!confirmed) return;
@@ -3428,7 +5052,7 @@ OUTPUT FORMAT (STRICT JSON):
                 if (!file) return;
                 const confirmed = await confirmAction({
                     title: "Import starten?",
-                    message: "Settings werden überschrieben, Cases/Logs hinzugefügt.",
+                    message: "Settings werden überschrieben, Daten hinzugefügt.",
                     confirmLabel: "Importieren"
                 });
                 if (!confirmed) return;
@@ -3436,7 +5060,7 @@ OUTPUT FORMAT (STRICT JSON):
                     await importData(file);
                     showToast("Import abgeschlossen");
                     render();
-                } catch (error) {
+                } catch {
                     showToast("Import fehlgeschlagen");
                 }
             });
@@ -3444,7 +5068,7 @@ OUTPUT FORMAT (STRICT JSON):
             elements.clearBtn.addEventListener("click", async () => {
                 const confirmed = await confirmAction({
                     title: "Alle Daten löschen?",
-                    message: "Cases und Logs werden dauerhaft entfernt. Dieser Schritt ist irreversibel.",
+                    message: "Cases, Logs und Wiki werden dauerhaft entfernt.",
                     confirmLabel: "Löschen"
                 });
                 if (!confirmed) return;
@@ -3460,7 +5084,7 @@ OUTPUT FORMAT (STRICT JSON):
                 const proxyValue = elements.proxyUrl.value.trim();
                 const proxyCheck = validateProxyUrl(proxyValue);
                 if (proxyValue && !proxyCheck.ok) {
-                    showToast("Proxy nur Same-Origin erlaubt");
+                    showToast("Proxy nicht erlaubt");
                     appState.settings.proxyUrl = "";
                     elements.proxyUrl.value = "";
                 } else {
@@ -3468,9 +5092,11 @@ OUTPUT FORMAT (STRICT JSON):
                 }
                 appState.settings.department = elements.department.value;
                 appState.settings.storePolicy = sanitizeString(elements.storePolicy.value, 400);
+                appState.settings.sessionOnlyKey = elements.sessionOnlyKey.checked;
                 if (!appState.settings.apiKeyLocked) {
                     appState.settings.apiKey = sanitizeString(elements.apiKey.value, 200);
                 }
+                appState.settings.wikiSourceUrl = sanitizeString(elements.wikiSourceUrl.value, 200);
                 const themeMode = document.querySelector("input[name='themeMode']:checked");
                 const densityMode = document.querySelector("input[name='densityMode']:checked");
                 if (themeMode) applyTheme(themeMode.value, false);
@@ -3486,7 +5112,6 @@ OUTPUT FORMAT (STRICT JSON):
             elements.themeAuto.addEventListener("change", () => applyTheme("auto"));
             elements.themeLight.addEventListener("change", () => applyTheme("light"));
             elements.themeDark.addEventListener("change", () => applyTheme("dark"));
-
             elements.densityCompact.addEventListener("change", () => applyDensity("compact", true));
             elements.densityComfortable.addEventListener("change", () => applyDensity("comfortable", true));
 
@@ -3503,9 +5128,7 @@ OUTPUT FORMAT (STRICT JSON):
                         closeModal(elements.settingsModal);
                         return;
                     }
-                    if (appState.stealthMode) {
-                        setStealthMode(false);
-                    }
+                    if (appState.stealthMode) setStealthMode(false);
                 }
 
                 if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "k") {
@@ -3528,6 +5151,18 @@ OUTPUT FORMAT (STRICT JSON):
                     event.preventDefault();
                     openSettings();
                 }
+                if (event.altKey && event.key === "1") {
+                    event.preventDefault();
+                    setFrame("sales");
+                }
+                if (event.altKey && event.key === "2") {
+                    event.preventDefault();
+                    setFrame("training");
+                }
+                if (event.altKey && event.key === "3") {
+                    event.preventDefault();
+                    setFrame("wiki");
+                }
             });
 
             window.addEventListener("popstate", () => {
@@ -3538,16 +5173,12 @@ OUTPUT FORMAT (STRICT JSON):
                 const activeModalId = modalStack[modalStack.length - 1];
                 if (activeModalId) {
                     const activeModal = document.getElementById(activeModalId);
-                    if (activeModal) {
-                        closeModal(activeModal, true);
-                    }
+                    if (activeModal) closeModal(activeModal, true);
                 }
             });
 
             const themeListener = () => {
-                if (appState.settings.themeMode === "auto") {
-                    applyTheme("auto", false);
-                }
+                if (appState.settings.themeMode === "auto") applyTheme("auto", false);
             };
             if (themeMedia.addEventListener) {
                 themeMedia.addEventListener("change", themeListener);
@@ -3555,9 +5186,7 @@ OUTPUT FORMAT (STRICT JSON):
                 themeMedia.addListener(themeListener);
             }
 
-            const motionListener = () => {
-                updateTrustStatus();
-            };
+            const motionListener = () => updateTrustStatus();
             if (reduceMotionMedia.addEventListener) {
                 reduceMotionMedia.addEventListener("change", motionListener);
             } else if (reduceMotionMedia.addListener) {
@@ -3565,9 +5194,7 @@ OUTPUT FORMAT (STRICT JSON):
             }
 
             window.addEventListener("resize", () => {
-                if (densityResizeRaf) {
-                    cancelAnimationFrame(densityResizeRaf);
-                }
+                if (densityResizeRaf) cancelAnimationFrame(densityResizeRaf);
                 densityResizeRaf = requestAnimationFrame(() => {
                     if (!appState.settings.densityUserSet) {
                         const nextDensity = computeDensity(window.innerWidth);
@@ -3587,17 +5214,22 @@ OUTPUT FORMAT (STRICT JSON):
             elements.proxyUrl.value = appState.settings.proxyUrl;
             elements.department.value = appState.settings.department;
             elements.storePolicy.value = appState.settings.storePolicy;
+            elements.sessionOnlyKey.checked = appState.settings.sessionOnlyKey;
+            elements.wikiSourceUrl.value = appState.settings.wikiSourceUrl;
             elements.lockStatus.textContent = appState.settings.apiKeyLocked ? "Lock aktiv" : "Lock deaktiviert";
             elements.lockToggleBtn.textContent = appState.settings.apiKeyLocked ? "Passphrase-Lock deaktivieren" : "Passphrase-Lock aktivieren";
-
             elements.themeAuto.checked = appState.settings.themeMode === "auto";
             elements.themeLight.checked = appState.settings.themeMode === "light";
             elements.themeDark.checked = appState.settings.themeMode === "dark";
-
             elements.densityCompact.checked = appState.settings.densityMode === "compact";
             elements.densityComfortable.checked = appState.settings.densityMode === "comfortable";
-
             openModal(elements.settingsModal);
+        }
+
+        async function handleWikiQuestion() {
+            const question = elements.wikiQuestionInput.value;
+            appState.wiki.answer = await answerProductQuestion(question);
+            renderWikiAnswer();
         }
 
         function setupWakeLockReacquisition() {
@@ -3614,7 +5246,7 @@ OUTPUT FORMAT (STRICT JSON):
             if (!("wakeLock" in navigator)) return;
             try {
                 wakeLock = await navigator.wakeLock.request("screen");
-            } catch (error) {
+            } catch {
                 wakeLock = null;
             }
         }
@@ -3627,10 +5259,24 @@ OUTPUT FORMAT (STRICT JSON):
             if (savedSettings) {
                 appState.settings = { ...appState.settings, ...savedSettings };
             }
+            if (appState.settings.lastSyncAt) {
+                appState.ui.lastSync = appState.settings.lastSyncAt;
+                updateSyncTime();
+            }
+            if (appState.settings.lastWikiSyncAt) {
+                appState.ui.lastWikiSync = appState.settings.lastWikiSyncAt;
+            }
+            const seller = await loadSellerState();
+            if (seller) {
+                appState.history = seller.history || [];
+                appState.favorites = seller.favorites || [];
+                appState.training = { ...appState.training, ...seller.training };
+            }
 
             const preferredDensity = appState.settings.densityMode || computeDensity(window.innerWidth);
             applyDensity(preferredDensity, appState.settings.densityUserSet, false);
             applyTheme(appState.settings.themeMode, false);
+            setFrame(appState.settings.frameMode || "sales", false);
 
             setupEvents();
             setupSpeechRecognition();
@@ -3641,6 +5287,7 @@ OUTPUT FORMAT (STRICT JSON):
             updateOnlineStatus();
             updatePolicyTile();
             updateTrustStatus();
+            await refreshWikiData();
             render();
             await updateStats();
             requestWakeLock();
@@ -3650,6 +5297,10 @@ OUTPUT FORMAT (STRICT JSON):
         }
 
         init();
+
+        // QA GATES:
+        // Device Matrix: iOS Safari 17+, Android Chrome/Samsung Internet, Desktop Chrome/Edge/Firefox/Safari.
+        // Test Cases: Theme toggle, Density, Frame switch, Offline, DB denied mode, AI parse fail, Product lookup, Back button modal, Keyboard shortcuts, Reduce-motion.
     </script>
 </body>
 </html>
