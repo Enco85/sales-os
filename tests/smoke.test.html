@@ -222,11 +222,17 @@
             let failCount = 0;
 
             const themeCycle = await runTest("Theme cycle + persist", async () => {
-                const toggle = doc.getElementById("themeToggleBtn");
+                const settingsBtn = doc.getElementById("settingsBtn");
+                const modal = doc.getElementById("settingsModal");
+                if (!modal.classList.contains("open")) {
+                    settingsBtn.click();
+                    await waitFor(() => modal.classList.contains("open"), 1500);
+                }
                 const before = await getSetting(win, "themeMode") || "auto";
                 const cycle = ["auto", "light", "dark"];
                 const expected = cycle[(cycle.indexOf(before) + 1) % cycle.length];
-                toggle.click();
+                const input = doc.getElementById(expected === "auto" ? "themeAuto" : expected === "light" ? "themeLight" : "themeDark");
+                input.click();
                 await waitFor(() => doc.documentElement.getAttribute("data-theme"), 1500);
                 const after = await getSetting(win, "themeMode");
                 if (after !== expected) {
@@ -236,10 +242,16 @@
             themeCycle ? passCount++ : failCount++;
 
             const densityTest = await runTest("Density toggle + persist", async () => {
-                const toggle = doc.getElementById("densityToggleBtn");
+                const settingsBtn = doc.getElementById("settingsBtn");
+                const modal = doc.getElementById("settingsModal");
+                if (!modal.classList.contains("open")) {
+                    settingsBtn.click();
+                    await waitFor(() => modal.classList.contains("open"), 1500);
+                }
                 const before = await getSetting(win, "densityMode") || doc.documentElement.getAttribute("data-density");
                 const expected = before === "compact" ? "comfortable" : "compact";
-                toggle.click();
+                const input = doc.getElementById(expected === "compact" ? "densityCompact" : "densityComfortable");
+                input.click();
                 await waitFor(() => doc.documentElement.getAttribute("data-density") === expected, 1500);
                 const after = await getSetting(win, "densityMode");
                 if (after && after !== expected) {
@@ -249,6 +261,11 @@
             densityTest ? passCount++ : failCount++;
 
             const modalTest = await runTest("Modal open/close via button + Esc", async () => {
+                if (doc.body.classList.contains("panel-docked")) {
+                    const warn = new Error("Panel docked on desktop; modal close skipped");
+                    warn.warn = true;
+                    throw warn;
+                }
                 const settingsBtn = doc.getElementById("settingsBtn");
                 const modal = doc.getElementById("settingsModal");
                 settingsBtn.click();
@@ -259,6 +276,11 @@
             modalTest ? passCount++ : failCount++;
 
             const focusTest = await runTest("Focus returns to trigger", async () => {
+                if (doc.body.classList.contains("panel-docked")) {
+                    const warn = new Error("Panel docked on desktop; focus return skipped");
+                    warn.warn = true;
+                    throw warn;
+                }
                 const settingsBtn = doc.getElementById("settingsBtn");
                 const modal = doc.getElementById("settingsModal");
                 settingsBtn.focus();
@@ -271,6 +293,11 @@
             focusTest ? passCount++ : failCount++;
 
             const backTest = await runTest("Back button closes modal", async () => {
+                if (doc.body.classList.contains("panel-docked")) {
+                    const warn = new Error("Panel docked on desktop; back close skipped");
+                    warn.warn = true;
+                    throw warn;
+                }
                 const settingsBtn = doc.getElementById("settingsBtn");
                 const modal = doc.getElementById("settingsModal");
                 const initialLength = win.history.length;

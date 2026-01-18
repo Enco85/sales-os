@@ -35,7 +35,7 @@ Fix: CSP Level 1 (local) + Level 2 Hashes dokumentiert. Default-Deny.
 Patch Snippet (copy paste ready):
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; base-uri 'self'; form-action 'self'; img-src 'self' data:; font-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline'; connect-src 'self' https://api.openai.com https://api.groq.com; frame-ancestors 'none'; object-src 'none';">
 <!-- CSP Level 2 (Enterprise, hash-based, no unsafe-inline):
-    Content-Security-Policy: default-src 'none'; base-uri 'self'; form-action 'self'; img-src 'self' data:; font-src 'self'; style-src 'self' 'sha256-N9nOv4+yzMHGx8FFrGAJrUoCI4/o3Qngb44XWFPh5Ks='; script-src 'self' 'sha256-UzCqZTBr+gncfJKcj2qFP/0KsRZccruoO5cgRQJyN5o='; connect-src 'self' https://api.openai.com https://api.groq.com; frame-ancestors 'none'; object-src 'none';
+    Content-Security-Policy: default-src 'none'; base-uri 'self'; form-action 'self'; img-src 'self' data:; font-src 'self'; style-src 'self' 'sha256-BdjvAHtpvim+egIHSc4mC5SKYlKIkHQ/9jkZcjZfsjA='; script-src 'self' 'sha256-Aac9ZaBTPbNgjQmg22SKZrXebbkx68UjIRu7YiwuhXU='; connect-src 'self' https://api.openai.com https://api.groq.com; frame-ancestors 'none'; object-src 'none';
      Hash calculation details: see REPORT.md
 -->
 Regression Risk: Niedrig (nur CSP-Tuning).
@@ -294,7 +294,7 @@ BLOCK 2: PATCH HTML komplett
     <meta name="referrer" content="no-referrer">
     <meta http-equiv="Content-Security-Policy" content="default-src 'none'; base-uri 'self'; form-action 'self'; img-src 'self' data:; font-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline'; connect-src 'self' https://api.openai.com https://api.groq.com; frame-ancestors 'none'; object-src 'none';">
     <!-- CSP Level 2 (Enterprise, hash-based, no unsafe-inline):
-        Content-Security-Policy: default-src 'none'; base-uri 'self'; form-action 'self'; img-src 'self' data:; font-src 'self'; style-src 'self' 'sha256-N9nOv4+yzMHGx8FFrGAJrUoCI4/o3Qngb44XWFPh5Ks='; script-src 'self' 'sha256-UzCqZTBr+gncfJKcj2qFP/0KsRZccruoO5cgRQJyN5o='; connect-src 'self' https://api.openai.com https://api.groq.com; frame-ancestors 'none'; object-src 'none';
+        Content-Security-Policy: default-src 'none'; base-uri 'self'; form-action 'self'; img-src 'self' data:; font-src 'self'; style-src 'self' 'sha256-BdjvAHtpvim+egIHSc4mC5SKYlKIkHQ/9jkZcjZfsjA='; script-src 'self' 'sha256-Aac9ZaBTPbNgjQmg22SKZrXebbkx68UjIRu7YiwuhXU='; connect-src 'self' https://api.openai.com https://api.groq.com; frame-ancestors 'none'; object-src 'none';
          Hash calculation details: see REPORT.md
     -->
     <title>MEHIC SALES OS — Enterprise RC 2026</title>

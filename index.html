@@ -1,12 +1,12 @@
 <!DOCTYPE html>
 <!--
 Executive Summary:
-- Drei Frames (Verkauf, Training, Wiki) mit persistenter Navigation und Offline-First Datastore.
-- Sales Engine liefert Quick Cues, Attach und Next Step mit Compliance-Guardrails.
-- Training Mode mit Drill, Roleplay, KPI-Übersicht und Pattern Library.
-- Produkt-Wiki erzwingt Wiki-Quellen, AI nur als unsicher markiert.
-- Security: CSP Level 1/2 Guidance, Proxy-Whitelist, Session-only Keys, XSS-harter Render.
-- A11y & Mobile: Fokus-Management, große Tap Targets, 100dvh & VisualViewport.
+- Minimal-Header mit Status-Dot und Quick-Panel-Zugriff für Retail-Speed.
+- Sales First: Hero-Input, Kontext-Chips, sofortige Antwortkarten.
+- Quick Panel bündelt Modus, Theme/Density, Datenaktionen, Danger Zone.
+- Training Frame als KPI + Drill mit Top-3-Schwächen und Verlauf.
+- Wiki erzwingt Datenblatt-Check, keine erfundenen Specs.
+- Security & A11y bleiben aktiv (CSP, Focus, Tap Targets, Offline).
 -->
 <html lang="de" data-theme="light" data-density="comfortable" data-debug="false" data-frame="sales">
 <head>
@@ -19,7 +19,7 @@ Executive Summary:
     <meta name="referrer" content="no-referrer">
     <meta http-equiv="Content-Security-Policy" content="default-src 'none'; base-uri 'self'; form-action 'self'; img-src 'self' data:; font-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline'; connect-src 'self' https://api.openai.com https://api.groq.com; frame-ancestors 'none'; object-src 'none';">
     <!-- CSP Level 2 (Enterprise, hash-based, no unsafe-inline):
-         Content-Security-Policy: default-src 'none'; base-uri 'self'; form-action 'self'; img-src 'self' data:; font-src 'self'; style-src 'self' 'sha256-N9nOv4+yzMHGx8FFrGAJrUoCI4/o3Qngb44XWFPh5Ks='; script-src 'self' 'sha256-UzCqZTBr+gncfJKcj2qFP/0KsRZccruoO5cgRQJyN5o='; connect-src 'self' https://api.openai.com https://api.groq.com; frame-ancestors 'none'; object-src 'none';
+         Content-Security-Policy: default-src 'none'; base-uri 'self'; form-action 'self'; img-src 'self' data:; font-src 'self'; style-src 'self' 'sha256-BdjvAHtpvim+egIHSc4mC5SKYlKIkHQ/9jkZcjZfsjA='; script-src 'self' 'sha256-Aac9ZaBTPbNgjQmg22SKZrXebbkx68UjIRu7YiwuhXU='; connect-src 'self' https://api.openai.com https://api.groq.com; frame-ancestors 'none'; object-src 'none';
          Hash calculation details: see REPORT.md
     -->
     <title>MEHIC SALES OS — Enterprise RC 2026</title>
@@ -101,7 +101,8 @@ Executive Summary:
             --safe-right: env(safe-area-inset-right);
 
             --keyboard-offset: 0px;
-            --control-bar-height: 140px;
+            --control-bar-height: 0px;
+            --panel-width: 360px;
         }
 
         html[data-theme="dark"] {
@@ -241,11 +242,11 @@ Executive Summary:
             position: sticky;
             top: 0;
             z-index: 200;
-            display: flex;
+            display: grid;
+            grid-template-columns: auto 1fr auto;
             align-items: center;
-            justify-content: space-between;
-            gap: var(--space-4);
-            padding: calc(var(--space-4) + var(--safe-top)) calc(var(--space-6) + var(--safe-right)) var(--space-4) calc(var(--space-6) + var(--safe-left));
+            gap: var(--space-3);
+            padding: calc(var(--space-3) + var(--safe-top)) calc(var(--space-5) + var(--safe-right)) var(--space-3) calc(var(--space-5) + var(--safe-left));
             background: var(--color-glass);
             border-bottom: 1px solid var(--color-divider);
             box-shadow: var(--shadow-1);
@@ -253,21 +254,33 @@ Executive Summary:
             -webkit-backdrop-filter: blur(18px);
         }
 
-        .logo-container {
+        .header-left {
             display: flex;
             align-items: center;
             gap: var(--space-3);
         }
 
+        .header-center {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .logo-container {
+            display: flex;
+            align-items: center;
+            gap: var(--space-2);
+        }
+
         .logo-svg {
-            width: 44px;
-            height: 44px;
+            width: 32px;
+            height: 32px;
         }
 
         .logo-text {
-            font-size: 18px;
+            font-size: 14px;
             font-weight: 800;
-            letter-spacing: -0.3px;
+            letter-spacing: 0.4px;
             color: var(--color-text-primary);
         }
 
@@ -277,11 +290,7 @@ Executive Summary:
         }
 
         .header-actions {
-            display: flex;
-            align-items: center;
-            gap: var(--space-2);
-            flex-wrap: wrap;
-            justify-content: flex-end;
+            display: none;
         }
 
         .segment-control {
@@ -316,15 +325,15 @@ Executive Summary:
             display: inline-flex;
             align-items: center;
             gap: var(--space-2);
-            padding: 6px 12px;
+            padding: 4px 10px;
             border-radius: var(--radius-pill);
             font-size: 12px;
             font-weight: 700;
             text-transform: uppercase;
             letter-spacing: 0.6px;
-            background: var(--color-surface);
+            background: transparent;
             border: 1px solid var(--color-border);
-            min-height: var(--tap-min);
+            min-height: 32px;
         }
 
         .status-pill[data-status="online"] .status-dot {
@@ -335,14 +344,37 @@ Executive Summary:
             background: var(--color-danger);
         }
 
+        .status-pill[data-status="syncing"] .status-dot {
+            background: var(--color-warning);
+        }
+
+        .status-pill[data-status="error"] .status-dot {
+            background: var(--color-danger);
+        }
+
         .status-dot {
             width: 10px;
             height: 10px;
             border-radius: 50%;
         }
 
+        @keyframes statusPulse {
+            0%, 100% { transform: scale(1); opacity: 0.7; }
+            50% { transform: scale(1.2); opacity: 1; }
+        }
+
+        .status-pill[data-status="syncing"] .status-dot {
+            animation: statusPulse 1.2s var(--easing-standard) infinite;
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            .status-pill[data-status="syncing"] .status-dot {
+                animation: none;
+            }
+        }
+
         .dept-badge {
-            padding: 6px 12px;
+            padding: 4px 10px;
             border-radius: var(--radius-pill);
             font-size: 12px;
             font-weight: 800;
@@ -350,7 +382,7 @@ Executive Summary:
             letter-spacing: 0.8px;
             background: var(--color-accent);
             color: #FFFFFF;
-            min-height: var(--tap-min);
+            min-height: 32px;
             display: inline-flex;
             align-items: center;
             justify-content: center;
@@ -443,11 +475,15 @@ Executive Summary:
             display: flex;
         }
 
+        body.panel-docked .offline-banner {
+            padding-right: calc(var(--panel-width) + var(--space-5));
+        }
+
         .stage {
             flex: 1;
             overflow-y: auto;
             padding: var(--space-6);
-            padding-bottom: calc(var(--control-bar-height) + var(--keyboard-offset) + var(--space-6) + var(--safe-bottom));
+            padding-bottom: calc(var(--space-6) + var(--safe-bottom));
             overscroll-behavior: contain;
         }
 
@@ -472,6 +508,10 @@ Executive Summary:
         html[data-frame="training"] #trainingFrame,
         html[data-frame="wiki"] #wikiFrame {
             display: block;
+        }
+
+        .sales-frame > * + * {
+            margin-top: var(--space-4);
         }
 
         html[data-frame="sales"] .training-only,
@@ -1120,20 +1160,10 @@ Executive Summary:
             100% { background-position: -200% 0; }
         }
 
-        .control-bar {
-            position: fixed;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            z-index: 300;
-            padding: var(--control-bar-padding);
-            padding-bottom: calc(var(--control-bar-padding) + var(--safe-bottom));
-            background: var(--color-glass);
-            border-top: 1px solid var(--color-divider);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-            box-shadow: var(--shadow-2);
-            transform: translateY(calc(-1 * var(--keyboard-offset)));
+        .sales-hero {
+            border: 1px solid var(--color-border);
+            background: var(--color-surface);
+            box-shadow: var(--shadow-1);
         }
 
         .context-chips {
@@ -1141,7 +1171,7 @@ Executive Summary:
             gap: var(--space-2);
             overflow-x: auto;
             padding-bottom: var(--space-2);
-            margin-bottom: var(--space-3);
+            margin-top: var(--space-3);
             scrollbar-width: none;
         }
 
@@ -1186,6 +1216,27 @@ Executive Summary:
             align-items: center;
         }
 
+        .hero-input {
+            margin-top: var(--space-4);
+        }
+
+        .hero-submit {
+            min-width: 180px;
+            min-height: var(--input-height);
+            justify-content: center;
+            padding: 14px 18px;
+        }
+
+        @media (max-width: 720px) {
+            .hero-input {
+                grid-template-columns: 1fr;
+            }
+
+            .hero-submit {
+                width: 100%;
+            }
+        }
+
         .control-actions {
             display: none;
             gap: var(--space-2);
@@ -1217,6 +1268,10 @@ Executive Summary:
             border: 1px solid var(--color-border);
             background: var(--color-surface);
             font-size: 15px;
+        }
+
+        .sales-hero .input-field {
+            font-size: 16px;
         }
 
         .input-field:focus-visible {
@@ -1290,6 +1345,110 @@ Executive Summary:
             border: 1px solid var(--color-border);
         }
 
+        .quick-panel {
+            align-items: flex-end;
+            justify-content: center;
+            padding: 0;
+        }
+
+        .quick-panel .modal-content {
+            width: 100%;
+            max-width: 640px;
+            border-radius: 20px 20px 0 0;
+            max-height: 85vh;
+            padding: var(--space-5);
+        }
+
+        .panel-handle {
+            width: 52px;
+            height: 4px;
+            border-radius: 999px;
+            background: var(--color-border);
+            margin: 0 auto var(--space-4);
+        }
+
+        .panel-section {
+            margin-bottom: var(--space-5);
+            display: grid;
+            gap: var(--space-3);
+        }
+
+        .panel-title {
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.6px;
+            font-weight: 800;
+            color: var(--color-text-secondary);
+        }
+
+        .panel-divider {
+            height: 1px;
+            background: var(--color-divider);
+        }
+
+        .panel-mode .segment-control {
+            width: 100%;
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: var(--space-2);
+            padding: 6px;
+        }
+
+        .panel-mode .segment-btn {
+            min-height: var(--tap-min);
+            text-align: center;
+        }
+
+        .panel-danger {
+            border: 1px solid rgba(220, 38, 38, 0.3);
+            background: rgba(220, 38, 38, 0.06);
+            padding: var(--space-4);
+            border-radius: var(--radius-2);
+        }
+
+        .panel-advanced summary {
+            cursor: pointer;
+            font-weight: 700;
+            padding: var(--space-2) 0;
+        }
+
+        @media (min-width: 900px) {
+            .panel-handle {
+                display: none;
+            }
+
+            .quick-panel {
+                align-items: stretch;
+                justify-content: flex-end;
+            }
+
+            .quick-panel .modal-content {
+                width: var(--panel-width);
+                max-width: var(--panel-width);
+                height: 100%;
+                max-height: 100vh;
+                border-radius: 0;
+                padding: var(--space-5);
+            }
+        }
+
+        @media (min-width: 1280px) {
+            body.panel-docked .stage,
+            body.panel-docked .header {
+                padding-right: calc(var(--panel-width) + var(--space-5));
+            }
+
+            body.panel-docked .quick-panel {
+                display: flex;
+                background: transparent;
+                pointer-events: none;
+            }
+
+            body.panel-docked .quick-panel .modal-content {
+                pointer-events: auto;
+            }
+        }
+
         .modal-header {
             display: flex;
             align-items: center;
@@ -1312,6 +1471,17 @@ Executive Summary:
             display: inline-flex;
             align-items: center;
             justify-content: center;
+        }
+
+        .confirm-extra {
+            margin-top: var(--space-4);
+            display: grid;
+            gap: var(--space-2);
+        }
+
+        .btn.hold-active {
+            opacity: 0.7;
+            transform: scale(0.98);
         }
 
         .form-group {
@@ -1463,7 +1633,7 @@ Executive Summary:
 
         .toast {
             position: fixed;
-            bottom: calc(var(--control-bar-height) + var(--space-4));
+            bottom: calc(var(--safe-bottom) + var(--space-4));
             left: 50%;
             transform: translateX(-50%) translateY(20px);
             opacity: 0;
@@ -1630,71 +1800,35 @@ Executive Summary:
     </div>
 
     <header class="header" id="header">
-        <div class="logo-container" aria-label="MEHIC SALES OS">
-            <svg class="logo-svg" viewBox="0 0 100 100" fill="none" aria-hidden="true">
-                <defs>
-                    <linearGradient id="logoGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                        <stop offset="0%" stop-color="#E3000F" />
-                        <stop offset="100%" stop-color="#C70010" />
-                    </linearGradient>
-                </defs>
-                <path d="M20 80 L20 20 L50 50 L80 20 L80 80" stroke="url(#logoGrad)" stroke-width="8" stroke-linecap="round" stroke-linejoin="round" fill="none" opacity="0.9"/>
-                <circle cx="50" cy="50" r="8" fill="url(#logoGrad)" opacity="0.8"/>
-            </svg>
-            <div class="logo-text">MEHIC SALES <span>OS</span></div>
+        <div class="header-left">
+            <div class="logo-container" aria-label="MEHIC SALES OS">
+                <svg class="logo-svg" viewBox="0 0 100 100" fill="none" aria-hidden="true">
+                    <defs>
+                        <linearGradient id="logoGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" stop-color="#E3000F" />
+                            <stop offset="100%" stop-color="#C70010" />
+                        </linearGradient>
+                    </defs>
+                    <path d="M20 80 L20 20 L50 50 L80 20 L80 80" stroke="url(#logoGrad)" stroke-width="8" stroke-linecap="round" stroke-linejoin="round" fill="none" opacity="0.9"/>
+                    <circle cx="50" cy="50" r="8" fill="url(#logoGrad)" opacity="0.8"/>
+                </svg>
+                <div class="logo-text">MEHIC <span>OS</span></div>
+            </div>
+            <div class="dept-badge" id="deptBadge">TV</div>
         </div>
-        <div class="header-actions">
+        <div class="header-center">
             <div class="status-pill" id="onlineStatus" data-status="online" role="status" aria-live="polite">
                 <span class="status-dot" aria-hidden="true"></span>
                 <span id="onlineStatusLabel">Online</span>
             </div>
-            <div class="dept-badge" id="deptBadge">TV</div>
-            <div class="segment-control" role="tablist" aria-label="Frames">
-                <button class="segment-btn" id="frameSalesBtn" type="button" data-frame="sales" aria-pressed="true" role="tab" aria-controls="salesFrame">Verkauf</button>
-                <button class="segment-btn" id="frameTrainingBtn" type="button" data-frame="training" aria-pressed="false" role="tab" aria-controls="trainingFrame">Training</button>
-                <button class="segment-btn" id="frameWikiBtn" type="button" data-frame="wiki" aria-pressed="false" role="tab" aria-controls="wikiFrame">Wiki</button>
-            </div>
-            <button class="toggle-btn" id="themeToggleBtn" type="button" aria-live="polite">
-                <svg viewBox="0 0 24 24" aria-hidden="true">
-                    <path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/>
-                </svg>
-                <span class="toggle-label" id="themeToggleLabel">Theme: Auto</span>
-            </button>
-            <button class="toggle-btn" id="densityToggleBtn" type="button">
-                <svg viewBox="0 0 24 24" aria-hidden="true">
-                    <rect x="4" y="5" width="16" height="4" rx="2"/>
-                    <rect x="4" y="11" width="16" height="4" rx="2"/>
-                    <rect x="4" y="17" width="16" height="2" rx="1"/>
-                </svg>
-                <span class="toggle-label" id="densityToggleLabel">Dichte: Kompakt</span>
-            </button>
-            <button class="icon-btn" id="syncBtn" type="button" title="Sync starten" aria-label="Sync starten">
-                <svg viewBox="0 0 24 24">
-                    <path d="M3 12a9 9 0 0 1 15.54-5.54"/>
-                    <polyline points="21 3 21 8 16 8"/>
-                    <path d="M21 12a9 9 0 0 1-15.54 5.54"/>
-                    <polyline points="3 21 3 16 8 16"/>
-                </svg>
-            </button>
-            <button class="icon-btn" id="stealthBtn" type="button" title="Stealth aktivieren" aria-label="Stealth aktivieren">
-                <svg viewBox="0 0 24 24">
-                    <path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7-10-7-10-7z"/>
-                    <circle cx="12" cy="12" r="3"/>
-                </svg>
-            </button>
-            <button class="icon-btn" id="resetBtn" type="button" title="Ansicht zurücksetzen" aria-label="Ansicht zurücksetzen">
-                <svg viewBox="0 0 24 24">
-                    <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/>
-                    <path d="M21 3v5h-5"/>
-                </svg>
-            </button>
-            <button class="icon-btn" id="settingsBtn" type="button" title="Einstellungen öffnen" aria-label="Einstellungen öffnen">
-                <svg viewBox="0 0 24 24">
-                    <circle cx="12" cy="12" r="3"/>
-                    <path d="M12 1v6m0 6v6"/>
-                </svg>
-            </button>
         </div>
+        <button class="icon-btn" id="settingsBtn" type="button" title="Panel öffnen" aria-label="Panel öffnen" aria-expanded="false">
+            <svg viewBox="0 0 24 24">
+                <path d="M3 6h18"/>
+                <path d="M3 12h18"/>
+                <path d="M3 18h18"/>
+            </svg>
+        </button>
     </header>
 
     <div class="offline-banner" id="offlineBanner" role="status" aria-live="polite">
@@ -1703,106 +1837,47 @@ Executive Summary:
 
     <main class="stage" id="stage">
         <div class="bento-grid" id="bentoGrid">
-            <section class="tile tile--hero glass" id="statusTile">
-                <div class="tile-header">
-                    <div>
-                        <div class="tile-title">Command HUD</div>
-                        <div class="tile-subtitle" id="hudSubtitle">Bereit</div>
-                    </div>
-                    <div class="sync-indicator" id="syncIndicator" data-status="idle">Sync Idle</div>
-                </div>
-                <div class="stat-grid">
-                    <div class="stat">
-                        <div class="stat-label">Library</div>
-                        <div class="stat-value" id="statCases">0</div>
-                    </div>
-                    <div class="stat">
-                        <div class="stat-label">Logs</div>
-                        <div class="stat-value" id="statLogs">0</div>
-                    </div>
-                    <div class="stat">
-                        <div class="stat-label">Modus</div>
-                        <div class="stat-value" id="statMode">Auto</div>
-                    </div>
-                </div>
-                <div class="pill-row">
-                    <span class="pill" id="statTheme">Theme: Auto</span>
-                    <span class="pill" id="statDensity">Dichte: Comfort</span>
-                    <span class="pill" id="statContext">Kontext: Neutral</span>
-                </div>
-            </section>
-
-            <section class="tile" id="policyTile">
-                <div class="tile-title">Store Policy</div>
-                <div class="tile-subtitle" id="policyTitle">Keine Aktion aktiv</div>
-                <div class="tile-desc" id="policyText">Trage im Settings-Panel aktuelle Aktionen ein, um Scarcity sicher zu nutzen.</div>
-            </section>
-
-            <section class="tile" id="trustTile">
-                <div class="tile-title">Trust & Safety</div>
-                <div class="tile-desc">BYOK bleibt lokal. Keine Keys im DOM. Keine Calls ohne Freigabe.</div>
-                <div class="pill-row">
-                    <span class="pill" id="trustKeyStatus">Key: Nicht gesetzt</span>
-                    <span class="pill" id="trustProxyStatus">Proxy: Aus</span>
-                    <span class="pill" id="trustMotionStatus">Motion: Standard</span>
-                </div>
-            </section>
-
-            <section class="tile diagnostics" id="diagnosticsTile" aria-live="polite" aria-hidden="true">
-                <div class="tile-title">Diagnostics</div>
-                <div class="tile-desc">Toggle: Ctrl + Shift + I</div>
-                <div class="diagnostics-grid">
-                    <div class="diag-row">
-                        <span class="diag-key">Theme</span>
-                        <span class="diag-value" id="diagTheme">–</span>
-                    </div>
-                    <div class="diag-row">
-                        <span class="diag-key">Density</span>
-                        <span class="diag-value" id="diagDensity">–</span>
-                    </div>
-                    <div class="diag-row">
-                        <span class="diag-key">Online</span>
-                        <span class="diag-value" id="diagOnline">–</span>
-                    </div>
-                    <div class="diag-row">
-                        <span class="diag-key">Storage</span>
-                        <span class="diag-value" id="diagDb">–</span>
-                    </div>
-                    <div class="diag-row">
-                        <span class="diag-key">CSP</span>
-                        <span class="diag-value" id="diagCsp">–</span>
-                    </div>
-                </div>
-            </section>
-
-            <section class="tile tile--wide" id="shortcutsTile">
-                <div class="tile-title">Shortcuts</div>
-                <div class="shortcut-row">
-                    <div>Focus Input</div>
-                    <div class="shortcut-key">Ctrl / ⌘ + K</div>
-                </div>
-                <div class="shortcut-row">
-                    <div>Theme Cycle</div>
-                    <div class="shortcut-key">Ctrl + Shift + T</div>
-                </div>
-                <div class="shortcut-row">
-                    <div>Dichte Toggle</div>
-                    <div class="shortcut-key">Ctrl + Shift + D</div>
-                </div>
-                <div class="shortcut-row">
-                    <div>Einstellungen</div>
-                    <div class="shortcut-key">Ctrl + S</div>
-                </div>
-            </section>
-
-            <section class="tile" id="syncTile">
-                <div class="tile-title">Sync Status</div>
-                <div class="tile-subtitle" id="syncTitle">Bereit</div>
-                <div class="tile-desc" id="syncDesc">Letzter Sync: <span id="syncTime">–</span></div>
-            </section>
-
             <section class="tile tile--wide frame-container" id="frameContainer">
                 <div class="frame-root sales-frame" id="salesFrame" role="tabpanel">
+                    <section class="tile sales-hero" id="salesHero">
+                        <div class="tile-title">Schnellstart</div>
+                        <div class="tile-subtitle">Einwand tippen, Antwort zeigen, Abschlussfrage sagen.</div>
+                        <div class="input-area hero-input">
+                            <label class="sr-only" for="objectionInput">Kundeneinwand</label>
+                            <div class="input-wrapper">
+                                <input type="text" class="input-field" id="objectionInput" placeholder="Kundeneinwand eingeben..." autocomplete="off" />
+                            </div>
+                            <button class="btn btn-primary hero-submit" id="submitBtn" type="button">
+                                Antwort generieren
+                            </button>
+                            <button class="mic-fab" id="micBtn" type="button" aria-label="Spracheingabe" aria-pressed="false">
+                                <svg viewBox="0 0 24 24">
+                                    <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/>
+                                    <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
+                                    <line x1="12" y1="19" x2="12" y2="23"/>
+                                    <line x1="8" y1="23" x2="16" y2="23"/>
+                                </svg>
+                            </button>
+                        </div>
+                        <div class="context-chips" id="contextChips" role="group" aria-label="Kontext Filter">
+                            <button class="chip" type="button" data-context="hurry" aria-pressed="false">
+                                <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+                                Eilig
+                            </button>
+                            <button class="chip" type="button" data-context="duo" aria-pressed="false">
+                                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/></svg>
+                                Paar
+                            </button>
+                            <button class="chip" type="button" data-context="easy" aria-pressed="false">
+                                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2v20M2 12h20"/></svg>
+                                Einfach
+                            </button>
+                            <button class="chip" type="button" data-context="techie" aria-pressed="false">
+                                <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>
+                                Techie
+                            </button>
+                        </div>
+                    </section>
                     <div class="sales-layout">
                         <section class="tile sales-primary" id="salesPrimary">
                             <div id="salesCardContainer"></div>
@@ -1850,8 +1925,8 @@ Executive Summary:
                             <div class="tile-title">Drill Mode</div>
                             <div class="tile-desc" id="drillText">Kein Drill geladen.</div>
                             <div class="btn-group">
-                                <button class="btn btn-secondary" id="nextDrillBtn" type="button">Next Drill</button>
-                                <button class="btn btn-primary" id="drillDoneBtn" type="button">Done</button>
+                                <button class="btn btn-secondary" id="nextDrillBtn" type="button">Neuer Drill</button>
+                                <button class="btn btn-primary" id="drillDoneBtn" type="button">30s fertig</button>
                             </div>
                             <div class="history-meta">Self-Rating</div>
                             <div class="pill-row" id="ratingButtons">
@@ -1871,6 +1946,10 @@ Executive Summary:
                             <div class="history-section">
                                 <div class="history-meta">Training KPIs</div>
                                 <div class="stat-grid" id="trainingStats"></div>
+                            </div>
+                            <div class="history-section">
+                                <div class="history-meta">Top 3 Schwächen</div>
+                                <div class="pattern-list" id="trainingWeaknessList"></div>
                             </div>
                             <div class="history-section">
                                 <div class="history-meta">Letzte 10 Einwände</div>
@@ -1923,70 +2002,12 @@ Executive Summary:
         </div>
     </main>
 
-    <div class="control-bar" id="controlBar" role="region" aria-label="Eingabe Steuerung">
-        <div class="context-chips" id="contextChips" role="group" aria-label="Kontext Filter">
-            <button class="chip" type="button" data-context="hurry" aria-pressed="false">
-                <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
-                Eilig
-            </button>
-            <button class="chip" type="button" data-context="duo" aria-pressed="false">
-                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/></svg>
-                Paar
-            </button>
-            <button class="chip" type="button" data-context="easy" aria-pressed="false">
-                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2v20M2 12h20"/></svg>
-                Einfach
-            </button>
-            <button class="chip" type="button" data-context="techie" aria-pressed="false">
-                <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>
-                Techie
-            </button>
-        </div>
-
-        <div class="input-area">
-            <label class="sr-only" for="objectionInput">Kundeneinwand</label>
-            <div class="input-wrapper">
-                <input type="text" class="input-field" id="objectionInput" placeholder="Kundeneinwand eingeben..." autocomplete="off" />
-            </div>
-            <button class="icon-btn send-btn" id="submitBtn" type="button" title="Antwort erstellen" aria-label="Antwort erstellen">
-                <svg viewBox="0 0 24 24">
-                    <path d="M22 2L11 13"/>
-                    <path d="M22 2L15 22L11 13L2 9L22 2Z"/>
-                </svg>
-            </button>
-            <button class="mic-fab" id="micBtn" type="button" aria-label="Spracheingabe" aria-pressed="false">
-                <svg viewBox="0 0 24 24">
-                    <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/>
-                    <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
-                    <line x1="12" y1="19" x2="12" y2="23"/>
-                    <line x1="8" y1="23" x2="16" y2="23"/>
-                </svg>
-            </button>
-        </div>
-        <div class="control-actions" aria-label="Quick Actions">
-            <button class="icon-btn small" id="quickClearBtn" type="button" title="Clear" aria-label="Clear">
-                <svg viewBox="0 0 24 24">
-                    <path d="M3 6h18"/>
-                    <path d="M8 6v14"/>
-                    <path d="M16 6v14"/>
-                    <path d="M5 6l1-3h12l1 3"/>
-                </svg>
-            </button>
-            <button class="icon-btn small" id="quickExportBtn" type="button" title="Export" aria-label="Export">
-                <svg viewBox="0 0 24 24">
-                    <path d="M12 3v12"/>
-                    <path d="M7 8l5-5 5 5"/>
-                    <path d="M5 21h14"/>
-                </svg>
-            </button>
-        </div>
-    </div>
-
-    <div class="modal" id="settingsModal" role="dialog" aria-modal="true" aria-labelledby="settingsTitle" aria-hidden="true">
+    <div class="modal quick-panel" id="settingsModal" role="dialog" aria-modal="true" aria-labelledby="settingsTitle" aria-hidden="true">
         <div class="modal-content" role="document">
+            <div class="panel-handle" aria-hidden="true"></div>
             <div class="modal-header">
-                <div class="modal-title" id="settingsTitle">Einstellungen</div>
-                <button class="close-btn" id="closeSettingsBtn" type="button" aria-label="Einstellungen schließen">
+                <div class="modal-title" id="settingsTitle">Quick Panel</div>
+                <button class="close-btn" id="closeSettingsBtn" type="button" aria-label="Panel schließen">
                     <svg viewBox="0 0 24 24">
                         <line x1="18" y1="6" x2="6" y2="18"/>
                         <line x1="6" y1="6" x2="18" y2="18"/>
@@ -1994,8 +2015,17 @@ Executive Summary:
                 </button>
             </div>
 
-            <div class="form-group">
-                <div class="form-label">Theme</div>
+            <div class="panel-section panel-mode">
+                <div class="panel-title">Modus</div>
+                <div class="segment-control" role="tablist" aria-label="Modus Switcher">
+                    <button class="segment-btn" id="frameSalesBtn" type="button" data-frame="sales" aria-pressed="true" role="tab" aria-controls="salesFrame">Verkauf</button>
+                    <button class="segment-btn" id="frameTrainingBtn" type="button" data-frame="training" aria-pressed="false" role="tab" aria-controls="trainingFrame">Training</button>
+                    <button class="segment-btn" id="frameWikiBtn" type="button" data-frame="wiki" aria-pressed="false" role="tab" aria-controls="wikiFrame">Wiki</button>
+                </div>
+            </div>
+
+            <div class="panel-section">
+                <div class="panel-title">Theme</div>
                 <div class="segmented" role="radiogroup" aria-label="Theme Auswahl">
                     <label class="segmented-option">
                         <input type="radio" name="themeMode" value="auto" id="themeAuto">
@@ -2003,17 +2033,17 @@ Executive Summary:
                     </label>
                     <label class="segmented-option">
                         <input type="radio" name="themeMode" value="light" id="themeLight">
-                        <span>Light</span>
+                        <span>Hell</span>
                     </label>
                     <label class="segmented-option">
                         <input type="radio" name="themeMode" value="dark" id="themeDark">
-                        <span>Dark</span>
+                        <span>Dunkel</span>
                     </label>
                 </div>
             </div>
 
-            <div class="form-group">
-                <div class="form-label">Density</div>
+            <div class="panel-section">
+                <div class="panel-title">Density</div>
                 <div class="segmented" role="radiogroup" aria-label="Density Auswahl">
                     <label class="segmented-option">
                         <input type="radio" name="densityMode" value="compact" id="densityCompact">
@@ -2027,93 +2057,102 @@ Executive Summary:
                 <div class="helper-text">Default: Mobile Comfort, Desktop Kompakt. Manuelle Wahl wird gespeichert.</div>
             </div>
 
-            <div class="form-group">
-                <label class="form-label" for="apiProvider">API Provider</label>
-                <select class="form-select" id="apiProvider">
-                    <option value="openai">OpenAI</option>
-                    <option value="groq">Groq</option>
-                </select>
-            </div>
-
-            <div class="form-group">
-                <label class="form-label" for="apiKey">API Key (BYOK)</label>
-                <input type="password" class="form-input" id="apiKey" placeholder="sk-..." autocomplete="off" />
-                <div class="warning-box">
-                    <svg viewBox="0 0 24 24">
-                        <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
-                        <line x1="12" y1="9" x2="12" y2="13"/>
-                        <line x1="12" y1="17" x2="12.01" y2="17"/>
-                    </svg>
-                    <div class="warning-text">Schlüssel wird lokal gespeichert. Passphrase-Lock empfohlen. Niemals auf öffentlichen Geräten verwenden.</div>
-                </div>
-            </div>
-
-            <div class="form-group">
-                <label class="form-label" for="sessionOnlyKey">API Key Modus</label>
-                <label class="toggle-row">
-                    <input type="checkbox" id="sessionOnlyKey">
-                    Session Only (nicht speichern)
-                </label>
-                <div class="helper-text">Wenn aktiv, bleibt der Key nur im RAM und wird nicht persistiert.</div>
-            </div>
-
-            <div class="form-group">
-                <label class="form-label" for="passphraseInput">Passphrase (optional)</label>
-                <input type="password" class="form-input" id="passphraseInput" placeholder="Nur lokal verwendet" autocomplete="off" />
-                <div class="helper-text" id="lockStatus">Lock deaktiviert</div>
-                <div class="btn-group">
-                    <button class="btn btn-secondary" id="lockToggleBtn" type="button">Passphrase-Lock aktivieren</button>
-                    <button class="btn btn-secondary" id="unlockBtn" type="button">Unlock</button>
-                </div>
-            </div>
-
-            <div class="form-group">
-                <label class="form-label" for="modelName">AI Model Name</label>
-                <input type="text" class="form-input" id="modelName" placeholder="gpt-4o-mini" />
-            </div>
-
-            <div class="form-group">
-                <label class="form-label" for="proxyUrl">API Proxy URL (optional)</label>
-                <input type="text" class="form-input" id="proxyUrl" placeholder="https://your-proxy.example" />
-                <div class="helper-text">Nur Same-Origin Proxies erlaubt (CSP-konform).</div>
-            </div>
-
-            <div class="form-group">
-                <label class="form-label" for="wikiSourceUrl">Wiki Source URL (optional)</label>
-                <input type="text" class="form-input" id="wikiSourceUrl" placeholder="https://example.com/wiki.json" />
-                <div class="helper-text">Wiki Sync nutzt diese Quelle (same-origin empfohlen).</div>
-            </div>
-
-            <div class="form-group">
-                <label class="form-label" for="department">Abteilung</label>
-                <select class="form-select" id="department">
-                    <option value="TV">TV & Audio</option>
-                    <option value="Mobile">Mobile</option>
-                    <option value="IT">IT</option>
-                    <option value="Weiß">Weiße Ware</option>
-                </select>
-            </div>
-
-            <div class="form-group">
-                <label class="form-label" for="storePolicy">Store Policy</label>
-                <textarea class="form-textarea" id="storePolicy" placeholder="z.B. 'Winteraktion bis 31.01.2026'"></textarea>
-            </div>
-
-            <div class="form-group">
-                <label class="form-label">Datenmanagement</label>
+            <div class="panel-section">
+                <div class="panel-title">Daten</div>
                 <div class="btn-group">
                     <button class="btn btn-secondary" id="exportBtn" type="button">Export</button>
                     <button class="btn btn-secondary" id="importBtn" type="button">Import</button>
                 </div>
                 <input type="file" id="importFile" accept=".json" class="sr-only" />
-                <div class="btn-group">
-                    <button class="btn btn-danger" id="clearBtn" type="button">Löschen</button>
-                </div>
+                <div class="helper-text">Letzter Sync: <span id="syncTime">–</span></div>
             </div>
 
-            <div class="btn-group">
-                <button class="btn btn-primary" id="saveSettingsBtn" type="button">Speichern</button>
+            <div class="panel-section panel-danger">
+                <div class="panel-title">Danger Zone</div>
+                <div class="tile-desc">Reset löscht lokale Daten. Nur bei Bedarf.</div>
+                <button class="btn btn-danger" id="clearBtn" type="button">Reset & Daten löschen</button>
             </div>
+
+            <details class="panel-advanced">
+                <summary>Advanced Settings</summary>
+                <div class="panel-section">
+                    <label class="form-label" for="apiProvider">API Provider</label>
+                    <select class="form-select" id="apiProvider">
+                        <option value="openai">OpenAI</option>
+                        <option value="groq">Groq</option>
+                    </select>
+                </div>
+
+                <div class="panel-section">
+                    <label class="form-label" for="apiKey">API Key (BYOK)</label>
+                    <input type="password" class="form-input" id="apiKey" placeholder="sk-..." autocomplete="off" />
+                    <div class="warning-box">
+                        <svg viewBox="0 0 24 24">
+                            <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+                            <line x1="12" y1="9" x2="12" y2="13"/>
+                            <line x1="12" y1="17" x2="12.01" y2="17"/>
+                        </svg>
+                        <div class="warning-text">Schlüssel wird lokal gespeichert. Passphrase-Lock empfohlen. Niemals auf öffentlichen Geräten verwenden.</div>
+                    </div>
+                </div>
+
+                <div class="panel-section">
+                    <label class="form-label" for="sessionOnlyKey">API Key Modus</label>
+                    <label class="toggle-row">
+                        <input type="checkbox" id="sessionOnlyKey">
+                        Session Only (nicht speichern)
+                    </label>
+                    <div class="helper-text">Wenn aktiv, bleibt der Key nur im RAM und wird nicht persistiert.</div>
+                </div>
+
+                <div class="panel-section">
+                    <label class="form-label" for="passphraseInput">Passphrase (optional)</label>
+                    <input type="password" class="form-input" id="passphraseInput" placeholder="Nur lokal verwendet" autocomplete="off" />
+                    <div class="helper-text" id="lockStatus">Lock deaktiviert</div>
+                    <div class="btn-group">
+                        <button class="btn btn-secondary" id="lockToggleBtn" type="button">Passphrase-Lock aktivieren</button>
+                        <button class="btn btn-secondary" id="unlockBtn" type="button">Unlock</button>
+                    </div>
+                </div>
+
+                <div class="panel-section">
+                    <label class="form-label" for="modelName">AI Model Name</label>
+                    <input type="text" class="form-input" id="modelName" placeholder="gpt-4o-mini" />
+                </div>
+
+                <div class="panel-section">
+                    <label class="form-label" for="proxyUrl">API Proxy URL (optional)</label>
+                    <input type="text" class="form-input" id="proxyUrl" placeholder="https://your-proxy.example" />
+                    <div class="helper-text">Nur Same-Origin Proxies erlaubt (CSP-konform).</div>
+                </div>
+
+                <div class="panel-section">
+                    <label class="form-label" for="wikiSourceUrl">Wiki Source URL (optional)</label>
+                    <input type="text" class="form-input" id="wikiSourceUrl" placeholder="https://example.com/wiki.json" />
+                    <div class="helper-text">Wiki Sync nutzt diese Quelle (same-origin empfohlen).</div>
+                </div>
+
+                <div class="panel-section">
+                    <label class="form-label" for="department">Abteilung</label>
+                    <select class="form-select" id="department">
+                        <option value="TV">TV & Audio</option>
+                        <option value="Mobile">Mobile</option>
+                        <option value="IT">IT</option>
+                        <option value="Weiß">Weiße Ware</option>
+                    </select>
+                </div>
+
+                <div class="panel-section">
+                    <label class="form-label" for="storePolicy">Store Policy</label>
+                    <textarea class="form-textarea" id="storePolicy" placeholder="z.B. 'Winteraktion bis 31.01.2026'"></textarea>
+                </div>
+
+                <div class="panel-section">
+                    <div class="btn-group">
+                        <button class="btn btn-primary" id="saveSettingsBtn" type="button">Speichern</button>
+                    </div>
+                </div>
+            </details>
         </div>
     </div>
 
@@ -2129,6 +2168,11 @@ Executive Summary:
                 </button>
             </div>
             <div class="tile-desc" id="confirmMessage">Bitte bestätigen.</div>
+            <div class="confirm-extra" id="confirmExtra" hidden>
+                <label class="form-label" for="confirmInput">Tippe: “Ich bestätige”</label>
+                <input type="text" class="form-input" id="confirmInput" placeholder="Ich bestätige" autocomplete="off" />
+                <div class="helper-text" id="confirmHoldHint">Zum Bestätigen 800ms halten.</div>
+            </div>
             <div class="btn-group">
                 <button class="btn btn-secondary" id="confirmCancelBtn" type="button">Abbrechen</button>
                 <button class="btn btn-danger" id="confirmConfirmBtn" type="button">Bestätigen</button>
@@ -2160,6 +2204,17 @@ Executive Summary:
 
         const FRAME_MODES = ["sales", "training", "wiki"];
         const MAX_HISTORY = 15;
+        const DEFAULT_TRAINING_STATE = {
+            drillIndex: 0,
+            roleplayStep: 0,
+            selectedPattern: "all",
+            variant: "neutral",
+            sessions: 0,
+            streak: 0,
+            lastSessionDate: "",
+            ratingSum: 0,
+            ratingCount: 0
+        };
 
         const PATTERN_RULES = {
             price: {
@@ -2286,17 +2341,7 @@ Executive Summary:
             frame: "sales",
             history: [],
             favorites: [],
-            training: {
-                drillIndex: 0,
-                roleplayStep: 0,
-                selectedPattern: "all",
-                variant: "neutral",
-                sessions: 0,
-                streak: 0,
-                lastSessionDate: "",
-                ratingSum: 0,
-                ratingCount: 0
-            },
+            training: { ...DEFAULT_TRAINING_STATE },
             wiki: {
                 products: [],
                 faq: [],
@@ -2356,6 +2401,10 @@ Executive Summary:
         let controlBarObserver = null;
         let densityResizeRaf = null;
         const modalStack = [];
+        let panelDocked = false;
+        let panelOpen = false;
+        let panelHoldTimer = null;
+        let panelTouchStart = null;
 
         const elements = {};
 
@@ -2588,16 +2637,10 @@ Executive Summary:
             elements.onlineStatus = document.getElementById("onlineStatus");
             elements.onlineStatusLabel = document.getElementById("onlineStatusLabel");
             elements.deptBadge = document.getElementById("deptBadge");
-            elements.themeToggleBtn = document.getElementById("themeToggleBtn");
-            elements.themeToggleLabel = document.getElementById("themeToggleLabel");
-            elements.densityToggleBtn = document.getElementById("densityToggleBtn");
-            elements.densityToggleLabel = document.getElementById("densityToggleLabel");
             elements.frameSalesBtn = document.getElementById("frameSalesBtn");
             elements.frameTrainingBtn = document.getElementById("frameTrainingBtn");
             elements.frameWikiBtn = document.getElementById("frameWikiBtn");
             elements.syncBtn = document.getElementById("syncBtn");
-            elements.stealthBtn = document.getElementById("stealthBtn");
-            elements.resetBtn = document.getElementById("resetBtn");
             elements.settingsBtn = document.getElementById("settingsBtn");
             elements.offlineBanner = document.getElementById("offlineBanner");
             elements.salesFrame = document.getElementById("salesFrame");
@@ -2625,6 +2668,7 @@ Executive Summary:
             elements.patternList = document.getElementById("patternList");
             elements.microlearningBox = document.getElementById("microlearningBox");
             elements.trainingStats = document.getElementById("trainingStats");
+            elements.trainingWeaknessList = document.getElementById("trainingWeaknessList");
             elements.trainingHistoryList = document.getElementById("trainingHistoryList");
             elements.wikiSearchInput = document.getElementById("wikiSearchInput");
             elements.wikiFilterChips = document.getElementById("wikiFilterChips");
@@ -2642,9 +2686,6 @@ Executive Summary:
             elements.submitBtn = document.getElementById("submitBtn");
             elements.micBtn = document.getElementById("micBtn");
             elements.contextChips = document.getElementById("contextChips");
-            elements.controlBar = document.getElementById("controlBar");
-            elements.quickClearBtn = document.getElementById("quickClearBtn");
-            elements.quickExportBtn = document.getElementById("quickExportBtn");
             elements.buildInfo = document.getElementById("buildInfo");
             elements.toast = document.getElementById("toast");
             elements.settingsModal = document.getElementById("settingsModal");
@@ -2672,34 +2713,16 @@ Executive Summary:
             elements.confirmConfirmBtn = document.getElementById("confirmConfirmBtn");
             elements.confirmCancelBtn = document.getElementById("confirmCancelBtn");
             elements.confirmCloseBtn = document.getElementById("confirmCloseBtn");
+            elements.confirmExtra = document.getElementById("confirmExtra");
+            elements.confirmInput = document.getElementById("confirmInput");
+            elements.confirmHoldHint = document.getElementById("confirmHoldHint");
             elements.stealthOverlay = document.getElementById("stealthOverlay");
             elements.themeAuto = document.getElementById("themeAuto");
             elements.themeLight = document.getElementById("themeLight");
             elements.themeDark = document.getElementById("themeDark");
             elements.densityCompact = document.getElementById("densityCompact");
             elements.densityComfortable = document.getElementById("densityComfortable");
-            elements.hudSubtitle = document.getElementById("hudSubtitle");
-            elements.statCases = document.getElementById("statCases");
-            elements.statLogs = document.getElementById("statLogs");
-            elements.statMode = document.getElementById("statMode");
-            elements.statTheme = document.getElementById("statTheme");
-            elements.statDensity = document.getElementById("statDensity");
-            elements.statContext = document.getElementById("statContext");
-            elements.policyTitle = document.getElementById("policyTitle");
-            elements.policyText = document.getElementById("policyText");
-            elements.trustKeyStatus = document.getElementById("trustKeyStatus");
-            elements.trustProxyStatus = document.getElementById("trustProxyStatus");
-            elements.trustMotionStatus = document.getElementById("trustMotionStatus");
-            elements.syncIndicator = document.getElementById("syncIndicator");
-            elements.syncTitle = document.getElementById("syncTitle");
-            elements.syncDesc = document.getElementById("syncDesc");
             elements.syncTime = document.getElementById("syncTime");
-            elements.diagnosticsTile = document.getElementById("diagnosticsTile");
-            elements.diagTheme = document.getElementById("diagTheme");
-            elements.diagDensity = document.getElementById("diagDensity");
-            elements.diagOnline = document.getElementById("diagOnline");
-            elements.diagDb = document.getElementById("diagDb");
-            elements.diagCsp = document.getElementById("diagCsp");
         }
 
         function escapeHTML(value) {
@@ -2805,8 +2828,9 @@ Executive Summary:
             appState.settings.themeMode = mode;
             const resolved = resolveTheme(mode);
             document.documentElement.setAttribute("data-theme", resolved);
-            elements.themeToggleLabel.textContent = `Theme: ${mode === "auto" ? "Auto" : resolved.charAt(0).toUpperCase() + resolved.slice(1)}`;
-            elements.statTheme.textContent = `Theme: ${mode === "auto" ? "Auto" : resolved.charAt(0).toUpperCase() + resolved.slice(1)}`;
+            if (elements.themeToggleLabel) {
+                elements.themeToggleLabel.textContent = `Theme: ${mode === "auto" ? "Auto" : resolved.charAt(0).toUpperCase() + resolved.slice(1)}`;
+            }
             updateThemeColorMeta();
             if (persist) saveSettings(buildPersistedSettings());
             updateDiagnostics();
@@ -2821,10 +2845,24 @@ Executive Summary:
             if (userSet) appState.settings.densityUserSet = true;
             document.documentElement.setAttribute("data-density", mode);
             const label = mode === "compact" ? "Kompakt" : "Comfort";
-            elements.densityToggleLabel.textContent = `Dichte: ${label}`;
-            elements.statDensity.textContent = `Dichte: ${label}`;
+            if (elements.densityToggleLabel) {
+                elements.densityToggleLabel.textContent = `Dichte: ${label}`;
+            }
             if (persist) saveSettings(buildPersistedSettings());
             updateDiagnostics();
+        }
+
+        function cycleTheme() {
+            const cycle = ["auto", "light", "dark"];
+            const current = appState.settings.themeMode;
+            const next = cycle[(cycle.indexOf(current) + 1) % cycle.length];
+            applyTheme(next);
+            updateTrustStatus();
+        }
+
+        function toggleDensity() {
+            const next = appState.settings.densityMode === "compact" ? "comfortable" : "compact";
+            applyDensity(next, true);
         }
 
         function setFrame(mode, persist = true) {
@@ -2845,20 +2883,29 @@ Executive Summary:
 
         function updateContextStatus() {
             const label = appState.contexts.length ? appState.contexts.join(", ") : "Neutral";
-            elements.statContext.textContent = `Kontext: ${label}`;
+            if (elements.statContext) {
+                elements.statContext.textContent = `Kontext: ${label}`;
+            }
         }
 
         function updateTrustStatus() {
             const keyStatus = appState.settings.apiKeyLocked ? "Key: Locked" : appState.settings.apiKey ? "Key: Aktiv" : "Key: Nicht gesetzt";
-            elements.trustKeyStatus.textContent = keyStatus;
+            if (elements.trustKeyStatus) {
+                elements.trustKeyStatus.textContent = keyStatus;
+            }
             const proxyValid = validateProxyUrl(appState.settings.proxyUrl);
             const proxyStatus = proxyValid.ok ? "Proxy: Aktiv" : "Proxy: Aus";
-            elements.trustProxyStatus.textContent = proxyStatus;
-            elements.trustMotionStatus.textContent = reduceMotionMedia.matches ? "Motion: Reduced" : "Motion: Standard";
+            if (elements.trustProxyStatus) {
+                elements.trustProxyStatus.textContent = proxyStatus;
+            }
+            if (elements.trustMotionStatus) {
+                elements.trustMotionStatus.textContent = reduceMotionMedia.matches ? "Motion: Reduced" : "Motion: Standard";
+            }
         }
 
         function updatePolicyTile() {
             const policy = sanitizeString(appState.settings.storePolicy, 400);
+            if (!elements.policyTitle || !elements.policyText) return;
             if (policy) {
                 elements.policyTitle.textContent = "Aktive Policy";
                 elements.policyText.textContent = policy;
@@ -2870,14 +2917,34 @@ Executive Summary:
 
         function updateOnlineStatus() {
             appState.ui.online = navigator.onLine;
-            elements.onlineStatus.dataset.status = appState.ui.online ? "online" : "offline";
-            elements.onlineStatusLabel.textContent = appState.ui.online ? "Online" : "Offline";
-            elements.statMode.textContent = appState.ui.online ? "Online" : "Offline";
-            elements.offlineBanner.classList.toggle("show", !appState.ui.online);
+            if (elements.offlineBanner) {
+                elements.offlineBanner.classList.toggle("show", !appState.ui.online);
+            }
             if (!appState.ui.online) {
                 setSyncStatus("offline", "Offline");
+            } else if (appState.ui.syncStatus === "offline") {
+                appState.ui.syncStatus = "idle";
             }
+            updateStatusIndicator();
             updateDiagnostics();
+        }
+
+        function updateStatusIndicator() {
+            if (!elements.onlineStatus || !elements.onlineStatusLabel) return;
+            let status = "online";
+            let label = "Online";
+            if (!appState.ui.online) {
+                status = "offline";
+                label = "Offline";
+            } else if (appState.ui.syncStatus === "syncing") {
+                status = "syncing";
+                label = "Syncing";
+            } else if (appState.ui.syncStatus === "error") {
+                status = "error";
+                label = "Sync Fehler";
+            }
+            elements.onlineStatus.dataset.status = status;
+            elements.onlineStatusLabel.textContent = label;
         }
 
         function getCspMode() {
@@ -2912,12 +2979,18 @@ Executive Summary:
 
         function setSyncStatus(status, label) {
             appState.ui.syncStatus = status;
-            elements.syncIndicator.dataset.status = status;
-            elements.syncIndicator.textContent = label || status;
-            elements.syncTitle.textContent = label || status;
+            if (elements.syncIndicator) {
+                elements.syncIndicator.dataset.status = status;
+                elements.syncIndicator.textContent = label || status;
+            }
+            if (elements.syncTitle) {
+                elements.syncTitle.textContent = label || status;
+            }
+            updateStatusIndicator();
         }
 
         function updateSyncTime() {
+            if (!elements.syncTime) return;
             if (!appState.ui.lastSync) {
                 elements.syncTime.textContent = "–";
                 return;
@@ -3014,11 +3087,34 @@ Executive Summary:
             }
         }
 
-        function confirmAction({ title, message, confirmLabel }) {
+        function confirmAction({ title, message, confirmLabel, requireText, holdMs }) {
             return new Promise(resolve => {
                 elements.confirmTitle.textContent = title;
                 elements.confirmMessage.textContent = message;
                 elements.confirmConfirmBtn.textContent = confirmLabel || "Bestätigen";
+                const requiresText = Boolean(requireText);
+                const requiresHold = typeof holdMs === "number";
+
+                if (elements.confirmExtra) {
+                    elements.confirmExtra.hidden = !requiresText;
+                }
+                if (elements.confirmInput) {
+                    elements.confirmInput.value = "";
+                }
+                if (elements.confirmHoldHint) {
+                    elements.confirmHoldHint.textContent = requiresHold ? `Zum Bestätigen ${holdMs}ms halten.` : "";
+                    elements.confirmHoldHint.style.display = requiresHold ? "block" : "none";
+                }
+
+                const updateConfirmState = () => {
+                    if (requiresText && elements.confirmInput) {
+                        elements.confirmConfirmBtn.disabled = elements.confirmInput.value.trim() !== requireText;
+                    } else {
+                        elements.confirmConfirmBtn.disabled = false;
+                    }
+                };
+
+                updateConfirmState();
 
                 const handleConfirm = () => {
                     cleanup();
@@ -3030,14 +3126,68 @@ Executive Summary:
                     resolve(false);
                 };
 
+                const handleHoldStart = () => {
+                    if (elements.confirmConfirmBtn.disabled) return;
+                    if (panelHoldTimer) {
+                        clearTimeout(panelHoldTimer);
+                        panelHoldTimer = null;
+                    }
+                    elements.confirmConfirmBtn.classList.add("hold-active");
+                    panelHoldTimer = window.setTimeout(() => {
+                        elements.confirmConfirmBtn.classList.remove("hold-active");
+                        handleConfirm();
+                    }, holdMs);
+                };
+
+                const handleHoldEnd = () => {
+                    if (panelHoldTimer) {
+                        clearTimeout(panelHoldTimer);
+                        panelHoldTimer = null;
+                        elements.confirmConfirmBtn.classList.remove("hold-active");
+                    }
+                };
+
+                const swallowClick = (event) => {
+                    if (requiresHold) {
+                        event.preventDefault();
+                    }
+                };
+
                 const cleanup = () => {
+                    if (panelHoldTimer) {
+                        clearTimeout(panelHoldTimer);
+                        panelHoldTimer = null;
+                    }
                     elements.confirmConfirmBtn.removeEventListener("click", handleConfirm);
+                    elements.confirmConfirmBtn.removeEventListener("click", swallowClick);
+                    elements.confirmConfirmBtn.removeEventListener("pointerdown", handleHoldStart);
+                    elements.confirmConfirmBtn.removeEventListener("pointerup", handleHoldEnd);
+                    elements.confirmConfirmBtn.removeEventListener("pointerleave", handleHoldEnd);
+                    elements.confirmConfirmBtn.removeEventListener("pointercancel", handleHoldEnd);
                     elements.confirmCancelBtn.removeEventListener("click", handleCancel);
                     elements.confirmCloseBtn.removeEventListener("click", handleCancel);
+                    if (elements.confirmInput) {
+                        elements.confirmInput.removeEventListener("input", updateConfirmState);
+                    }
+                    if (elements.confirmExtra) {
+                        elements.confirmExtra.hidden = true;
+                    }
+                    elements.confirmConfirmBtn.disabled = false;
                     closeModal(elements.confirmModal);
                 };
 
-                elements.confirmConfirmBtn.addEventListener("click", handleConfirm);
+                if (requiresText && elements.confirmInput) {
+                    elements.confirmInput.addEventListener("input", updateConfirmState);
+                }
+                if (requiresHold) {
+                    elements.confirmConfirmBtn.addEventListener("pointerdown", handleHoldStart);
+                    elements.confirmConfirmBtn.addEventListener("pointerup", handleHoldEnd);
+                    elements.confirmConfirmBtn.addEventListener("pointerleave", handleHoldEnd);
+                    elements.confirmConfirmBtn.addEventListener("pointercancel", handleHoldEnd);
+                    elements.confirmConfirmBtn.addEventListener("click", swallowClick);
+                } else {
+                    elements.confirmConfirmBtn.addEventListener("click", handleConfirm);
+                }
                 elements.confirmCancelBtn.addEventListener("click", handleCancel);
                 elements.confirmCloseBtn.addEventListener("click", handleCancel);
                 openModal(elements.confirmModal);
@@ -3062,6 +3212,102 @@ Executive Summary:
                 }
                 lastTap = now;
             });
+        }
+
+        function updatePanelDockedState() {
+            if (!elements.settingsModal) return;
+            const wasDocked = panelDocked;
+            panelDocked = window.matchMedia("(min-width: 1280px)").matches;
+            document.body.classList.toggle("panel-docked", panelDocked);
+            elements.settingsModal.setAttribute("aria-modal", panelDocked ? "false" : "true");
+            if (panelDocked) {
+                panelOpen = true;
+                elements.settingsModal.classList.add("open");
+                elements.settingsModal.setAttribute("aria-hidden", "false");
+                if (elements.settingsBtn) {
+                    elements.settingsBtn.setAttribute("aria-expanded", "true");
+                }
+                const index = modalStack.indexOf("settingsModal");
+                if (index > -1) {
+                    modalStack.splice(index, 1);
+                    if (modalStack.length === 0) {
+                        modalHistoryActive = false;
+                        setAppInert(false);
+                    }
+                }
+                return;
+            }
+            if (wasDocked && !panelDocked) {
+                panelOpen = false;
+                elements.settingsModal.classList.remove("open");
+                elements.settingsModal.setAttribute("aria-hidden", "true");
+                if (elements.settingsBtn) {
+                    elements.settingsBtn.setAttribute("aria-expanded", "false");
+                }
+            }
+        }
+
+        function openQuickPanel() {
+            if (!elements.settingsModal) return;
+            updatePanelDockedState();
+            panelOpen = true;
+            if (elements.settingsBtn) {
+                elements.settingsBtn.setAttribute("aria-expanded", "true");
+            }
+            if (panelDocked) {
+                elements.settingsModal.classList.add("open");
+                elements.settingsModal.setAttribute("aria-hidden", "false");
+                return;
+            }
+            elements.settingsModal.setAttribute("aria-modal", "true");
+            openModal(elements.settingsModal);
+        }
+
+        function closeQuickPanel(fromPopstate = false) {
+            if (!elements.settingsModal) return;
+            if (panelDocked) return;
+            panelOpen = false;
+            if (elements.settingsBtn) {
+                elements.settingsBtn.setAttribute("aria-expanded", "false");
+            }
+            closeModal(elements.settingsModal, fromPopstate);
+        }
+
+        function toggleQuickPanel() {
+            if (panelOpen && !panelDocked) {
+                closeQuickPanel();
+            } else {
+                openQuickPanel();
+            }
+        }
+
+        function setupPanelSwipe() {
+            if (!elements.settingsModal) return;
+            const panelContent = elements.settingsModal.querySelector(".modal-content");
+            if (!panelContent) return;
+
+            panelContent.addEventListener("touchstart", (event) => {
+                if (!panelOpen || panelDocked) return;
+                if (panelContent.scrollTop > 0) return;
+                panelTouchStart = event.touches[0].clientY;
+            }, { passive: true });
+
+            panelContent.addEventListener("touchmove", (event) => {
+                if (!panelTouchStart || panelDocked) return;
+                const deltaY = event.touches[0].clientY - panelTouchStart;
+                if (deltaY > 80) {
+                    panelTouchStart = null;
+                    closeQuickPanel();
+                }
+            }, { passive: true });
+
+            panelContent.addEventListener("touchend", () => {
+                panelTouchStart = null;
+            }, { passive: true });
+
+            panelContent.addEventListener("touchcancel", () => {
+                panelTouchStart = null;
+            }, { passive: true });
         }
 
         function extractJSON(text) {
@@ -3440,16 +3686,17 @@ Executive Summary:
         async function clearDataStores() {
             await waitForDB();
             if (storage.mode === "local") {
-                ["msos_cases", "msos_logs", "msos_products", "msos_product_faq", "msos_product_notes", "msos_comparisons"].forEach(key => localStorage.removeItem(key));
+                ["msos_cases", "msos_logs", "msos_products", "msos_product_faq", "msos_product_notes", "msos_comparisons", "msos_seller"].forEach(key => localStorage.removeItem(key));
                 return;
             }
-            const tx = storage.db.transaction(["cases", "logs", "products", "productFaq", "productNotes", "comparisons"], "readwrite");
+            const tx = storage.db.transaction(["cases", "logs", "products", "productFaq", "productNotes", "comparisons", "seller"], "readwrite");
             tx.objectStore("cases").clear();
             tx.objectStore("logs").clear();
             tx.objectStore("products").clear();
             tx.objectStore("productFaq").clear();
             tx.objectStore("productNotes").clear();
             tx.objectStore("comparisons").clear();
+            tx.objectStore("seller").clear();
             return new Promise(resolve => {
                 tx.oncomplete = () => resolve();
             });
@@ -3460,8 +3707,12 @@ Executive Summary:
             const logs = await getAllLogs();
             appState.stats.cases = cases.length;
             appState.stats.logs = logs.length;
-            elements.statCases.textContent = String(appState.stats.cases);
-            elements.statLogs.textContent = String(appState.stats.logs);
+            if (elements.statCases) {
+                elements.statCases.textContent = String(appState.stats.cases);
+            }
+            if (elements.statLogs) {
+                elements.statLogs.textContent = String(appState.stats.logs);
+            }
         }
 
         function levenshteinDistance(a, b) {
@@ -3816,48 +4067,33 @@ OUTPUT JSON ONLY:
                 };
             }
             if (product) {
-                const fallbackCitations = [];
-                Object.entries(product.specs || {}).slice(0, 3).forEach(([field, value]) => {
-                    fallbackCitations.push({ field, value: String(value), origin: "spec" });
-                });
-                appState.wiki.faq.filter(faq => faq.productId === product.id).slice(0, 2).forEach(faq => {
-                    fallbackCitations.push({ field: faq.question, value: faq.answer, origin: "faq" });
-                });
-                if (fallbackCitations.length) {
-                    return {
-                        type: "product_answer",
-                        productId: product.id,
-                        confidence: "medium",
-                        source: "wiki",
-                        status: "success",
-                        answer: fallbackCitations.map(item => `${item.field}: ${item.value}`).join(" | "),
-                        citations: fallbackCitations,
-                        nextAction: "Bei Bedarf Datenblatt öffnen."
-                    };
-                }
-            }
-            try {
-                const aiAnswer = await callAIProduct(trimmed, product);
-                return aiAnswer;
-            } catch (error) {
                 return {
                     type: "product_answer",
-                    productId: product ? product.id : null,
-                    confidence: "low",
-                    source: "ai_only",
-                    status: product ? "check_datasheet" : "fact_check_needed",
-                    answer: "Keine gesicherten Wiki-Daten gefunden. Bitte Datenblatt prüfen.",
+                    productId: product.id,
+                    confidence: "medium",
+                    source: "wiki",
+                    status: "check_datasheet",
+                    answer: "Keine gesicherten Wiki-Daten zu dieser Frage. Bitte Datenblatt prüfen.",
                     citations: [],
                     nextAction: "Datenblatt öffnen oder Produktseite prüfen."
                 };
             }
+            return {
+                type: "product_answer",
+                productId: null,
+                confidence: "low",
+                source: "ai_only",
+                status: "fact_check_needed",
+                answer: "Kein Produkt gefunden. Bitte Produktseite prüfen.",
+                citations: [],
+                nextAction: "Produktseite oder Datenblatt prüfen."
+            };
         }
 
         async function handleObjectionSubmit() {
             const objection = sanitizeString(elements.objectionInput.value, 200);
             appState.objection = objection;
             if (!objection) {
-                haptic([40, 40]);
                 showToast("Bitte Einwand eingeben");
                 return;
             }
@@ -3895,10 +4131,12 @@ OUTPUT JSON ONLY:
                 }
 
                 setActiveCard(card);
+                haptic([35]);
                 await logEvent("case_resolved", { cardId: card.id, pattern: card.meta.pattern });
             } catch (error) {
                 const fallback = normalizeCaseCard(JOKER_CARD);
                 setActiveCard(fallback);
+                haptic([80]);
                 await logEvent("error_fallback", { error: error.message });
                 showToast("Fallback geladen");
             }
@@ -3958,7 +4196,6 @@ OUTPUT JSON ONLY:
         }
 
         function resetApp() {
-            haptic([40]);
             appState.objection = "";
             appState.contexts = [];
             appState.cards = [];
@@ -4138,31 +4375,34 @@ OUTPUT JSON ONLY:
         function renderTrainingFrame() {
             const card = getActiveCard();
             if (!card) {
+                elements.trainingCardTitle.textContent = "Kein Einwand aktiv";
                 elements.trainingCardContainer.innerHTML = `
                     <div class="empty-state">
                         <div class="empty-title">Training bereit</div>
                         <div class="empty-subtitle">Wähle eine Karte aus dem Verkauf.</div>
                     </div>
                 `;
-                return;
-            }
-            elements.trainingCardTitle.textContent = `Pattern: ${card.meta.pattern}`;
-            const variant = appState.training.variant || "neutral";
-            updateVariantButtons(variant);
-            const quick = card.content.quick[variant];
-            elements.trainingCardContainer.innerHTML = `
-                <div class="quick-cues">
-                    <div class="cue-block">
-                        <div class="cue-label">Diagnose</div>
-                        <div class="cue-text">${escapeHTML(card.content.coach.diagnosis)}</div>
+                elements.roleplayPrompt.textContent = "Roleplay bereit. Wähle zuerst eine Karte.";
+                elements.roleplayResponse.textContent = "";
+            } else {
+                elements.trainingCardTitle.textContent = `Pattern: ${card.meta.pattern}`;
+                const variant = appState.training.variant || "neutral";
+                updateVariantButtons(variant);
+                const quick = card.content.quick[variant];
+                elements.trainingCardContainer.innerHTML = `
+                    <div class="quick-cues">
+                        <div class="cue-block">
+                            <div class="cue-label">Diagnose</div>
+                            <div class="cue-text">${escapeHTML(card.content.coach.diagnosis)}</div>
+                        </div>
+                        ${buildQuickBlock("Einstieg", quick.entry, card.id, "entry", variant)}
+                        ${buildQuickBlock("Anker", quick.anchor, card.id, "anchor", variant)}
+                        ${buildQuickBlock("Frage", quick.question, card.id, "question", variant)}
+                        ${buildQuickBlock("Bridge", quick.bridge, card.id, "bridge", variant)}
+                        ${buildQuickBlock("Close", quick.close, card.id, "close", variant)}
                     </div>
-                    ${buildQuickBlock("Einstieg", quick.entry, card.id, "entry", variant)}
-                    ${buildQuickBlock("Anker", quick.anchor, card.id, "anchor", variant)}
-                    ${buildQuickBlock("Frage", quick.question, card.id, "question", variant)}
-                    ${buildQuickBlock("Bridge", quick.bridge, card.id, "bridge", variant)}
-                    ${buildQuickBlock("Close", quick.close, card.id, "close", variant)}
-                </div>
-            `;
+                `;
+            }
             renderDrill(card);
             renderTrainingStats();
             renderPatternLibrary();
@@ -4175,7 +4415,7 @@ OUTPUT JSON ONLY:
         }
 
         function renderDrill(card) {
-            const drills = card.content.coach.drill || [];
+            const drills = card && card.content && card.content.coach ? card.content.coach.drill || [] : [];
             if (!drills.length) {
                 elements.drillText.textContent = "Kein Drill vorhanden.";
                 return;
@@ -4205,10 +4445,10 @@ OUTPUT JSON ONLY:
                     patternScores[item.pattern].success += 1;
                 }
             });
-            const weakness = Object.entries(patternScores)
+            const weaknessList = Object.entries(patternScores)
                 .map(([pattern, stat]) => ({ pattern, rate: stat.total ? stat.success / stat.total : 1 }))
-                .sort((a, b) => a.rate - b.rate)[0];
-            const weaknessLabel = weakness ? `${weakness.pattern} (${Math.round(weakness.rate * 100)}%)` : "–";
+                .sort((a, b) => a.rate - b.rate)
+                .slice(0, 3);
 
             elements.trainingStats.innerHTML = `
                 <div class="stat">
@@ -4224,14 +4464,19 @@ OUTPUT JSON ONLY:
                     <div class="stat-value">${escapeHTML(patternText)}</div>
                 </div>
                 <div class="stat">
-                    <div class="stat-label">Weakness</div>
-                    <div class="stat-value">${escapeHTML(weaknessLabel)}</div>
-                </div>
-                <div class="stat">
                     <div class="stat-label">Sessions</div>
                     <div class="stat-value">${appState.training.sessions}</div>
                 </div>
             `;
+
+            if (elements.trainingWeaknessList) {
+                elements.trainingWeaknessList.innerHTML = weaknessList.map(item => `
+                    <div class="pattern-item">
+                        <div>${escapeHTML(item.pattern)}</div>
+                        <div class="pattern-meta">${Math.round(item.rate * 100)}% Erfolg</div>
+                    </div>
+                `).join("") || `<div class="tile-desc">Noch keine Schwächen.</div>`;
+            }
 
             elements.trainingHistoryList.innerHTML = lastTen.map(item => `
                 <div class="history-item">
@@ -4394,7 +4639,9 @@ OUTPUT JSON ONLY:
 
         function render() {
             elements.deptBadge.textContent = appState.settings.department;
-            elements.hudSubtitle.textContent = appState.loading ? "Analyse läuft" : "Bereit";
+            if (elements.hudSubtitle) {
+                elements.hudSubtitle.textContent = appState.loading ? "Analyse läuft" : "Bereit";
+            }
             updateContextStatus();
             updateTrustStatus();
             updatePolicyTile();
@@ -4436,7 +4683,6 @@ OUTPUT JSON ONLY:
                 const text = event.results[0][0].transcript;
                 appState.objection = text;
                 elements.objectionInput.value = text;
-                haptic([40, 30, 40]);
                 handleObjectionSubmit();
             };
 
@@ -4671,6 +4917,7 @@ OUTPUT JSON ONLY:
                 if (manual) showToast("Offline – Wiki Sync pausiert");
                 return;
             }
+            setSyncStatus("syncing", "Syncing");
             try {
                 const controller = new AbortController();
                 const timeout = setTimeout(() => controller.abort(), 10000);
@@ -4688,8 +4935,10 @@ OUTPUT JSON ONLY:
                 appState.settings.lastWikiSyncAt = appState.ui.lastWikiSync;
                 await saveSettings(buildPersistedSettings());
                 await refreshWikiData();
+                setSyncStatus("ok", "Sync OK");
                 if (manual) showToast("Wiki Sync abgeschlossen");
             } catch {
+                setSyncStatus("error", "Sync Fehler");
                 if (manual) showToast("Wiki Sync fehlgeschlagen");
             }
         }
@@ -4727,53 +4976,45 @@ OUTPUT JSON ONLY:
         }
 
         function setupEvents() {
-            elements.resetBtn.addEventListener("click", (event) => {
-                event.stopPropagation();
-                resetApp();
+            elements.settingsBtn.addEventListener("click", () => {
+                if (panelOpen && !panelDocked) {
+                    closeQuickPanel();
+                    return;
+                }
+                openSettings();
             });
-
-            elements.settingsBtn.addEventListener("click", () => openSettings());
-            elements.closeSettingsBtn.addEventListener("click", () => closeModal(elements.settingsModal));
+            elements.closeSettingsBtn.addEventListener("click", () => closeQuickPanel());
             elements.settingsModal.addEventListener("click", (event) => {
-                if (event.target === elements.settingsModal) closeModal(elements.settingsModal);
+                if (event.target === elements.settingsModal && !panelDocked) {
+                    closeQuickPanel();
+                }
             });
             elements.confirmModal.addEventListener("click", (event) => {
                 if (event.target === elements.confirmModal) closeModal(elements.confirmModal);
             });
 
-            elements.frameSalesBtn.addEventListener("click", () => setFrame("sales"));
-            elements.frameTrainingBtn.addEventListener("click", () => setFrame("training"));
-            elements.frameWikiBtn.addEventListener("click", () => setFrame("wiki"));
-
-            elements.themeToggleBtn.addEventListener("click", () => {
-                const cycle = ["auto", "light", "dark"];
-                const current = appState.settings.themeMode;
-                const next = cycle[(cycle.indexOf(current) + 1) % cycle.length];
-                applyTheme(next);
-                updateTrustStatus();
+            elements.frameSalesBtn.addEventListener("click", () => {
+                setFrame("sales");
+                if (!panelDocked) closeQuickPanel();
+            });
+            elements.frameTrainingBtn.addEventListener("click", () => {
+                setFrame("training");
+                if (!panelDocked) closeQuickPanel();
+            });
+            elements.frameWikiBtn.addEventListener("click", () => {
+                setFrame("wiki");
+                if (!panelDocked) closeQuickPanel();
             });
 
-            elements.densityToggleBtn.addEventListener("click", () => {
-                const next = appState.settings.densityMode === "compact" ? "comfortable" : "compact";
-                applyDensity(next, true);
-            });
-
-            elements.syncBtn.addEventListener("click", () => syncLibrary(true));
+            if (elements.syncBtn) {
+                elements.syncBtn.addEventListener("click", () => syncLibrary(true));
+            }
             elements.wikiSyncBtn.addEventListener("click", () => syncWiki(true));
             elements.wikiClearBtn.addEventListener("click", () => {
                 appState.wiki.filters = { category: "all", brand: "all", feature: "all" };
                 appState.wiki.searchQuery = "";
                 elements.wikiSearchInput.value = "";
                 renderWikiFrame();
-            });
-
-            elements.stealthBtn.addEventListener("click", async () => {
-                const confirmed = await confirmAction({
-                    title: "Stealth aktivieren?",
-                    message: "Display wird abgedunkelt. Zweimal tippen oder ESC beendet den Modus.",
-                    confirmLabel: "Aktivieren"
-                });
-                if (confirmed) setStealthMode(true);
             });
 
             elements.contextChips.addEventListener("click", (event) => {
@@ -4812,19 +5053,6 @@ OUTPUT JSON ONLY:
                 recognition.start();
             });
 
-            elements.quickClearBtn.addEventListener("click", () => resetApp());
-            elements.quickExportBtn.addEventListener("click", async () => {
-                const data = await exportData();
-                const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
-                const url = URL.createObjectURL(blob);
-                const anchor = document.createElement("a");
-                anchor.href = url;
-                anchor.download = `mehic_sales_os_export_${Date.now()}.json`;
-                anchor.click();
-                URL.revokeObjectURL(url);
-                showToast("Export abgeschlossen");
-            });
-
             elements.salesCardContainer.addEventListener("click", (event) => {
                 const trigger = event.target.closest(".expand-trigger");
                 if (trigger) {
@@ -4845,6 +5073,7 @@ OUTPUT JSON ONLY:
                     updateHistoryResult(cardId, feedback);
                     logEvent("feedback", { cardId, feedback });
                     showToast(feedback === "success" ? "Feedback gespeichert" : "Danke für Ihr Feedback");
+                    haptic(feedback === "success" ? [30] : [70]);
                     renderTrainingStats();
                 }
 
@@ -5067,15 +5296,22 @@ OUTPUT JSON ONLY:
 
             elements.clearBtn.addEventListener("click", async () => {
                 const confirmed = await confirmAction({
-                    title: "Alle Daten löschen?",
-                    message: "Cases, Logs und Wiki werden dauerhaft entfernt.",
-                    confirmLabel: "Löschen"
+                    title: "Reset bestätigen",
+                    message: "Dieser Schritt löscht lokale Daten unwiderruflich.",
+                    confirmLabel: "Ich bestätige",
+                    requireText: "Ich bestätige",
+                    holdMs: 800
                 });
                 if (!confirmed) return;
                 await clearDataStores();
+                appState.history = [];
+                appState.favorites = [];
+                appState.training = { ...DEFAULT_TRAINING_STATE };
+                await saveSellerState();
                 resetApp();
                 await updateStats();
                 showToast("Daten gelöscht");
+                haptic([90]);
             });
 
             elements.saveSettingsBtn.addEventListener("click", async () => {
@@ -5106,7 +5342,8 @@ OUTPUT JSON ONLY:
                 updateTrustStatus();
                 render();
                 showToast("Einstellungen gespeichert");
-                closeModal(elements.settingsModal);
+                haptic([30]);
+                closeQuickPanel();
             });
 
             elements.themeAuto.addEventListener("change", () => applyTheme("auto"));
@@ -5125,7 +5362,7 @@ OUTPUT JSON ONLY:
                         return;
                     }
                     if (elements.settingsModal.classList.contains("open")) {
-                        closeModal(elements.settingsModal);
+                        closeQuickPanel();
                         return;
                     }
                     if (appState.stealthMode) setStealthMode(false);
@@ -5141,11 +5378,11 @@ OUTPUT JSON ONLY:
                 }
                 if (event.ctrlKey && event.shiftKey && event.key.toLowerCase() === "t") {
                     event.preventDefault();
-                    elements.themeToggleBtn.click();
+                    cycleTheme();
                 }
                 if (event.ctrlKey && event.shiftKey && event.key.toLowerCase() === "d") {
                     event.preventDefault();
-                    elements.densityToggleBtn.click();
+                    toggleDensity();
                 }
                 if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "s") {
                     event.preventDefault();
@@ -5172,6 +5409,10 @@ OUTPUT JSON ONLY:
                 }
                 const activeModalId = modalStack[modalStack.length - 1];
                 if (activeModalId) {
+                    if (activeModalId === "settingsModal") {
+                        closeQuickPanel(true);
+                        return;
+                    }
                     const activeModal = document.getElementById(activeModalId);
                     if (activeModal) closeModal(activeModal, true);
                 }
@@ -5202,6 +5443,7 @@ OUTPUT JSON ONLY:
                             applyDensity(nextDensity, false);
                         }
                     }
+                    updatePanelDockedState();
                     densityResizeRaf = null;
                 });
             });
@@ -5223,7 +5465,7 @@ OUTPUT JSON ONLY:
             elements.themeDark.checked = appState.settings.themeMode === "dark";
             elements.densityCompact.checked = appState.settings.densityMode === "compact";
             elements.densityComfortable.checked = appState.settings.densityMode === "comfortable";
-            openModal(elements.settingsModal);
+            openQuickPanel();
         }
 
         async function handleWikiQuestion() {
@@ -5276,14 +5518,16 @@ OUTPUT JSON ONLY:
             const preferredDensity = appState.settings.densityMode || computeDensity(window.innerWidth);
             applyDensity(preferredDensity, appState.settings.densityUserSet, false);
             applyTheme(appState.settings.themeMode, false);
-            setFrame(appState.settings.frameMode || "sales", false);
+            setFrame("sales", false);
+            appState.settings.frameMode = "sales";
 
             setupEvents();
             setupSpeechRecognition();
             setupViewportHandling();
-            setupControlBarObserver();
             setupStealthOverlay();
+            setupPanelSwipe();
             setupWakeLockReacquisition();
+            updatePanelDockedState();
             updateOnlineStatus();
             updatePolicyTile();
             updateTrustStatus();
