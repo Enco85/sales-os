@@ -19,9 +19,24 @@ Executive Summary:
     <meta name="referrer" content="no-referrer">
     <meta http-equiv="Content-Security-Policy" content="default-src 'none'; base-uri 'self'; form-action 'self'; img-src 'self' data:; font-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline'; connect-src 'self' https://api.openai.com https://api.groq.com; frame-ancestors 'none'; object-src 'none';">
     <!-- CSP Level 2 (Enterprise, hash-based, no unsafe-inline):
-         Content-Security-Policy: default-src 'none'; base-uri 'self'; form-action 'self'; img-src 'self' data:; font-src 'self'; style-src 'self' 'sha256-BdjvAHtpvim+egIHSc4mC5SKYlKIkHQ/9jkZcjZfsjA='; script-src 'self' 'sha256-Aac9ZaBTPbNgjQmg22SKZrXebbkx68UjIRu7YiwuhXU='; connect-src 'self' https://api.openai.com https://api.groq.com; frame-ancestors 'none'; object-src 'none';
+         Content-Security-Policy: default-src 'none'; base-uri 'self'; form-action 'self'; img-src 'self' data:; font-src 'self'; style-src 'self' 'sha256-M4sENJrqBVCDv+mUS/Xrapwi66pZn/GK7b1VFlYbuAs='; script-src 'self' 'sha256-S/ySjqTl5V92Ch0CpgyK4oh71Ka7qeSo4DlQTi4tj0k=' 'sha256-+6vfCGl5FxFFbtiAodhL+PgaVRAKIFMgPVgoCrs9/DM='; connect-src 'self' https://api.openai.com https://api.groq.com; frame-ancestors 'none'; object-src 'none';
          Hash calculation details: see REPORT.md
     -->
+    <script>
+        (() => {
+            try {
+                const raw = localStorage.getItem("msos_settings");
+                if (!raw) return;
+                const settings = JSON.parse(raw);
+                const frame = settings && settings.frameMode;
+                if (["sales", "training", "wiki"].includes(frame)) {
+                    document.documentElement.setAttribute("data-frame", frame);
+                }
+            } catch {
+                // ignore storage errors
+            }
+        })();
+    </script>
     <title>MEHIC SALES OS — Enterprise RC 2026</title>
     <style>
         *,
@@ -498,16 +513,65 @@ Executive Summary:
             border: none;
             box-shadow: none;
             padding: 0;
+            position: relative;
         }
 
         .frame-root {
-            display: none;
+            opacity: 0;
+            pointer-events: none;
+            position: absolute;
+            inset: 0;
+            transition: opacity var(--duration-medium) var(--easing-standard);
         }
 
         html[data-frame="sales"] #salesFrame,
         html[data-frame="training"] #trainingFrame,
         html[data-frame="wiki"] #wikiFrame {
-            display: block;
+            opacity: 1;
+            pointer-events: auto;
+            position: relative;
+        }
+
+        html[data-view-direction]::view-transition-old(root),
+        html[data-view-direction]::view-transition-new(root) {
+            animation-duration: var(--duration-medium);
+            animation-timing-function: var(--easing-standard);
+        }
+
+        html[data-view-direction="forward"]::view-transition-old(root) {
+            animation-name: slide-left-out;
+        }
+
+        html[data-view-direction="forward"]::view-transition-new(root) {
+            animation-name: slide-left-in;
+        }
+
+        html[data-view-direction="backward"]::view-transition-old(root) {
+            animation-name: slide-right-out;
+        }
+
+        html[data-view-direction="backward"]::view-transition-new(root) {
+            animation-name: slide-right-in;
+        }
+
+        @keyframes slide-left-out {
+            from { transform: translateX(0); opacity: 1; }
+            to { transform: translateX(-8%); opacity: 0; }
+        }
+
+        @keyframes slide-left-in {
+            from { transform: translateX(8%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        @keyframes slide-right-out {
+            from { transform: translateX(0); opacity: 1; }
+            to { transform: translateX(8%); opacity: 0; }
+        }
+
+        @keyframes slide-right-in {
+            from { transform: translateX(-8%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
         }
 
         .sales-frame > * + * {
@@ -600,6 +664,7 @@ Executive Summary:
             padding: var(--tile-padding);
             box-shadow: var(--shadow-1);
             position: relative;
+            container-type: inline-size;
         }
 
         .tile.glass {
@@ -1166,6 +1231,33 @@ Executive Summary:
             box-shadow: var(--shadow-1);
         }
 
+        .sales-playbook {
+            display: grid;
+            gap: var(--space-4);
+        }
+
+        .playbook-section {
+            border: 1px solid var(--color-divider);
+            border-radius: var(--radius-2);
+            padding: var(--space-3);
+            display: grid;
+            gap: var(--space-2);
+            background: var(--color-elevated);
+        }
+
+        .playbook-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: var(--space-2);
+        }
+
+        .playbook-chips {
+            display: flex;
+            flex-wrap: wrap;
+            gap: var(--space-2);
+        }
+
         .context-chips {
             display: flex;
             gap: var(--space-2);
@@ -1227,12 +1319,12 @@ Executive Summary:
             padding: 14px 18px;
         }
 
-        @media (max-width: 720px) {
-            .hero-input {
+        @container (max-width: 720px) {
+            .sales-hero .hero-input {
                 grid-template-columns: 1fr;
             }
 
-            .hero-submit {
+            .sales-hero .hero-submit {
                 width: 100%;
             }
         }
@@ -1249,7 +1341,7 @@ Executive Summary:
             border-radius: var(--radius-1);
         }
 
-        @media (min-width: 1024px) {
+        @container (min-width: 1024px) {
             .control-actions {
                 display: flex;
                 justify-content: flex-end;
@@ -1343,6 +1435,25 @@ Executive Summary:
             overflow-y: auto;
             box-shadow: var(--shadow-3);
             border: 1px solid var(--color-border);
+        }
+
+        dialog.wiki-editor {
+            padding: 0;
+            border: none;
+            background: transparent;
+            width: min(720px, 100%);
+            max-width: 720px;
+        }
+
+        dialog.wiki-editor::backdrop {
+            background: var(--color-backdrop);
+            backdrop-filter: blur(8px);
+        }
+
+        .wiki-entry-detail {
+            margin-top: var(--space-4);
+            display: grid;
+            gap: var(--space-3);
         }
 
         .quick-panel {
@@ -1748,16 +1859,14 @@ Executive Summary:
             .header {
                 padding: calc(var(--space-3) + var(--safe-top)) var(--space-4) var(--space-3) var(--space-4);
             }
+        }
 
-            .input-area {
+        @container (max-width: 680px) {
+            .sales-hero .input-area {
                 grid-template-columns: 1fr auto;
             }
 
-            .send-btn {
-                display: none;
-            }
-
-            .toggle-label {
+            .sales-hero .send-btn {
                 display: none;
             }
         }
@@ -1877,10 +1986,115 @@ Executive Summary:
                                 Techie
                             </button>
                         </div>
+                        <div class="context-chips tech-toggle" id="techToggleGroup" role="group" aria-label="Technische Produktfrage">
+                            <button class="chip" id="techQuestionToggle" type="button" aria-pressed="false" data-tech-question="true">
+                                Technische Produktfrage
+                            </button>
+                        </div>
                     </section>
                     <div class="sales-layout">
                         <section class="tile sales-primary" id="salesPrimary">
                             <div id="salesCardContainer"></div>
+                        </section>
+                        <section class="tile sales-playbook" id="salesPlaybook">
+                            <div class="tile-title">Leitfaden</div>
+                            <div class="tile-subtitle">1-Tap Fragen und Abschlussbausteine.</div>
+                            <div class="playbook-section">
+                                <div class="playbook-header">
+                                    <div class="history-meta">Bedarf & Prioritäten</div>
+                                    <button class="copy-btn" type="button" data-playbook-copy="Welche Leistungen sind Ihnen wichtig | Welche sind Ihnen weniger wichtig | Welche Geräte verwenden Sie | Wer wird es hauptsächlich nutzen | Wie viel nutzen Sie es im Durchschnitt | Was ist Ihnen wichtig bei einem Smartphone | Was ist Ihnen wichtig bei einem Fernseher | Welche Ansprüche haben Sie an das Notebook oder den Laptop">Copy</button>
+                                </div>
+                                <div class="playbook-chips">
+                                    <button class="chip" type="button" data-playbook-text="Welche Leistungen sind Ihnen wichtig">Welche Leistungen sind Ihnen wichtig</button>
+                                    <button class="chip" type="button" data-playbook-text="Welche sind Ihnen weniger wichtig">Welche sind Ihnen weniger wichtig</button>
+                                    <button class="chip" type="button" data-playbook-text="Welche Geräte verwenden Sie">Welche Geräte verwenden Sie</button>
+                                    <button class="chip" type="button" data-playbook-text="Wer wird es hauptsächlich nutzen">Wer wird es hauptsächlich nutzen</button>
+                                    <button class="chip" type="button" data-playbook-text="Wie viel nutzen Sie es im Durchschnitt">Wie viel nutzen Sie es im Durchschnitt</button>
+                                    <button class="chip" type="button" data-playbook-text="Was ist Ihnen wichtig bei einem Smartphone">Was ist Ihnen wichtig bei einem Smartphone</button>
+                                    <button class="chip" type="button" data-playbook-text="Was ist Ihnen wichtig bei einem Fernseher">Was ist Ihnen wichtig bei einem Fernseher</button>
+                                    <button class="chip" type="button" data-playbook-text="Welche Ansprüche haben Sie an das Notebook oder den Laptop">Welche Ansprüche haben Sie an das Notebook oder den Laptop</button>
+                                </div>
+                            </div>
+                            <div class="playbook-section">
+                                <div class="playbook-header">
+                                    <div class="history-meta">Nutzen & Wert</div>
+                                    <button class="copy-btn" type="button" data-playbook-copy="Was ist der Vorteil für Sie, wenn das Smartphone eine gute Kamera hat | Was ist der Vorteil für Sie, wenn das Smartphone einen großen Speicher hat | Was ist der Vorteil für Sie, wenn das Notebook oder der Laptop eine lange Akkulaufzeit hat">Copy</button>
+                                </div>
+                                <div class="playbook-chips">
+                                    <button class="chip" type="button" data-playbook-text="Was ist der Vorteil für Sie, wenn das Smartphone eine gute Kamera hat">Was ist der Vorteil für Sie, wenn das Smartphone eine gute Kamera hat</button>
+                                    <button class="chip" type="button" data-playbook-text="Was ist der Vorteil für Sie, wenn das Smartphone einen großen Speicher hat">Was ist der Vorteil für Sie, wenn das Smartphone einen großen Speicher hat</button>
+                                    <button class="chip" type="button" data-playbook-text="Was ist der Vorteil für Sie, wenn das Notebook oder der Laptop eine lange Akkulaufzeit hat">Was ist der Vorteil für Sie, wenn das Notebook oder der Laptop eine lange Akkulaufzeit hat</button>
+                                </div>
+                            </div>
+                            <div class="playbook-section">
+                                <div class="playbook-header">
+                                    <div class="history-meta">Abschlussfragen</div>
+                                    <button class="copy-btn" type="button" data-playbook-copy="Sollen wir es einpacken | Wollen wir das so machen | Darf ich es Ihnen reservieren | Wollen Sie bar oder mit Karte zahlen | Soll ich es gleich aktivieren | Soll ich es gleich einrichten | Soll ich es Ihnen nach Hause liefern lassen">Copy</button>
+                                </div>
+                                <div class="playbook-chips">
+                                    <button class="chip" type="button" data-playbook-text="Sollen wir es einpacken">Sollen wir es einpacken</button>
+                                    <button class="chip" type="button" data-playbook-text="Wollen wir das so machen">Wollen wir das so machen</button>
+                                    <button class="chip" type="button" data-playbook-text="Darf ich es Ihnen reservieren">Darf ich es Ihnen reservieren</button>
+                                    <button class="chip" type="button" data-playbook-text="Wollen Sie bar oder mit Karte zahlen">Wollen Sie bar oder mit Karte zahlen</button>
+                                    <button class="chip" type="button" data-playbook-text="Soll ich es gleich aktivieren">Soll ich es gleich aktivieren</button>
+                                    <button class="chip" type="button" data-playbook-text="Soll ich es gleich einrichten">Soll ich es gleich einrichten</button>
+                                    <button class="chip" type="button" data-playbook-text="Soll ich es Ihnen nach Hause liefern lassen">Soll ich es Ihnen nach Hause liefern lassen</button>
+                                </div>
+                            </div>
+                            <div class="playbook-section">
+                                <div class="playbook-header">
+                                    <div class="history-meta">DAF (Dank – Abklärung – Frage)</div>
+                                    <button class="copy-btn" type="button" data-playbook-copy="D: Super, dass Sie das ansprechen | D: Danke, dass Sie das sagen | A: Was genau ist Ihnen dabei wichtig | A: Woran würden Sie festmachen, dass es sich lohnt | F: Wenn wir das lösen, wollen wir es heute mitnehmen | F: Wollen wir es so machen">Copy</button>
+                                </div>
+                                <div class="playbook-chips">
+                                    <button class="chip" type="button" data-playbook-text="Super, dass Sie das ansprechen">D: Super, dass Sie das ansprechen</button>
+                                    <button class="chip" type="button" data-playbook-text="Danke, dass Sie das sagen">D: Danke, dass Sie das sagen</button>
+                                    <button class="chip" type="button" data-playbook-text="Was genau ist Ihnen dabei wichtig">A: Was genau ist Ihnen dabei wichtig</button>
+                                    <button class="chip" type="button" data-playbook-text="Woran würden Sie festmachen, dass es sich lohnt">A: Woran würden Sie festmachen, dass es sich lohnt</button>
+                                    <button class="chip" type="button" data-playbook-text="Wenn wir das lösen, wollen wir es heute mitnehmen">F: Wenn wir das lösen, wollen wir es heute mitnehmen</button>
+                                    <button class="chip" type="button" data-playbook-text="Wollen wir es so machen">F: Wollen wir es so machen</button>
+                                </div>
+                            </div>
+                            <div class="playbook-section">
+                                <div class="playbook-header">
+                                    <div class="history-meta">SPIN – Problem</div>
+                                    <button class="copy-btn" type="button" data-playbook-copy="Was stört Sie am aktuellen Gerät am meisten | Was fehlt Ihnen im Alltag am meisten">Copy</button>
+                                </div>
+                                <div class="playbook-chips">
+                                    <button class="chip" type="button" data-playbook-text="Was stört Sie am aktuellen Gerät am meisten">Was stört Sie am aktuellen Gerät am meisten</button>
+                                    <button class="chip" type="button" data-playbook-text="Was fehlt Ihnen im Alltag am meisten">Was fehlt Ihnen im Alltag am meisten</button>
+                                </div>
+                            </div>
+                            <div class="playbook-section">
+                                <div class="playbook-header">
+                                    <div class="history-meta">SPIN – Implikation</div>
+                                    <button class="copy-btn" type="button" data-playbook-copy="Was passiert, wenn das Problem bleibt | Was kostet Sie das im Alltag (Zeit, Nerven, Geld)">Copy</button>
+                                </div>
+                                <div class="playbook-chips">
+                                    <button class="chip" type="button" data-playbook-text="Was passiert, wenn das Problem bleibt">Was passiert, wenn das Problem bleibt</button>
+                                    <button class="chip" type="button" data-playbook-text="Was kostet Sie das im Alltag (Zeit, Nerven, Geld)">Was kostet Sie das im Alltag (Zeit, Nerven, Geld)</button>
+                                </div>
+                            </div>
+                            <div class="playbook-section">
+                                <div class="playbook-header">
+                                    <div class="history-meta">SPIN – Need-Payoff</div>
+                                    <button class="copy-btn" type="button" data-playbook-copy="Was wäre für Sie besser, wenn das gelöst ist | Woran merken Sie, dass es sich gelohnt hat">Copy</button>
+                                </div>
+                                <div class="playbook-chips">
+                                    <button class="chip" type="button" data-playbook-text="Was wäre für Sie besser, wenn das gelöst ist">Was wäre für Sie besser, wenn das gelöst ist</button>
+                                    <button class="chip" type="button" data-playbook-text="Woran merken Sie, dass es sich gelohnt hat">Woran merken Sie, dass es sich gelohnt hat</button>
+                                </div>
+                            </div>
+                            <div class="playbook-section">
+                                <div class="playbook-header">
+                                    <div class="history-meta">Kalibrierte Fragen</div>
+                                    <button class="copy-btn" type="button" data-playbook-copy="Wie soll das für Sie idealerweise aussehen | Was müsste passieren, damit es für Sie passt">Copy</button>
+                                </div>
+                                <div class="playbook-chips">
+                                    <button class="chip" type="button" data-playbook-text="Wie soll das für Sie idealerweise aussehen">Wie soll das für Sie idealerweise aussehen</button>
+                                    <button class="chip" type="button" data-playbook-text="Was müsste passieren, damit es für Sie passt">Was müsste passieren, damit es für Sie passt</button>
+                                </div>
+                            </div>
                         </section>
                         <aside class="tile sales-history" id="salesHistory">
                             <div class="tile-title">Verlauf</div>
@@ -1896,7 +2110,7 @@ Executive Summary:
                     </div>
                 </div>
 
-                <div class="frame-root training-frame" id="trainingFrame" role="tabpanel" hidden>
+                <div class="frame-root training-frame" id="trainingFrame" role="tabpanel">
                     <div class="training-layout">
                         <section class="tile training-card" id="trainingCardPanel">
                             <div class="tile-header">
@@ -1959,7 +2173,7 @@ Executive Summary:
                     </div>
                 </div>
 
-                <div class="frame-root wiki-frame" id="wikiFrame" role="tabpanel" hidden>
+                <div class="frame-root wiki-frame" id="wikiFrame" role="tabpanel">
                     <div class="wiki-layout">
                         <section class="tile wiki-search-panel">
                             <div class="tile-title">Produkt Wiki</div>
@@ -1974,6 +2188,19 @@ Executive Summary:
                         <section class="tile wiki-results-panel">
                             <div class="tile-title">Treffer</div>
                             <div class="history-list" id="wikiResults"></div>
+                        </section>
+
+                        <section class="tile wiki-crud-panel" id="wikiCrudPanel">
+                            <div class="tile-header">
+                                <div>
+                                    <div class="tile-title">Wiki Einträge</div>
+                                    <div class="tile-subtitle">Lokale Wissensbasis</div>
+                                </div>
+                                <button class="btn btn-secondary" id="wikiNewBtn" type="button">+ Neu</button>
+                            </div>
+                            <div class="history-list" id="wikiEntryList"></div>
+                            <div class="panel-divider"></div>
+                            <div class="wiki-entry-detail" id="wikiEntryDetail"></div>
                         </section>
 
                         <section class="tile wiki-detail-panel">
@@ -2064,6 +2291,12 @@ Executive Summary:
                     <button class="btn btn-secondary" id="importBtn" type="button">Import</button>
                 </div>
                 <input type="file" id="importFile" accept=".json" class="sr-only" />
+                <div class="btn-group">
+                    <button class="btn btn-secondary" id="libraryExportBtn" type="button">Library exportieren</button>
+                    <button class="btn btn-secondary" id="libraryImportBtn" type="button">Library importieren</button>
+                </div>
+                <input type="file" id="libraryImportFile" accept=".json" class="sr-only" />
+                <button class="btn btn-secondary" id="wikiResetBtn" type="button">Wiki zurücksetzen</button>
                 <div class="helper-text">Letzter Sync: <span id="syncTime">–</span></div>
             </div>
 
@@ -2180,6 +2413,54 @@ Executive Summary:
         </div>
     </div>
 
+    <dialog class="wiki-editor" id="wikiEditorModal" aria-labelledby="wikiEditorTitle">
+        <form class="modal-content" id="wikiEditorForm">
+            <div class="modal-header">
+                <div class="modal-title" id="wikiEditorTitle">Wiki Eintrag</div>
+                <button class="close-btn" id="wikiEditorCloseBtn" type="button" aria-label="Dialog schließen">
+                    <svg viewBox="0 0 24 24">
+                        <line x1="18" y1="6" x2="6" y2="18"/>
+                        <line x1="6" y1="6" x2="18" y2="18"/>
+                    </svg>
+                </button>
+            </div>
+            <input type="hidden" id="wikiEditorId" />
+            <div class="panel-section">
+                <label class="form-label" for="wikiTitle">Titel (Pflicht)</label>
+                <input class="form-input" id="wikiTitle" type="text" placeholder="z.B. Garantie Ablauf" autocomplete="off" />
+            </div>
+            <div class="panel-section">
+                <label class="form-label" for="wikiCategory">Kategorie (Pflicht)</label>
+                <input class="form-input" id="wikiCategory" type="text" placeholder="z.B. TV" autocomplete="off" />
+            </div>
+            <div class="panel-section">
+                <label class="form-label" for="wikiBrand">Brand</label>
+                <input class="form-input" id="wikiBrand" type="text" placeholder="z.B. Samsung" autocomplete="off" />
+            </div>
+            <div class="panel-section">
+                <label class="form-label" for="wikiTags">Tags</label>
+                <input class="form-input" id="wikiTags" type="text" placeholder="kamera, oled, gaming" autocomplete="off" />
+                <div class="helper-text">Kommagetrennt oder Zeilenumbrüche.</div>
+            </div>
+            <div class="panel-section">
+                <label class="form-label" for="wikiKurz">Kurz</label>
+                <textarea class="form-textarea" id="wikiKurz" placeholder="Kurzbeschreibung"></textarea>
+            </div>
+            <div class="panel-section">
+                <label class="form-label" for="wikiSpecs">Specs</label>
+                <textarea class="form-textarea" id="wikiSpecs" placeholder="Spezifikationen"></textarea>
+            </div>
+            <div class="panel-section">
+                <label class="form-label" for="wikiFaq">FAQ</label>
+                <textarea class="form-textarea" id="wikiFaq" placeholder="FAQ Einträge"></textarea>
+            </div>
+            <div class="btn-group">
+                <button class="btn btn-secondary" id="wikiEditorCancelBtn" type="button">Abbrechen</button>
+                <button class="btn btn-primary" id="wikiEditorSaveBtn" type="button">Speichern</button>
+            </div>
+        </form>
+    </dialog>
+
     <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
     <footer class="footer">
@@ -2193,7 +2474,7 @@ Executive Summary:
         const BUILD_SIGNATURE = `MEHIC_SALES_OS_RC_${APP_VERSION}__${BUILD_DATE}`;
 
         const DB_NAME = "MehicSalesOS_DB";
-        const DB_VERSION = 3;
+        const DB_VERSION = 4;
         const MASTER_LIBRARY_URL = "./library.json";
         const LIBRARY_SHA256 = "pM/qq9A97C8i/Bgtyx2UG/8gtFdRzlangPRZbIYFbUQ=";
 
@@ -2203,6 +2484,86 @@ Executive Summary:
         };
 
         const FRAME_MODES = ["sales", "training", "wiki"];
+        const DEFAULT_WIKI_SEEDS = [];
+        const DEFAULT_LIBRARY_SEEDS = [
+            {
+                id: "abo_kuendigung_vergessen",
+                objectionKey: "subscription_aversion",
+                objectionText: "Abo kündigen vergessen",
+                suggestedReply: "Transparenz: Ich zeige kurz, was abgedeckt ist und was nicht. Sie entscheiden in Ruhe.",
+                playbookRefs: [],
+                sellerVotes: { works: 0, fails: 0 },
+                lastUsedAt: 0,
+                updatedAt: Date.now(),
+                source: "seed"
+            },
+            {
+                id: "zu_teuer",
+                objectionKey: "price",
+                objectionText: "Zu teuer",
+                suggestedReply: "Ich zeige kurz, welcher Nutzen im Alltag für Sie relevant ist.",
+                playbookRefs: [],
+                sellerVotes: { works: 0, fails: 0 },
+                lastUsedAt: 0,
+                updatedAt: Date.now(),
+                source: "seed"
+            },
+            {
+                id: "ueberlege_noch",
+                objectionKey: "uncertainty",
+                objectionText: "Überlege noch",
+                suggestedReply: "Gerne. Was müssten wir klären, damit Sie sicher entscheiden können?",
+                playbookRefs: [],
+                sellerVotes: { works: 0, fails: 0 },
+                lastUsedAt: 0,
+                updatedAt: Date.now(),
+                source: "seed"
+            },
+            {
+                id: "brauche_ich_nicht",
+                objectionKey: "feature_gap",
+                objectionText: "Brauche ich nicht",
+                suggestedReply: "Verstanden. Darf ich fragen, was für Sie im Alltag wirklich zählt?",
+                playbookRefs: [],
+                sellerVotes: { works: 0, fails: 0 },
+                lastUsedAt: 0,
+                updatedAt: Date.now(),
+                source: "seed"
+            },
+            {
+                id: "nur_schauen",
+                objectionKey: "trust",
+                objectionText: "Nur schauen",
+                suggestedReply: "Natürlich. Darf ich kurz verstehen, was Sie vergleichen möchten?",
+                playbookRefs: [],
+                sellerVotes: { works: 0, fails: 0 },
+                lastUsedAt: 0,
+                updatedAt: Date.now(),
+                source: "seed"
+            },
+            {
+                id: "online_guenstiger",
+                objectionKey: "competitor",
+                objectionText: "Online günstiger",
+                suggestedReply: "Danke fürs Offen sagen. Wollen wir kurz den Gesamtvergleich machen?",
+                playbookRefs: [],
+                sellerVotes: { works: 0, fails: 0 },
+                lastUsedAt: 0,
+                updatedAt: Date.now(),
+                source: "seed"
+            },
+            {
+                id: "keine_zeit",
+                objectionKey: "delivery",
+                objectionText: "Keine Zeit",
+                suggestedReply: "Verstanden. Was wäre der schnellste Weg für Sie: kurz klären oder gleich reservieren?",
+                playbookRefs: [],
+                sellerVotes: { works: 0, fails: 0 },
+                lastUsedAt: 0,
+                updatedAt: Date.now(),
+                source: "seed"
+            }
+        ];
         const MAX_HISTORY = 15;
         const DEFAULT_TRAINING_STATE = {
             drillIndex: 0,
@@ -2341,12 +2702,16 @@ Executive Summary:
             frame: "sales",
             history: [],
             favorites: [],
+            playbookRefs: [],
+            library: [],
             training: { ...DEFAULT_TRAINING_STATE },
             wiki: {
                 products: [],
                 faq: [],
                 notes: [],
                 comparisons: [],
+                entries: [],
+                selectedEntryId: null,
                 filters: { category: "all", brand: "all", feature: "all" },
                 selectedProductId: null,
                 searchQuery: "",
@@ -2377,6 +2742,7 @@ Executive Summary:
                 syncStatus: "idle",
                 lastSync: null,
                 lastWikiSync: null,
+                techQuestion: false,
                 debug: false
             },
             stats: {
@@ -2647,6 +3013,7 @@ Executive Summary:
             elements.trainingFrame = document.getElementById("trainingFrame");
             elements.wikiFrame = document.getElementById("wikiFrame");
             elements.salesCardContainer = document.getElementById("salesCardContainer");
+            elements.salesPlaybook = document.getElementById("salesPlaybook");
             elements.historyList = document.getElementById("historyList");
             elements.favoriteList = document.getElementById("favoriteList");
             elements.trainingCardContainer = document.getElementById("trainingCardContainer");
@@ -2676,16 +3043,33 @@ Executive Summary:
             elements.wikiClearBtn = document.getElementById("wikiClearBtn");
             elements.wikiResults = document.getElementById("wikiResults");
             elements.wikiDetail = document.getElementById("wikiDetail");
+            elements.wikiEntryList = document.getElementById("wikiEntryList");
+            elements.wikiEntryDetail = document.getElementById("wikiEntryDetail");
+            elements.wikiNewBtn = document.getElementById("wikiNewBtn");
             elements.wikiQuestionInput = document.getElementById("wikiQuestionInput");
             elements.wikiQuestionBtn = document.getElementById("wikiQuestionBtn");
             elements.wikiAnswerStatus = document.getElementById("wikiAnswerStatus");
             elements.wikiAnswerText = document.getElementById("wikiAnswerText");
             elements.wikiCitations = document.getElementById("wikiCitations");
             elements.wikiCompareList = document.getElementById("wikiCompareList");
+            elements.wikiEditorModal = document.getElementById("wikiEditorModal");
+            elements.wikiEditorForm = document.getElementById("wikiEditorForm");
+            elements.wikiEditorId = document.getElementById("wikiEditorId");
+            elements.wikiTitle = document.getElementById("wikiTitle");
+            elements.wikiCategory = document.getElementById("wikiCategory");
+            elements.wikiBrand = document.getElementById("wikiBrand");
+            elements.wikiTags = document.getElementById("wikiTags");
+            elements.wikiKurz = document.getElementById("wikiKurz");
+            elements.wikiSpecs = document.getElementById("wikiSpecs");
+            elements.wikiFaq = document.getElementById("wikiFaq");
+            elements.wikiEditorCloseBtn = document.getElementById("wikiEditorCloseBtn");
+            elements.wikiEditorCancelBtn = document.getElementById("wikiEditorCancelBtn");
+            elements.wikiEditorSaveBtn = document.getElementById("wikiEditorSaveBtn");
             elements.objectionInput = document.getElementById("objectionInput");
             elements.submitBtn = document.getElementById("submitBtn");
             elements.micBtn = document.getElementById("micBtn");
             elements.contextChips = document.getElementById("contextChips");
+            elements.techQuestionToggle = document.getElementById("techQuestionToggle");
             elements.buildInfo = document.getElementById("buildInfo");
             elements.toast = document.getElementById("toast");
             elements.settingsModal = document.getElementById("settingsModal");
@@ -2706,6 +3090,10 @@ Executive Summary:
             elements.exportBtn = document.getElementById("exportBtn");
             elements.importBtn = document.getElementById("importBtn");
             elements.importFile = document.getElementById("importFile");
+            elements.libraryExportBtn = document.getElementById("libraryExportBtn");
+            elements.libraryImportBtn = document.getElementById("libraryImportBtn");
+            elements.libraryImportFile = document.getElementById("libraryImportFile");
+            elements.wikiResetBtn = document.getElementById("wikiResetBtn");
             elements.clearBtn = document.getElementById("clearBtn");
             elements.confirmModal = document.getElementById("confirmModal");
             elements.confirmTitle = document.getElementById("confirmTitle");
@@ -2865,16 +3253,44 @@ Executive Summary:
             applyDensity(next, true);
         }
 
+        function getFrameDirection(previous, next) {
+            const order = { sales: 0, training: 1, wiki: 2 };
+            if (previous === next) return "forward";
+            return order[next] > order[previous] ? "forward" : "backward";
+        }
+
+        function withViewTransition(fn, direction = "forward") {
+            document.documentElement.setAttribute("data-view-direction", direction);
+            if (document.startViewTransition) {
+                const transition = document.startViewTransition(() => fn());
+                transition.finished.finally(() => {
+                    document.documentElement.removeAttribute("data-view-direction");
+                });
+                return;
+            }
+            fn();
+            document.documentElement.removeAttribute("data-view-direction");
+        }
+
         function setFrame(mode, persist = true) {
             if (!FRAME_MODES.includes(mode)) return;
-            appState.frame = mode;
-            document.documentElement.setAttribute("data-frame", mode);
-            elements.frameSalesBtn.setAttribute("aria-pressed", String(mode === "sales"));
-            elements.frameTrainingBtn.setAttribute("aria-pressed", String(mode === "training"));
-            elements.frameWikiBtn.setAttribute("aria-pressed", String(mode === "wiki"));
-            elements.salesFrame.hidden = mode !== "sales";
-            elements.trainingFrame.hidden = mode !== "training";
-            elements.wikiFrame.hidden = mode !== "wiki";
+            const previous = appState.frame;
+            const direction = getFrameDirection(previous, mode);
+            const apply = () => {
+                appState.frame = mode;
+                document.documentElement.setAttribute("data-frame", mode);
+                elements.frameSalesBtn.setAttribute("aria-pressed", String(mode === "sales"));
+                elements.frameTrainingBtn.setAttribute("aria-pressed", String(mode === "training"));
+                elements.frameWikiBtn.setAttribute("aria-pressed", String(mode === "wiki"));
+                elements.salesFrame.setAttribute("aria-hidden", String(mode !== "sales"));
+                elements.trainingFrame.setAttribute("aria-hidden", String(mode !== "training"));
+                elements.wikiFrame.setAttribute("aria-hidden", String(mode !== "wiki"));
+            };
+            if (previous === mode) {
+                apply();
+            } else {
+                withViewTransition(apply, direction);
+            }
             if (persist) {
                 appState.settings.frameMode = mode;
                 saveSettings(buildPersistedSettings());
@@ -3027,7 +3443,11 @@ Executive Summary:
 
         function openModal(modal) {
             appState.lastFocused = document.activeElement;
-            modal.classList.add("open");
+            if (modal.tagName === "DIALOG") {
+                if (!modal.open) modal.showModal();
+            } else {
+                modal.classList.add("open");
+            }
             modal.setAttribute("aria-hidden", "false");
             setAppInert(true);
             trapFocus(modal);
@@ -3041,7 +3461,11 @@ Executive Summary:
         }
 
         function closeModal(modal, fromPopstate = false) {
-            modal.classList.remove("open");
+            if (modal.tagName === "DIALOG") {
+                if (modal.open) modal.close();
+            } else {
+                modal.classList.remove("open");
+            }
             modal.setAttribute("aria-hidden", "true");
             releaseFocusTrap(modal);
             const index = modalStack.indexOf(modal.id);
@@ -3488,6 +3912,56 @@ Executive Summary:
             };
         }
 
+        function parseTags(value) {
+            if (Array.isArray(value)) {
+                return sanitizeArray(value, 40);
+            }
+            if (typeof value === "string") {
+                return value
+                    .split(/[,;\n]/)
+                    .map(tag => tag.trim())
+                    .filter(Boolean)
+                    .slice(0, 40);
+            }
+            return [];
+        }
+
+        function normalizeWikiEntry(item) {
+            if (!item || typeof item !== "object") return null;
+            return {
+                id: sanitizeString(item.id || `wiki_${Date.now()}`, 80),
+                title: sanitizeString(item.title, 120),
+                brand: sanitizeString(item.brand, 80),
+                tags: parseTags(item.tags),
+                category: sanitizeString(item.category, 80),
+                sections: {
+                    kurz: sanitizeString(item.sections && item.sections.kurz, 600),
+                    specs: sanitizeString(item.sections && item.sections.specs, 800),
+                    faq: sanitizeString(item.sections && item.sections.faq, 800)
+                },
+                updatedAt: item.updatedAt || new Date().toISOString()
+            };
+        }
+
+        function normalizeLibraryItem(item) {
+            if (!item || typeof item !== "object") return null;
+            const votes = item.sellerVotes || {};
+            return {
+                id: sanitizeString(item.id || `lib_${Date.now()}`, 80),
+                objectionKey: sanitizeString(item.objectionKey, 80),
+                objectionText: sanitizeString(item.objectionText, 200),
+                suggestedReply: sanitizeString(item.suggestedReply, 600),
+                playbookRefs: sanitizeArray(item.playbookRefs, 120),
+                sellerVotes: {
+                    works: Number(votes.works) || 0,
+                    fails: Number(votes.fails) || 0
+                },
+                lastUsedAt: typeof item.lastUsedAt === "number" ? item.lastUsedAt : 0,
+                updatedAt: typeof item.updatedAt === "number" ? item.updatedAt : Date.now(),
+                source: sanitizeEnum(item.source, ["seed", "learned"], "learned")
+            };
+        }
+
         function validateProxyUrl(value) {
             if (!value) return { ok: false };
             try {
@@ -3533,6 +4007,8 @@ Executive Summary:
                     if (!db.objectStoreNames.contains("productNotes")) db.createObjectStore("productNotes", { keyPath: "id" });
                     if (!db.objectStoreNames.contains("comparisons")) db.createObjectStore("comparisons", { keyPath: "id" });
                     if (!db.objectStoreNames.contains("seller")) db.createObjectStore("seller", { keyPath: "id" });
+                    if (!db.objectStoreNames.contains("wiki")) db.createObjectStore("wiki", { keyPath: "id" });
+                    if (!db.objectStoreNames.contains("objection_library")) db.createObjectStore("objection_library", { keyPath: "id" });
                 };
             });
         }
@@ -3683,13 +4159,116 @@ Executive Summary:
             return getAllFromStore("comparisons", "msos_comparisons");
         }
 
+        async function getAllWikiEntries() {
+            return getAllFromStore("wiki", "msos_wiki");
+        }
+
+        async function saveWikiEntry(entry) {
+            await waitForDB();
+            if (storage.mode === "local") {
+                const items = safeParseJSON(localStorage.getItem("msos_wiki"), []);
+                const index = items.findIndex(item => item.id === entry.id);
+                if (index > -1) {
+                    items[index] = entry;
+                } else {
+                    items.unshift(entry);
+                }
+                localStorage.setItem("msos_wiki", JSON.stringify(items));
+                return;
+            }
+            const tx = storage.db.transaction("wiki", "readwrite");
+            tx.objectStore("wiki").put(entry);
+            return new Promise(resolve => {
+                tx.oncomplete = () => resolve();
+            });
+        }
+
+        async function deleteWikiEntry(id) {
+            await waitForDB();
+            if (storage.mode === "local") {
+                const items = safeParseJSON(localStorage.getItem("msos_wiki"), []).filter(item => item.id !== id);
+                localStorage.setItem("msos_wiki", JSON.stringify(items));
+                return;
+            }
+            const tx = storage.db.transaction("wiki", "readwrite");
+            tx.objectStore("wiki").delete(id);
+            return new Promise(resolve => {
+                tx.oncomplete = () => resolve();
+            });
+        }
+
+        async function ensureWikiSeeds() {
+            if (!DEFAULT_WIKI_SEEDS.length) return;
+            const entries = await getAllWikiEntries();
+            if (entries.length) return;
+            const normalized = DEFAULT_WIKI_SEEDS.map(normalizeWikiEntry).filter(Boolean);
+            await saveAllToStore("wiki", "msos_wiki", normalized);
+        }
+
+        async function resetWikiEntries() {
+            await waitForDB();
+            if (storage.mode === "local") {
+                localStorage.removeItem("msos_wiki");
+                if (DEFAULT_WIKI_SEEDS.length) {
+                    const normalized = DEFAULT_WIKI_SEEDS.map(normalizeWikiEntry).filter(Boolean);
+                    localStorage.setItem("msos_wiki", JSON.stringify(normalized));
+                }
+                return;
+            }
+            const tx = storage.db.transaction("wiki", "readwrite");
+            const store = tx.objectStore("wiki");
+            store.clear();
+            if (DEFAULT_WIKI_SEEDS.length) {
+                DEFAULT_WIKI_SEEDS.map(normalizeWikiEntry).filter(Boolean).forEach(item => store.put(item));
+            }
+            return new Promise(resolve => {
+                tx.oncomplete = () => resolve();
+            });
+        }
+
+        async function getAllLibraryItems() {
+            return getAllFromStore("objection_library", "msos_objection_library");
+        }
+
+        async function saveLibraryItem(item) {
+            await waitForDB();
+            if (storage.mode === "local") {
+                const items = safeParseJSON(localStorage.getItem("msos_objection_library"), []);
+                const index = items.findIndex(entry => entry.id === item.id);
+                if (index > -1) {
+                    items[index] = item;
+                } else {
+                    items.unshift(item);
+                }
+                localStorage.setItem("msos_objection_library", JSON.stringify(items));
+                return;
+            }
+            const tx = storage.db.transaction("objection_library", "readwrite");
+            tx.objectStore("objection_library").put(item);
+            return new Promise(resolve => {
+                tx.oncomplete = () => resolve();
+            });
+        }
+
+        async function ensureLibrarySeeds() {
+            const items = await getAllLibraryItems();
+            if (items.length) return;
+            const normalized = DEFAULT_LIBRARY_SEEDS.map(normalizeLibraryItem).filter(Boolean);
+            await saveAllToStore("objection_library", "msos_objection_library", normalized);
+        }
+
+        async function refreshLibraryItems() {
+            await ensureLibrarySeeds();
+            appState.library = (await getAllLibraryItems()).map(normalizeLibraryItem).filter(Boolean);
+        }
+
         async function clearDataStores() {
             await waitForDB();
             if (storage.mode === "local") {
-                ["msos_cases", "msos_logs", "msos_products", "msos_product_faq", "msos_product_notes", "msos_comparisons", "msos_seller"].forEach(key => localStorage.removeItem(key));
+                ["msos_cases", "msos_logs", "msos_products", "msos_product_faq", "msos_product_notes", "msos_comparisons", "msos_seller", "msos_wiki", "msos_objection_library"].forEach(key => localStorage.removeItem(key));
                 return;
             }
-            const tx = storage.db.transaction(["cases", "logs", "products", "productFaq", "productNotes", "comparisons", "seller"], "readwrite");
+            const tx = storage.db.transaction(["cases", "logs", "products", "productFaq", "productNotes", "comparisons", "seller", "wiki", "objection_library"], "readwrite");
             tx.objectStore("cases").clear();
             tx.objectStore("logs").clear();
             tx.objectStore("products").clear();
@@ -3697,6 +4276,8 @@ Executive Summary:
             tx.objectStore("productNotes").clear();
             tx.objectStore("comparisons").clear();
             tx.objectStore("seller").clear();
+            tx.objectStore("wiki").clear();
+            tx.objectStore("objection_library").clear();
             return new Promise(resolve => {
                 tx.oncomplete = () => resolve();
             });
@@ -4090,6 +4671,26 @@ OUTPUT JSON ONLY:
             };
         }
 
+        async function handleTechnicalQuestion(question) {
+            appState.wiki.searchQuery = question;
+            if (elements.wikiSearchInput) {
+                elements.wikiSearchInput.value = question;
+            }
+            renderWikiFrame();
+            setFrame("wiki");
+            let answer = await answerProductQuestion(question);
+            if (answer && answer.status !== "success") {
+                try {
+                    const product = appState.wiki.products.find(item => item.id === appState.wiki.selectedProductId);
+                    answer = await callAIProduct(question, product);
+                } catch {
+                    // keep wiki-only answer
+                }
+            }
+            appState.wiki.answer = answer;
+            renderWikiAnswer();
+        }
+
         async function handleObjectionSubmit() {
             const objection = sanitizeString(elements.objectionInput.value, 200);
             appState.objection = objection;
@@ -4102,6 +4703,10 @@ OUTPUT JSON ONLY:
             render();
 
             try {
+                if (appState.ui.techQuestion) {
+                    await handleTechnicalQuestion(objection);
+                    return;
+                }
                 let card = null;
                 if (!navigator.onLine || (!appState.settings.apiKey && !appState.settings.proxyUrl)) {
                     const localMatch = await searchLocalCases(objection);
@@ -4139,11 +4744,11 @@ OUTPUT JSON ONLY:
                 haptic([80]);
                 await logEvent("error_fallback", { error: error.message });
                 showToast("Fallback geladen");
+            } finally {
+                appState.loading = false;
+                setInputBusy(false);
+                render();
             }
-
-            appState.loading = false;
-            setInputBusy(false);
-            render();
         }
 
         function setInputBusy(isBusy) {
@@ -4184,6 +4789,43 @@ OUTPUT JSON ONLY:
             saveSellerState();
         }
 
+        function trackPlaybookRef(text) {
+            if (!text) return;
+            const existing = appState.playbookRefs.filter(item => item !== text);
+            appState.playbookRefs = [text, ...existing].slice(0, 12);
+        }
+
+        async function recordLibraryVote(card, voteType) {
+            await refreshLibraryItems();
+            const now = Date.now();
+            const id = sanitizeString(card.id || `lib_${now}`, 80);
+            let item = appState.library.find(entry => entry.id === id);
+            if (!item) {
+                const quick = card.content.quick.neutral;
+                item = normalizeLibraryItem({
+                    id,
+                    objectionKey: card.meta.pattern,
+                    objectionText: card.objection || appState.objection,
+                    suggestedReply: [quick.entry, quick.anchor, quick.question, quick.bridge, quick.close].join(" "),
+                    playbookRefs: [...appState.playbookRefs],
+                    sellerVotes: { works: 0, fails: 0 },
+                    lastUsedAt: now,
+                    updatedAt: now,
+                    source: "learned"
+                });
+                appState.library.unshift(item);
+            }
+            if (voteType === "works") {
+                item.sellerVotes.works += 1;
+            } else {
+                item.sellerVotes.fails += 1;
+            }
+            item.lastUsedAt = now;
+            item.updatedAt = now;
+            item.playbookRefs = Array.from(new Set([...(item.playbookRefs || []), ...appState.playbookRefs]));
+            await saveLibraryItem(item);
+        }
+
         function toggleFavorite(cardId) {
             const index = appState.favorites.indexOf(cardId);
             if (index > -1) {
@@ -4199,10 +4841,15 @@ OUTPUT JSON ONLY:
             appState.objection = "";
             appState.contexts = [];
             appState.cards = [];
+            appState.playbookRefs = [];
+            appState.ui.techQuestion = false;
             elements.objectionInput.value = "";
             elements.contextChips.querySelectorAll(".chip").forEach(chip => {
                 chip.setAttribute("aria-pressed", "false");
             });
+            if (elements.techQuestionToggle) {
+                elements.techQuestionToggle.setAttribute("aria-pressed", "false");
+            }
             updateContextStatus();
             render();
         }
@@ -4326,6 +4973,12 @@ OUTPUT JSON ONLY:
                             Nicht hilfreich
                         </button>
                         <button class="feedback-btn" type="button" data-train="${card.id}">Train this</button>
+                        <button class="feedback-btn success" type="button" data-library-vote="works" data-card="${card.id}">
+                            Funktioniert
+                        </button>
+                        <button class="feedback-btn error" type="button" data-library-vote="fails" data-card="${card.id}">
+                            Funktioniert nicht
+                        </button>
                     </div>
                 </section>
             `;
@@ -4414,8 +5067,31 @@ OUTPUT JSON ONLY:
             elements.variantChallengerBtn.setAttribute("aria-pressed", String(active === "challenger"));
         }
 
+        function buildTrainingDrills(card) {
+            const drills = [];
+            const baseDrills = card && card.content && card.content.coach ? card.content.coach.drill || [] : [];
+            if (baseDrills.length) {
+                drills.push(...baseDrills);
+            }
+            drills.push(
+                "Drill Bedarf: Stelle drei Bedarf-Fragen aus dem Leitfaden.",
+                "Drill Nutzen: Formuliere eine Nutzenfrage und einen Nutzenanker.",
+                "Drill Abschluss: Wähle zwei Abschlussfragen aus dem Leitfaden."
+            );
+            const pool = [
+                ...appState.cards.map(item => item.objection).filter(Boolean),
+                ...appState.history.slice(0, 200).map(item => item.objection).filter(Boolean),
+                ...SEED_CASES.map(item => item.objection).filter(Boolean)
+            ];
+            const unique = Array.from(new Set(pool)).slice(0, 2);
+            unique.forEach(text => {
+                drills.push(`Drill: Reagiere auf "${text}" mit Einstieg, Anker, Frage, Bridge, Close.`);
+            });
+            return drills;
+        }
+
         function renderDrill(card) {
-            const drills = card && card.content && card.content.coach ? card.content.coach.drill || [] : [];
+            const drills = buildTrainingDrills(card);
             if (!drills.length) {
                 elements.drillText.textContent = "Kein Drill vorhanden.";
                 return;
@@ -4523,10 +5199,60 @@ OUTPUT JSON ONLY:
                 </button>
             `).join("") || `<div class="tile-desc">Keine Produkte gefunden.</div>`;
 
+            renderWikiEntries();
             renderWikiFilters();
             renderWikiDetail();
             renderWikiAnswer();
             renderWikiCompare();
+        }
+
+        function renderWikiEntries() {
+            if (!elements.wikiEntryList || !elements.wikiEntryDetail) return;
+            elements.wikiEntryList.innerHTML = appState.wiki.entries.map(entry => `
+                <button class="history-item" type="button" data-wiki-entry="${entry.id}">
+                    <div>${escapeHTML(entry.title || "Ohne Titel")}</div>
+                    <div class="history-meta">${escapeHTML(entry.category || "Kategorie")}${entry.brand ? ` • ${escapeHTML(entry.brand)}` : ""}</div>
+                </button>
+            `).join("") || `<div class="tile-desc">Keine Einträge.</div>`;
+            renderWikiEntryDetail();
+        }
+
+        function renderWikiEntryDetail() {
+            if (!elements.wikiEntryDetail) return;
+            const entry = appState.wiki.entries.find(item => item.id === appState.wiki.selectedEntryId);
+            if (!entry) {
+                elements.wikiEntryDetail.innerHTML = `<div class="tile-desc">Kein Eintrag ausgewählt.</div>`;
+                return;
+            }
+            const tags = Array.isArray(entry.tags) ? entry.tags : [];
+            elements.wikiEntryDetail.innerHTML = `
+                <div class="diag-row">
+                    <span class="diag-key">Titel</span>
+                    <span class="diag-value">${escapeHTML(entry.title)}</span>
+                </div>
+                <div class="diag-row">
+                    <span class="diag-key">Kategorie</span>
+                    <span class="diag-value">${escapeHTML(entry.category)}</span>
+                </div>
+                <div class="diag-row">
+                    <span class="diag-key">Brand</span>
+                    <span class="diag-value">${escapeHTML(entry.brand || "–")}</span>
+                </div>
+                <div class="history-meta">Tags</div>
+                <div class="tag-row">
+                    ${tags.map(tag => `<div class="tag-item">${escapeHTML(tag)}</div>`).join("") || `<div class="tile-desc">Keine Tags.</div>`}
+                </div>
+                <div class="history-meta">Kurz</div>
+                <div class="tile-desc">${escapeHTML(entry.sections.kurz || "–")}</div>
+                <div class="history-meta">Specs</div>
+                <div class="tile-desc">${escapeHTML(entry.sections.specs || "–")}</div>
+                <div class="history-meta">FAQ</div>
+                <div class="tile-desc">${escapeHTML(entry.sections.faq || "–")}</div>
+                <div class="btn-group">
+                    <button class="btn btn-secondary" type="button" data-wiki-edit="${entry.id}">Bearbeiten</button>
+                    <button class="btn btn-danger" type="button" data-wiki-delete="${entry.id}">Löschen</button>
+                </div>
+            `;
         }
 
         function renderWikiFilters() {
@@ -4654,17 +5380,103 @@ OUTPUT JSON ONLY:
         function copyToClipboard(text) {
             const value = text.trim();
             if (!value) return;
+            const fallbackCopy = () => {
+                try {
+                    const textarea = document.createElement("textarea");
+                    textarea.value = value;
+                    textarea.setAttribute("readonly", "true");
+                    textarea.style.position = "absolute";
+                    textarea.style.left = "-9999px";
+                    document.body.appendChild(textarea);
+                    textarea.select();
+                    const ok = document.execCommand("copy");
+                    document.body.removeChild(textarea);
+                    return ok;
+                } catch {
+                    return false;
+                }
+            };
+            const handleSuccess = () => {
+                showToast("Kopiert");
+                haptic([50]);
+            };
+            const handleFail = () => showToast("Kopieren fehlgeschlagen");
             if (navigator.clipboard && navigator.clipboard.writeText) {
-                navigator.clipboard.writeText(value).then(() => showToast("Kopiert"));
+                navigator.clipboard.writeText(value).then(handleSuccess).catch(() => {
+                    const ok = fallbackCopy();
+                    if (ok) handleSuccess();
+                    else handleFail();
+                });
                 return;
             }
-            const textarea = document.createElement("textarea");
-            textarea.value = value;
-            document.body.appendChild(textarea);
-            textarea.select();
-            document.execCommand("copy");
-            document.body.removeChild(textarea);
-            showToast("Kopiert");
+            const ok = fallbackCopy();
+            if (ok) handleSuccess();
+            else handleFail();
+        }
+
+        function openWikiEditor(entry = null) {
+            if (!elements.wikiEditorModal) return;
+            elements.wikiEditorId.value = entry ? entry.id : "";
+            elements.wikiTitle.value = entry ? entry.title : "";
+            elements.wikiCategory.value = entry ? entry.category : "";
+            elements.wikiBrand.value = entry ? entry.brand : "";
+            elements.wikiTags.value = entry && entry.tags ? entry.tags.join(", ") : "";
+            elements.wikiKurz.value = entry ? entry.sections.kurz : "";
+            elements.wikiSpecs.value = entry ? entry.sections.specs : "";
+            elements.wikiFaq.value = entry ? entry.sections.faq : "";
+            openModal(elements.wikiEditorModal);
+        }
+
+        function closeWikiEditor() {
+            if (!elements.wikiEditorModal) return;
+            closeModal(elements.wikiEditorModal);
+        }
+
+        async function handleWikiEditorSave() {
+            const title = sanitizeString(elements.wikiTitle.value, 120);
+            const category = sanitizeString(elements.wikiCategory.value, 80);
+            if (!title || !category) {
+                showToast("Titel und Kategorie erforderlich");
+                return;
+            }
+            const entry = normalizeWikiEntry({
+                id: sanitizeString(elements.wikiEditorId.value, 80) || `wiki_${Date.now()}`,
+                title,
+                category,
+                brand: sanitizeString(elements.wikiBrand.value, 80),
+                tags: elements.wikiTags.value,
+                sections: {
+                    kurz: sanitizeString(elements.wikiKurz.value, 600),
+                    specs: sanitizeString(elements.wikiSpecs.value, 800),
+                    faq: sanitizeString(elements.wikiFaq.value, 800)
+                },
+                updatedAt: new Date().toISOString()
+            });
+            await saveWikiEntry(entry);
+            const index = appState.wiki.entries.findIndex(item => item.id === entry.id);
+            if (index > -1) {
+                appState.wiki.entries[index] = entry;
+            } else {
+                appState.wiki.entries.unshift(entry);
+            }
+            appState.wiki.selectedEntryId = entry.id;
+            renderWikiEntries();
+            closeWikiEditor();
+            showToast("Wiki Eintrag gespeichert");
+        }
+
+        async function handleWikiReset() {
+            const confirmed = await confirmAction({
+                title: "Wiki zurücksetzen?",
+                message: "Alle lokalen Wiki Einträge werden entfernt.",
+                confirmLabel: "Zurücksetzen"
+            });
+            if (!confirmed) return;
+            await resetWikiEntries();
+            appState.wiki.entries = (await getAllWikiEntries()).map(normalizeWikiEntry).filter(Boolean);
+            appState.wiki.selectedEntryId = appState.wiki.entries[0]?.id || null;
+            renderWikiEntries();
+            showToast("Wiki zurückgesetzt");
         }
 
         function setupSpeechRecognition() {
@@ -4813,7 +5625,17 @@ OUTPUT JSON ONLY:
                 faq,
                 notes,
                 comparisons,
-                seller
+                seller,
+                wikiEntries: await getAllWikiEntries()
+            };
+        }
+
+        async function exportLibraryData() {
+            const library = (await getAllLibraryItems()).map(normalizeLibraryItem).filter(Boolean);
+            return {
+                schemaVersion: 1,
+                exportVersion: 1,
+                library
             };
         }
 
@@ -4842,6 +5664,7 @@ OUTPUT JSON ONLY:
                 ? parsed.comparisons.map(item => (typeof item === "string" ? { id: item } : item)).filter(Boolean)
                 : [];
             const seller = parsed.seller || null;
+            const wikiEntries = Array.isArray(parsed.wikiEntries) ? parsed.wikiEntries.map(normalizeWikiEntry).filter(Boolean) : [];
 
             await saveAllToStore("cases", "msos_cases", cases);
             await saveAllToStore("logs", "msos_logs", logs);
@@ -4849,6 +5672,7 @@ OUTPUT JSON ONLY:
             await saveAllToStore("productFaq", "msos_product_faq", faq);
             await saveAllToStore("productNotes", "msos_product_notes", notes);
             await saveAllToStore("comparisons", "msos_comparisons", comparisons);
+            await saveAllToStore("wiki", "msos_wiki", wikiEntries);
 
             if (seller) {
                 appState.history = seller.history || [];
@@ -4858,6 +5682,23 @@ OUTPUT JSON ONLY:
             }
             await refreshWikiData();
             await updateStats();
+        }
+
+        async function importLibraryData(file) {
+            if (file.size > 2 * 1024 * 1024) throw new Error("Datei zu groß");
+            const raw = await file.text();
+            const parsed = JSON.parse(raw);
+            if (!parsed || typeof parsed !== "object") throw new Error("Invalid import");
+            const keys = Object.keys(parsed);
+            const allowed = ["schemaVersion", "exportVersion", "library"];
+            if (keys.length !== allowed.length || !allowed.every(key => keys.includes(key))) {
+                throw new Error("Schema ungültig");
+            }
+            if (!Array.isArray(parsed.library)) throw new Error("Library fehlt");
+            if (parsed.library.length > 10000) throw new Error("Zu viele Einträge");
+            const normalized = parsed.library.map(normalizeLibraryItem).filter(Boolean);
+            await saveAllToStore("objection_library", "msos_objection_library", normalized);
+            await refreshLibraryItems();
         }
 
         async function verifyLibraryHash(buffer) {
@@ -4949,6 +5790,14 @@ OUTPUT JSON ONLY:
             appState.wiki.notes = (await getAllNotes()).map(normalizeNote).filter(Boolean);
             const comparisons = await getAllComparisons();
             appState.wiki.comparisons = comparisons.map(item => item.id || item);
+            await ensureWikiSeeds();
+            appState.wiki.entries = (await getAllWikiEntries()).map(normalizeWikiEntry).filter(Boolean);
+            if (appState.wiki.selectedEntryId && !appState.wiki.entries.find(entry => entry.id === appState.wiki.selectedEntryId)) {
+                appState.wiki.selectedEntryId = appState.wiki.entries[0]?.id || null;
+            }
+            if (!appState.wiki.selectedEntryId && appState.wiki.entries.length) {
+                appState.wiki.selectedEntryId = appState.wiki.entries[0].id;
+            }
             renderWikiFrame();
         }
 
@@ -5021,6 +5870,7 @@ OUTPUT JSON ONLY:
                 const chip = event.target.closest(".chip");
                 if (!chip) return;
                 const context = chip.dataset.context;
+                if (!context) return;
                 const index = appState.contexts.indexOf(context);
                 if (index > -1) {
                     appState.contexts.splice(index, 1);
@@ -5031,6 +5881,16 @@ OUTPUT JSON ONLY:
                 }
                 updateContextStatus();
             });
+
+            if (elements.techQuestionToggle) {
+                elements.techQuestionToggle.addEventListener("click", () => {
+                    const isActive = elements.techQuestionToggle.getAttribute("aria-pressed") === "true";
+                    const next = !isActive;
+                    elements.techQuestionToggle.setAttribute("aria-pressed", String(next));
+                    appState.ui.techQuestion = next;
+                    showToast(next ? "Technische Frage aktiv" : "Technische Frage aus");
+                });
+            }
 
             elements.objectionInput.addEventListener("input", (event) => {
                 appState.objection = event.target.value;
@@ -5066,7 +5926,7 @@ OUTPUT JSON ONLY:
                     icon.classList.toggle("open", !isOpen);
                 }
 
-                const feedbackBtn = event.target.closest(".feedback-btn");
+                const feedbackBtn = event.target.closest("[data-feedback]");
                 if (feedbackBtn) {
                     const feedback = feedbackBtn.dataset.feedback;
                     const cardId = feedbackBtn.dataset.card;
@@ -5075,6 +5935,14 @@ OUTPUT JSON ONLY:
                     showToast(feedback === "success" ? "Feedback gespeichert" : "Danke für Ihr Feedback");
                     haptic(feedback === "success" ? [30] : [70]);
                     renderTrainingStats();
+                }
+
+                const libraryVote = event.target.closest("[data-library-vote]");
+                if (libraryVote) {
+                    const card = getActiveCard();
+                    if (!card) return;
+                    await recordLibraryVote(card, libraryVote.dataset.libraryVote);
+                    showToast("Learning Loop gespeichert");
                 }
 
                 const favoriteBtn = event.target.closest(".favorite-btn");
@@ -5102,6 +5970,26 @@ OUTPUT JSON ONLY:
                     renderTrainingFrame();
                 }
             });
+
+            if (elements.salesPlaybook) {
+                elements.salesPlaybook.addEventListener("click", (event) => {
+                    const copyBtn = event.target.closest(".copy-btn");
+                    if (copyBtn && copyBtn.dataset.playbookCopy) {
+                        copyToClipboard(copyBtn.dataset.playbookCopy.replace(/\s*\|\s*/g, " "));
+                        return;
+                    }
+                    const playbookChip = event.target.closest("[data-playbook-text]");
+                    if (playbookChip) {
+                        const text = playbookChip.dataset.playbookText;
+                        const current = elements.objectionInput.value.trim();
+                        const next = current ? `${current} ${text}` : text;
+                        elements.objectionInput.value = next;
+                        appState.objection = next;
+                        trackPlaybookRef(text);
+                        elements.objectionInput.focus();
+                    }
+                });
+            }
 
             elements.trainingCardContainer.addEventListener("click", (event) => {
                 const copyBtn = event.target.closest(".copy-btn");
@@ -5218,6 +6106,70 @@ OUTPUT JSON ONLY:
                 renderWikiDetail();
             });
 
+            if (elements.wikiNewBtn) {
+                elements.wikiNewBtn.addEventListener("click", () => {
+                    openWikiEditor();
+                });
+            }
+
+            if (elements.wikiEntryList) {
+                elements.wikiEntryList.addEventListener("click", (event) => {
+                    const item = event.target.closest("[data-wiki-entry]");
+                    if (!item) return;
+                    appState.wiki.selectedEntryId = item.dataset.wikiEntry;
+                    renderWikiEntryDetail();
+                });
+            }
+
+            if (elements.wikiEntryDetail) {
+                elements.wikiEntryDetail.addEventListener("click", async (event) => {
+                    const editBtn = event.target.closest("[data-wiki-edit]");
+                    if (editBtn) {
+                        const entry = appState.wiki.entries.find(item => item.id === editBtn.dataset.wikiEdit);
+                        if (entry) openWikiEditor(entry);
+                        return;
+                    }
+                    const deleteBtn = event.target.closest("[data-wiki-delete]");
+                    if (deleteBtn) {
+                        const confirmed = await confirmAction({
+                            title: "Wiki Eintrag löschen?",
+                            message: "Der Eintrag wird lokal entfernt.",
+                            confirmLabel: "Löschen"
+                        });
+                        if (!confirmed) return;
+                        const id = deleteBtn.dataset.wikiDelete;
+                        await deleteWikiEntry(id);
+                        appState.wiki.entries = appState.wiki.entries.filter(item => item.id !== id);
+                        if (appState.wiki.selectedEntryId === id) {
+                            appState.wiki.selectedEntryId = appState.wiki.entries[0]?.id || null;
+                        }
+                        renderWikiEntries();
+                        showToast("Wiki Eintrag gelöscht");
+                    }
+                });
+            }
+
+            if (elements.wikiEditorSaveBtn) {
+                elements.wikiEditorSaveBtn.addEventListener("click", () => handleWikiEditorSave());
+            }
+            if (elements.wikiEditorCancelBtn) {
+                elements.wikiEditorCancelBtn.addEventListener("click", () => closeWikiEditor());
+            }
+            if (elements.wikiEditorCloseBtn) {
+                elements.wikiEditorCloseBtn.addEventListener("click", () => closeWikiEditor());
+            }
+            if (elements.wikiEditorModal) {
+                elements.wikiEditorModal.addEventListener("cancel", (event) => {
+                    event.preventDefault();
+                    closeWikiEditor();
+                });
+                elements.wikiEditorModal.addEventListener("click", (event) => {
+                    if (event.target === elements.wikiEditorModal) {
+                        closeWikiEditor();
+                    }
+                });
+            }
+
             elements.wikiDetail.addEventListener("click", (event) => {
                 const btn = event.target.closest("[data-compare]");
                 if (!btn) return;
@@ -5294,6 +6246,56 @@ OUTPUT JSON ONLY:
                 }
             });
 
+            if (elements.libraryExportBtn) {
+                elements.libraryExportBtn.addEventListener("click", async () => {
+                    const confirmed = await confirmAction({
+                        title: "Library exportieren?",
+                        message: "Export enthält lokale Learning-Loop Einträge.",
+                        confirmLabel: "Exportieren"
+                    });
+                    if (!confirmed) return;
+                    const data = await exportLibraryData();
+                    const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+                    const url = URL.createObjectURL(blob);
+                    const anchor = document.createElement("a");
+                    anchor.href = url;
+                    anchor.download = `mehic_library_export_${Date.now()}.json`;
+                    anchor.click();
+                    URL.revokeObjectURL(url);
+                    showToast("Library Export abgeschlossen");
+                });
+            }
+
+            if (elements.libraryImportBtn) {
+                elements.libraryImportBtn.addEventListener("click", () => {
+                    elements.libraryImportFile.value = "";
+                    elements.libraryImportFile.click();
+                });
+            }
+
+            if (elements.libraryImportFile) {
+                elements.libraryImportFile.addEventListener("change", async (event) => {
+                    const file = event.target.files[0];
+                    if (!file) return;
+                    const confirmed = await confirmAction({
+                        title: "Library importieren?",
+                        message: "Lokale Learning-Loop Einträge werden ersetzt.",
+                        confirmLabel: "Importieren"
+                    });
+                    if (!confirmed) return;
+                    try {
+                        await importLibraryData(file);
+                        showToast("Library Import abgeschlossen");
+                    } catch {
+                        showToast("Library Import fehlgeschlagen");
+                    }
+                });
+            }
+
+            if (elements.wikiResetBtn) {
+                elements.wikiResetBtn.addEventListener("click", () => handleWikiReset());
+            }
+
             elements.clearBtn.addEventListener("click", async () => {
                 const confirmed = await confirmAction({
                     title: "Reset bestätigen",
@@ -5307,7 +6309,10 @@ OUTPUT JSON ONLY:
                 appState.history = [];
                 appState.favorites = [];
                 appState.training = { ...DEFAULT_TRAINING_STATE };
+                appState.library = [];
+                appState.playbookRefs = [];
                 await saveSellerState();
+                await refreshLibraryItems();
                 resetApp();
                 await updateStats();
                 showToast("Daten gelöscht");
@@ -5518,8 +6523,8 @@ OUTPUT JSON ONLY:
             const preferredDensity = appState.settings.densityMode || computeDensity(window.innerWidth);
             applyDensity(preferredDensity, appState.settings.densityUserSet, false);
             applyTheme(appState.settings.themeMode, false);
-            setFrame("sales", false);
-            appState.settings.frameMode = "sales";
+            const initialFrame = appState.settings.frameMode || "sales";
+            setFrame(initialFrame, false);
 
             setupEvents();
             setupSpeechRecognition();
@@ -5532,6 +6537,7 @@ OUTPUT JSON ONLY:
             updatePolicyTile();
             updateTrustStatus();
             await refreshWikiData();
+            await refreshLibraryItems();
             render();
             await updateStats();
             requestWakeLock();
