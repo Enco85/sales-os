@@ -34,6 +34,7 @@
         5) openssl dgst -sha256 -binary script.txt | openssl base64 -A
         6) Ergebnis als 'sha256-...' in script-src aufnehmen.
         Beispiel (Server-Header): Content-Security-Policy: default-src 'self'; ...; style-src 'self' 'sha256-...'; script-src 'self' 'sha256-...';
+        Proxy Hinweis: Bei Proxy-Nutzung den konkreten Proxy-Host in connect-src erlauben.
         Hinweis: frame-ancestors wirkt nur als HTTP-Header, nicht als Meta-Tag.
     -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -54,6 +55,10 @@
             --radius-lg: 20px;
             --radius-xl: 26px;
             --density-scale: 1;
+            --safe-top: env(safe-area-inset-top, 0px);
+            --safe-right: env(safe-area-inset-right, 0px);
+            --safe-bottom: env(safe-area-inset-bottom, 0px);
+            --safe-left: env(safe-area-inset-left, 0px);
             --space-1: calc(6px * var(--density-scale));
             --space-2: calc(8px * var(--density-scale));
             --space-3: calc(12px * var(--density-scale));
@@ -107,6 +112,7 @@
             --shadow-2: 0 16px 40px rgba(0, 0, 0, 0.14);
             --shadow-3: 0 24px 60px rgba(0, 0, 0, 0.16);
             --focus-ring: 0 0 0 3px rgba(227, 0, 15, 0.35);
+            --focus-ring-offset: 2px;
         }
 
         :root[data-density="compact"] {
@@ -239,7 +245,8 @@
         }
 
         :focus-visible {
-            outline: none;
+            outline: 2px solid transparent;
+            outline-offset: var(--focus-ring-offset);
             box-shadow: var(--focus-ring);
         }
 
@@ -251,7 +258,7 @@
             border-bottom: 1px solid var(--color-glass-border);
             backdrop-filter: blur(16px) saturate(140%);
             -webkit-backdrop-filter: blur(16px) saturate(140%);
-            padding: calc(var(--space-4) + env(safe-area-inset-top)) var(--space-4) var(--space-3);
+            padding: calc(var(--space-4) + var(--safe-top)) calc(var(--space-4) + var(--safe-right)) var(--space-3) calc(var(--space-4) + var(--safe-left));
             user-select: none;
         }
 
@@ -426,7 +433,7 @@
         .stage {
             flex: 1;
             overflow-y: auto;
-            padding: var(--space-6) var(--space-4) calc(var(--control-bar-height) + var(--keyboard-offset));
+            padding: var(--space-6) calc(var(--space-4) + var(--safe-right)) calc(var(--control-bar-height) + var(--keyboard-offset)) calc(var(--space-4) + var(--safe-left));
             overscroll-behavior: contain;
         }
 
@@ -442,14 +449,23 @@
 
         .cards-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            grid-template-columns: repeat(1, minmax(0, 1fr));
             gap: var(--space-4);
             grid-auto-flow: dense;
         }
 
+        @media (min-width: 640px) {
+            .cards-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+        }
+
         @media (min-width: 1024px) {
+            .cards-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
             .card.bento-hero { grid-column: span 2; }
             .card.bento-tall { grid-row: span 2; }
+        }
+
+        @media (min-width: 1280px) {
+            .cards-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
         }
 
         .card {
@@ -649,7 +665,7 @@
             border-top: 1px solid var(--color-glass-border);
             backdrop-filter: blur(18px) saturate(140%);
             -webkit-backdrop-filter: blur(18px) saturate(140%);
-            padding: var(--space-4) var(--space-4) calc(var(--space-4) + env(safe-area-inset-bottom));
+            padding: var(--space-4) calc(var(--space-4) + var(--safe-right)) calc(var(--space-4) + var(--safe-bottom)) calc(var(--space-4) + var(--safe-left));
             box-shadow: var(--shadow-2);
             transition: bottom var(--motion-fast) var(--motion-ease-standard);
         }
@@ -668,6 +684,14 @@
             overflow-x: auto;
             padding-bottom: var(--space-1);
             scrollbar-width: none;
+        }
+
+        .offline-hint {
+            font-size: 12px;
+            font-weight: 700;
+            color: var(--color-warning);
+            text-transform: uppercase;
+            letter-spacing: 0.6px;
         }
 
         .context-chips::-webkit-scrollbar { display: none; }
@@ -774,6 +798,34 @@
             overflow-y: auto;
             box-shadow: var(--shadow-3);
             border: 1px solid var(--color-border);
+        }
+
+        .confirm-message {
+            font-size: 14px;
+            color: var(--color-text-secondary);
+            margin-bottom: var(--space-4);
+        }
+
+        .lock-panel {
+            border: 1px solid var(--color-border);
+            background: var(--color-surface);
+            border-radius: var(--radius-md);
+            padding: var(--space-4);
+            margin-bottom: var(--space-4);
+        }
+
+        .lock-panel[hidden] { display: none; }
+
+        .lock-text {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--color-text);
+            margin-bottom: var(--space-2);
+        }
+
+        .settings-body[aria-hidden="true"] {
+            opacity: 0.4;
+            pointer-events: none;
         }
 
         .modal-header {
@@ -1004,6 +1056,7 @@
                         <svg viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8"/></svg>Techie
                     </button>
                 </div>
+                <div class="offline-hint" id="offlineHint" role="status" aria-live="polite" hidden>Offline: Nur lokale Daten</div>
                 <div class="input-area">
                     <label class="sr-only" for="objectionInput">Einwand</label>
                     <input type="text" class="input-field" id="objectionInput" placeholder="Einwand eingeben..." autocomplete="off" inputmode="text" />
@@ -1028,70 +1081,116 @@
                     <svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
                 </button>
             </div>
-            <div class="form-group">
-                <label class="form-label" for="themeSelect">Theme</label>
-                <select class="form-select" id="themeSelect">
-                    <option value="auto">Auto</option>
-                    <option value="light">Hell</option>
-                    <option value="dark">Dunkel</option>
-                </select>
-            </div>
-            <div class="form-group">
-                <label class="form-label" for="densitySelect">Dichte</label>
-                <select class="form-select" id="densitySelect">
-                    <option value="compact">Kompakt</option>
-                    <option value="comfortable">Komfortabel</option>
-                </select>
-            </div>
-            <div class="form-group">
-                <label class="form-label" for="apiProvider">API Provider</label>
-                <select class="form-select" id="apiProvider">
-                    <option value="openai">OpenAI</option>
-                    <option value="groq">Groq</option>
-                </select>
-            </div>
-            <div class="form-group">
-                <label class="form-label" for="apiKey">API Key (RAM only)</label>
-                <input type="password" class="form-input" id="apiKey" placeholder="Wird nicht gespeichert..." autocomplete="off" />
-                <div class="field-hint">Schlüssel wird nur im RAM gehalten und nie gespeichert.</div>
-            </div>
-            <div class="form-group">
-                <label class="form-label" for="modelName">Model</label>
-                <input type="text" class="form-input" id="modelName" placeholder="gpt-4o-mini" />
-            </div>
-            <div class="form-group">
-                <label class="form-label" for="proxyUrl">Proxy URL (Optional)</label>
-                <input type="url" class="form-input" id="proxyUrl" placeholder="https://..." />
-                <div class="field-hint">Nur https erlaubt. Keine lokalen oder internen Hosts.</div>
-            </div>
-            <div class="form-group">
-                <label class="form-label" for="department">Abteilung</label>
-                <select class="form-select" id="department">
-                    <option value="TV">TV &amp; Audio</option>
-                    <option value="Mobile">Mobile</option>
-                    <option value="IT">IT</option>
-                    <option value="Weiß">Weiße Ware</option>
-                </select>
-            </div>
-            <div class="form-group">
-                <label class="form-label" for="storePolicy">Store Policy</label>
-                <textarea class="form-textarea" id="storePolicy" placeholder="z.B. Winteraktion -10% bis 31.01.2026"></textarea>
-            </div>
-            <div class="form-group">
-                <label class="form-label">Datenmanagement</label>
+            <div class="lock-panel" id="lockPanel" hidden>
+                <div class="lock-text">Session gesperrt. Passphrase eingeben.</div>
+                <div class="form-group">
+                    <label class="form-label" for="unlockPassphrase">Passphrase</label>
+                    <input type="password" class="form-input" id="unlockPassphrase" placeholder="••••••" autocomplete="current-password" />
+                </div>
                 <div class="btn-group">
-                    <button class="btn btn-secondary" id="exportBtn" type="button">Export</button>
-                    <button class="btn btn-secondary" id="importBtn" type="button">Import</button>
+                    <button class="btn btn-secondary" id="unlockCancelBtn" type="button">Abbrechen</button>
+                    <button class="btn btn-primary" id="unlockBtn" type="button">Entsperren</button>
                 </div>
-                <input type="file" id="importFile" accept=".json" class="sr-only" />
-                <div class="btn-group" style="margin-top: var(--space-3);">
-                    <button class="btn btn-danger" id="clearBtn" type="button">Reset DB (Halten)</button>
-                </div>
-                <div class="field-hint">Export enthält keine API Keys.</div>
             </div>
+            <div class="settings-body" id="settingsBody">
+                <div class="form-group">
+                    <label class="form-label" for="themeSelect">Theme</label>
+                    <select class="form-select" id="themeSelect">
+                        <option value="auto">Auto</option>
+                        <option value="light">Hell</option>
+                        <option value="dark">Dunkel</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="densitySelect">Dichte</label>
+                    <select class="form-select" id="densitySelect">
+                        <option value="compact">Kompakt</option>
+                        <option value="comfortable">Komfortabel</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="apiProvider">API Provider</label>
+                    <select class="form-select" id="apiProvider">
+                        <option value="openai">OpenAI</option>
+                        <option value="groq">Groq</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="apiKey">API Key (RAM only)</label>
+                    <input type="password" class="form-input" id="apiKey" placeholder="Wird nicht gespeichert..." autocomplete="off" />
+                    <div class="field-hint">Schlüssel wird nur im RAM gehalten und nie gespeichert.</div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="modelName">Model</label>
+                    <input type="text" class="form-input" id="modelName" placeholder="gpt-4o-mini" />
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="proxyUrl">Proxy URL (Optional)</label>
+                    <input type="url" class="form-input" id="proxyUrl" placeholder="https://..." />
+                    <div class="field-hint">Nur https erlaubt. Keine lokalen oder internen Hosts.</div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="masterHash">Master Hash (Supply Chain Lock)</label>
+                    <input type="text" class="form-input" id="masterHash" placeholder="SHA-256 Hex" autocomplete="off" />
+                    <div class="field-hint">Ohne Hash ist Master Sync deaktiviert.</div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="department">Abteilung</label>
+                    <select class="form-select" id="department">
+                        <option value="TV">TV &amp; Audio</option>
+                        <option value="Mobile">Mobile</option>
+                        <option value="IT">IT</option>
+                        <option value="Weiß">Weiße Ware</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="storePolicy">Store Policy</label>
+                    <textarea class="form-textarea" id="storePolicy" placeholder="z.B. Winteraktion -10% bis 31.01.2026"></textarea>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Session Lock (Optional)</label>
+                    <input type="password" class="form-input" id="lockPassphrase" placeholder="Passphrase setzen" autocomplete="new-password" />
+                    <div style="height: var(--space-2);"></div>
+                    <input type="password" class="form-input" id="lockPassphraseConfirm" placeholder="Passphrase bestätigen" autocomplete="new-password" />
+                    <div style="height: var(--space-2);"></div>
+                    <input type="number" class="form-input" id="lockTimeout" min="5" max="240" step="5" placeholder="Timeout in Minuten (z.B. 30)" />
+                    <div class="field-hint">Sperrt API-Funktion und Settings-Zugriff, wenn nicht entsperrt.</div>
+                    <div class="btn-group" style="margin-top: var(--space-3);">
+                        <button class="btn btn-secondary" id="lockRemoveBtn" type="button">Lock entfernen</button>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Datenmanagement</label>
+                    <div class="btn-group">
+                        <button class="btn btn-secondary" id="exportBtn" type="button">Export</button>
+                        <button class="btn btn-secondary" id="importBtn" type="button">Import</button>
+                    </div>
+                    <input type="file" id="importFile" accept=".json" class="sr-only" />
+                    <div class="btn-group" style="margin-top: var(--space-3);">
+                        <button class="btn btn-danger" id="clearBtn" type="button">Reset DB (Halten)</button>
+                    </div>
+                    <div class="field-hint">Export enthält keine API Keys.</div>
+                </div>
+                <div class="btn-group">
+                    <button class="btn btn-secondary" id="cancelSettingsBtn" type="button">Abbrechen</button>
+                    <button class="btn btn-primary" id="saveSettingsBtn" type="button">Speichern</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal" id="confirmModal" role="alertdialog" aria-modal="true" aria-labelledby="confirmTitle" aria-describedby="confirmMessage" aria-hidden="true">
+        <div class="modal-content" role="document">
+            <div class="modal-header">
+                <h2 id="confirmTitle" class="modal-title">Bestätigung</h2>
+                <button class="icon-btn" id="confirmCloseBtn" type="button" aria-label="Schließen">
+                    <svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                </button>
+            </div>
+            <p class="confirm-message" id="confirmMessage"></p>
             <div class="btn-group">
-                <button class="btn btn-secondary" id="cancelSettingsBtn" type="button">Abbrechen</button>
-                <button class="btn btn-primary" id="saveSettingsBtn" type="button">Speichern</button>
+                <button class="btn btn-secondary" id="confirmCancelBtn" type="button">Abbrechen</button>
+                <button class="btn btn-danger" id="confirmOkBtn" type="button">Bestätigen</button>
             </div>
         </div>
     </div>
@@ -1102,11 +1201,17 @@
         const DB_VERSION = 2;
         const MASTER_URL = "https://raw.githubusercontent.com/Enco85/sales-os/main/library.json";
         const EXPECTED_MASTER_SHA256 = "";
+        const STORAGE_KEYS = {
+            settings: "mehic_sales_settings_v2",
+            cases: "mehic_sales_cases_v2",
+            logs: "mehic_sales_logs_v2"
+        };
+        const STORAGE_LIMITS = { logs: 500, cases: 1000 };
         const THEME_ORDER = ["auto", "light", "dark"];
         const DENSITY_ORDER = ["compact", "comfortable"];
         const THEME_LABELS = { auto: "Auto", light: "Hell", dark: "Dunkel" };
         const DENSITY_LABELS = { compact: "Kompakt", comfortable: "Komfortabel" };
-        const SOURCE_LABELS = { seed: "Seed", local: "Lokal", ai: "AI", fallback: "Fallback" };
+        const SOURCE_LABELS = { seed: "Seed", local: "Lokal", ai: "AI", master: "Master", fallback: "Fallback" };
 
         let db = null;
         let dbInitPromise = null;
@@ -1124,6 +1229,16 @@
         let modalHistoryActive = false;
         let ignoreNextPop = false;
         let layoutRaf = null;
+        let densityRaf = null;
+        let lastAutoDensity = null;
+        let storageMode = "idb";
+        let localStorageAvailable = false;
+        let sessionUnlockedUntil = 0;
+        let toastQueue = [];
+        let toastActive = false;
+        let confirmResolver = null;
+        let confirmPreviousFocus = null;
+        let confirmSettingsHidden = false;
         const reducedMotionQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
         let reducedMotion = reducedMotionQuery.matches;
 
@@ -1141,7 +1256,11 @@
                 department: "TV",
                 storePolicy: "",
                 theme: "auto",
-                density: "compact"
+                density: "compact",
+                densityLocked: false,
+                lockHash: "",
+                lockTimeoutMin: 30,
+                masterHash: ""
             },
             stealthMode: false
         };
@@ -1159,6 +1278,7 @@
             dom.objectionInput = document.getElementById("objectionInput");
             dom.micBtn = document.getElementById("micBtn");
             dom.controlBar = document.getElementById("controlBar");
+            dom.offlineHint = document.getElementById("offlineHint");
             dom.settingsModal = document.getElementById("settingsModal");
             dom.appShell = document.getElementById("appShell");
             dom.stealthOverlay = document.getElementById("stealthOverlay");
@@ -1170,12 +1290,124 @@
             dom.proxyUrl = document.getElementById("proxyUrl");
             dom.department = document.getElementById("department");
             dom.storePolicy = document.getElementById("storePolicy");
+            dom.masterHash = document.getElementById("masterHash");
+            dom.lockPanel = document.getElementById("lockPanel");
+            dom.settingsBody = document.getElementById("settingsBody");
+            dom.unlockPassphrase = document.getElementById("unlockPassphrase");
+            dom.unlockBtn = document.getElementById("unlockBtn");
+            dom.unlockCancelBtn = document.getElementById("unlockCancelBtn");
+            dom.lockPassphrase = document.getElementById("lockPassphrase");
+            dom.lockPassphraseConfirm = document.getElementById("lockPassphraseConfirm");
+            dom.lockTimeout = document.getElementById("lockTimeout");
+            dom.lockRemoveBtn = document.getElementById("lockRemoveBtn");
+            dom.confirmModal = document.getElementById("confirmModal");
+            dom.confirmMessage = document.getElementById("confirmMessage");
+            dom.confirmTitle = document.getElementById("confirmTitle");
+            dom.confirmOkBtn = document.getElementById("confirmOkBtn");
+            dom.confirmCancelBtn = document.getElementById("confirmCancelBtn");
+            dom.confirmCloseBtn = document.getElementById("confirmCloseBtn");
             dom.toast = document.getElementById("toast");
         }
 
         function toFiniteNumber(v, fallback = 0) {
             const n = Number(v);
             return Number.isFinite(n) ? n : fallback;
+        }
+
+        function isLocalStorageAvailable() {
+            try {
+                const key = "__mehic_test__";
+                localStorage.setItem(key, "1");
+                localStorage.removeItem(key);
+                return true;
+            } catch (_) { return false; }
+        }
+
+        function loadLocalJSON(key, fallback) {
+            if (!localStorageAvailable) return fallback;
+            try {
+                const raw = localStorage.getItem(key);
+                if (!raw) return fallback;
+                const data = JSON.parse(raw);
+                return data ?? fallback;
+            } catch (_) { return fallback; }
+        }
+
+        function saveLocalJSON(key, value) {
+            if (!localStorageAvailable) return false;
+            try {
+                localStorage.setItem(key, JSON.stringify(value));
+                return true;
+            } catch (_) { return false; }
+        }
+
+        function sanitizeSettings(input, fallback = appState.settings) {
+            const s = input && typeof input === "object" ? input : {};
+            return {
+                apiProvider: s.apiProvider === "groq" ? "groq" : "openai",
+                apiKey: "",
+                modelName: String(s.modelName || fallback.modelName || "gpt-4o-mini").slice(0, 80),
+                proxyUrl: validateProxyUrl(s.proxyUrl || ""),
+                department: ["TV", "Mobile", "IT", "Weiß"].includes(s.department) ? s.department : (fallback.department || "TV"),
+                storePolicy: String(s.storePolicy || fallback.storePolicy || "").slice(0, 200),
+                theme: THEME_ORDER.includes(s.theme) ? s.theme : (fallback.theme || "auto"),
+                density: DENSITY_ORDER.includes(s.density) ? s.density : (fallback.density || "compact"),
+                densityLocked: typeof s.densityLocked === "boolean" ? s.densityLocked : (fallback.densityLocked || false),
+                lockHash: typeof s.lockHash === "string" ? s.lockHash : (fallback.lockHash || ""),
+                lockTimeoutMin: Math.min(240, Math.max(5, toFiniteNumber(s.lockTimeoutMin, fallback.lockTimeoutMin || 30))),
+                masterHash: typeof s.masterHash === "string" ? s.masterHash.trim().toLowerCase() : (fallback.masterHash || "")
+            };
+        }
+
+        function sanitizeLog(log) {
+            const safe = log && typeof log === "object" ? log : {};
+            return {
+                timestamp: String(safe.timestamp || new Date().toISOString()).slice(0, 40),
+                type: String(safe.type || "event").slice(0, 40),
+                objection: String(safe.objection || "").slice(0, 200),
+                contexts: Array.isArray(safe.contexts) ? safe.contexts.map(c => String(c).slice(0, 20)) : [],
+                data: safe.data && typeof safe.data === "object" ? safe.data : {}
+            };
+        }
+
+        function sanitizeCases(list) {
+            if (!Array.isArray(list)) return [];
+            const out = [];
+            for (const item of list) {
+                const cloned = safeClone(item, "import.case");
+                if (!cloned) continue;
+                const norm = normalizeCard(cloned);
+                if (!validateCardShape(norm)) continue;
+                out.push(norm);
+            }
+            return out.slice(0, STORAGE_LIMITS.cases);
+        }
+
+        function sanitizeImportData(raw) {
+            const data = raw && typeof raw === "object" ? raw : {};
+            const settings = sanitizeSettings(data.settings || {});
+            const cases = sanitizeCases(data.cases || []);
+            const logs = Array.isArray(data.logs) ? data.logs.map(sanitizeLog).slice(0, STORAGE_LIMITS.logs) : [];
+            return { settings, cases, logs };
+        }
+
+        function isSessionUnlocked() {
+            if (!appState.settings.lockHash) return true;
+            return Date.now() < sessionUnlockedUntil;
+        }
+
+        function lockSession() {
+            sessionUnlockedUntil = 0;
+        }
+
+        async function unlockSession(passphrase) {
+            if (!appState.settings.lockHash) return true;
+            const hash = await hashPassphrase(passphrase);
+            if (hash === appState.settings.lockHash) {
+                sessionUnlockedUntil = Date.now() + (appState.settings.lockTimeoutMin * 60 * 1000);
+                return true;
+            }
+            return false;
         }
 
         function deepClone(obj) {
@@ -1225,6 +1457,10 @@
             return [...new Uint8Array(hash)].map(b => b.toString(16).padStart(2,"0")).join("");
         }
 
+        async function hashPassphrase(passphrase) {
+            return sha256Hex("mehic_lock_v1:" + String(passphrase || ""));
+        }
+
         function extractJSON(text) {
             if (typeof text !== "string") throw new Error("No JSON found");
             const s = text;
@@ -1262,10 +1498,57 @@
         function showToast(msg, ms = 2400) {
             const t = dom.toast;
             if (!t) return;
-            t.textContent = String(msg || "");
-            t.classList.add("show");
-            if (showToast._timer) clearTimeout(showToast._timer);
-            showToast._timer = setTimeout(() => t.classList.remove("show"), ms);
+            toastQueue.push({ msg: String(msg || ""), ms });
+            if (!toastActive) {
+                toastActive = true;
+                const run = () => {
+                    const next = toastQueue.shift();
+                    if (!next) { toastActive = false; return; }
+                    t.textContent = next.msg;
+                    t.classList.add("show");
+                    if (showToast._timer) clearTimeout(showToast._timer);
+                    showToast._timer = setTimeout(() => {
+                        t.classList.remove("show");
+                        setTimeout(run, 200);
+                    }, next.ms);
+                };
+                run();
+            }
+        }
+
+        function showConfirm({ title, message, confirmText } = {}) {
+            return new Promise((resolve) => {
+                if (!dom.confirmModal) { resolve(false); return; }
+                confirmResolver = resolve;
+                confirmPreviousFocus = document.activeElement;
+                const inSettings = dom.settingsModal.classList.contains("open");
+                confirmSettingsHidden = inSettings;
+                if (inSettings) dom.settingsModal.setAttribute("aria-hidden", "true");
+                disableAppShellA11y();
+                document.body.classList.add("modal-open");
+                dom.confirmTitle.textContent = title || "Bestätigung";
+                dom.confirmMessage.textContent = message || "Sind Sie sicher?";
+                dom.confirmOkBtn.textContent = confirmText || "Bestätigen";
+                dom.confirmModal.classList.add("open");
+                dom.confirmModal.setAttribute("aria-hidden", "false");
+                setTimeout(() => dom.confirmOkBtn.focus(), 0);
+            });
+        }
+
+        function closeConfirm(result) {
+            if (!dom.confirmModal.classList.contains("open")) return;
+            dom.confirmModal.classList.remove("open");
+            dom.confirmModal.setAttribute("aria-hidden", "true");
+            if (confirmSettingsHidden) dom.settingsModal.setAttribute("aria-hidden", "false");
+            if (!dom.settingsModal.classList.contains("open")) {
+                restoreAppShellA11y();
+                document.body.classList.remove("modal-open");
+            }
+            if (confirmPreviousFocus && isFocusable(confirmPreviousFocus)) confirmPreviousFocus.focus();
+            confirmPreviousFocus = null;
+            if (confirmResolver) confirmResolver(!!result);
+            confirmResolver = null;
+            confirmSettingsHidden = false;
         }
 
         function normalizeCard(card) {
@@ -1437,6 +1720,7 @@
             document.documentElement.setAttribute("data-theme", safe);
             if (dom.themeLabel) dom.themeLabel.textContent = THEME_LABELS[safe] || "Auto";
             if (dom.themeToggle) dom.themeToggle.setAttribute("aria-label", "Theme: " + (THEME_LABELS[safe] || "Auto"));
+            if (dom.themeSelect) dom.themeSelect.value = safe;
             updateThemeColorMeta();
         }
 
@@ -1445,7 +1729,31 @@
             document.documentElement.setAttribute("data-density", safe);
             if (dom.densityLabel) dom.densityLabel.textContent = DENSITY_LABELS[safe] || "Kompakt";
             if (dom.densityToggle) dom.densityToggle.setAttribute("aria-label", "Dichte: " + (DENSITY_LABELS[safe] || "Kompakt"));
+            if (dom.densitySelect) dom.densitySelect.value = safe;
             scheduleLayoutMetrics();
+        }
+
+        function getAutoDensity() {
+            const isCoarse = window.matchMedia("(pointer: coarse)").matches;
+            const width = window.innerWidth || document.documentElement.clientWidth;
+            if (isCoarse || width < 768) return "comfortable";
+            return "compact";
+        }
+
+        function applyAutoDensityIfNeeded() {
+            if (appState.settings.densityLocked) return;
+            if (densityRaf) cancelAnimationFrame(densityRaf);
+            densityRaf = requestAnimationFrame(() => {
+                const target = getAutoDensity();
+                if (target !== lastAutoDensity) {
+                    lastAutoDensity = target;
+                    appState.settings.density = target;
+                    applyDensity(target);
+                    saveSettings(appState.settings);
+                    render();
+                }
+                densityRaf = null;
+            });
         }
 
         function updateThemeColorMeta() {
@@ -1501,6 +1809,21 @@
             dom._a11yRestores = [];
         }
 
+        function showLockPanel() {
+            if (!dom.lockPanel || !dom.settingsBody) return;
+            dom.lockPanel.hidden = false;
+            dom.settingsBody.setAttribute("aria-hidden", "true");
+            try { dom.settingsBody.setAttribute("inert", ""); } catch(_){}
+            setTimeout(() => { if (dom.unlockPassphrase) dom.unlockPassphrase.focus(); }, 50);
+        }
+
+        function hideLockPanel() {
+            if (!dom.lockPanel || !dom.settingsBody) return;
+            dom.lockPanel.hidden = true;
+            dom.settingsBody.removeAttribute("aria-hidden");
+            try { dom.settingsBody.removeAttribute("inert"); } catch(_){}
+        }
+
         function openSettingsModal() {
             lastFocus = document.activeElement;
             disableAppShellA11y();
@@ -1513,16 +1836,25 @@
             dom.apiKey.value = "";
             dom.modelName.value = appState.settings.modelName;
             dom.proxyUrl.value = appState.settings.proxyUrl;
+            dom.masterHash.value = appState.settings.masterHash || EXPECTED_MASTER_SHA256 || "";
             dom.department.value = appState.settings.department;
             dom.storePolicy.value = appState.settings.storePolicy;
+            dom.lockPassphrase.value = "";
+            dom.lockPassphraseConfirm.value = "";
+            dom.lockTimeout.value = String(appState.settings.lockTimeoutMin || 30);
             if (!modalHistoryActive && !(history.state && history.state.settingsOpen)) {
                 history.pushState({ settingsOpen: true }, "", location.href);
                 modalHistoryActive = true;
             }
-            setTimeout(() => {
-                const first = getFirstFocusable(dom.settingsModal);
-                if (first) first.focus();
-            }, 50);
+            if (appState.settings.lockHash && !isSessionUnlocked()) {
+                showLockPanel();
+            } else {
+                hideLockPanel();
+                setTimeout(() => {
+                    const first = getFirstFocusable(dom.settingsModal);
+                    if (first) first.focus();
+                }, 50);
+            }
         }
 
         function closeSettingsModal({ skipHistory = false } = {}) {
@@ -1530,6 +1862,8 @@
             modalClosing = true;
             dom.settingsModal.classList.remove("open");
             dom.settingsModal.setAttribute("aria-hidden", "true");
+            hideLockPanel();
+            if (dom.unlockPassphrase) dom.unlockPassphrase.value = "";
             restoreAppShellA11y();
             document.body.classList.remove("modal-open");
             if (lastFocus && isFocusable(lastFocus) && document.body.contains(lastFocus)) {
@@ -1552,7 +1886,9 @@
             if (!navigator.onLine) status = "offline";
             else if (syncRunning) status = "syncing";
             dom.statusPill.dataset.status = status;
-            dom.statusPill.textContent = status === "offline" ? "Offline" : status === "syncing" ? "Sync" : "Online";
+            const base = status === "offline" ? "Offline" : status === "syncing" ? "Sync" : "Online";
+            dom.statusPill.textContent = storageMode === "local" ? base + " • Local" : base;
+            if (dom.offlineHint) dom.offlineHint.hidden = navigator.onLine;
         }
 
         function scheduleLayoutMetrics() {
@@ -1571,9 +1907,13 @@
                 try {
                     dbClosing = false;
                     const req = indexedDB.open(DB_NAME, DB_VERSION);
-                    req.onerror = () => resolve(null);
+                    req.onerror = () => {
+                        storageMode = localStorageAvailable ? "local" : "none";
+                        resolve(null);
+                    };
                     req.onsuccess = () => {
                         db = req.result;
+                        storageMode = "idb";
                         dbClosing = false;
                         dbWarned = false;
                         db.onversionchange = () => {
@@ -1600,15 +1940,22 @@
             if (dbClosing) { dbClosing = false; dbInitPromise = null; }
             const timeout = new Promise(resolve => setTimeout(() => resolve(null), timeoutMs));
             const res = await Promise.race([initDB(), timeout]);
-            if (!res && !dbWarned) { dbWarned = true; showToast("DB nicht verfügbar"); }
+            if (!res) {
+                storageMode = localStorageAvailable ? "local" : "none";
+                if (!dbWarned) { dbWarned = true; showToast(localStorageAvailable ? "DB nicht verfügbar, Fallback aktiv" : "DB nicht verfügbar"); }
+            } else {
+                storageMode = "idb";
+            }
+            updateStatusPill();
             return res;
         }
 
         async function saveSettings(s) {
             await waitForDB();
-            if (!db) return false;
-            const safe = { ...s };
-            delete safe.apiKey;
+            const safe = sanitizeSettings(s);
+            if (!db) {
+                return saveLocalJSON(STORAGE_KEYS.settings, safe);
+            }
             return new Promise(resolve => {
                 let done = false;
                 const tx = db.transaction("settings", "readwrite");
@@ -1625,17 +1972,31 @@
 
         async function loadSettings() {
             await waitForDB();
-            if (!db) return null;
+            if (!db) {
+                const local = loadLocalJSON(STORAGE_KEYS.settings, null);
+                return local ? sanitizeSettings(local) : null;
+            }
             return new Promise(r => {
                 const req = db.transaction("settings", "readonly").objectStore("settings").get("main");
-                req.onsuccess = () => r(req.result || null);
+                req.onsuccess = () => r(req.result ? sanitizeSettings(req.result) : null);
                 req.onerror = () => r(null);
             });
         }
 
         async function logEvent(type, data) {
             await waitForDB();
-            if (!db) return false;
+            if (!db) {
+                const logs = loadLocalJSON(STORAGE_KEYS.logs, []);
+                logs.push(sanitizeLog({
+                    timestamp: new Date().toISOString(),
+                    type,
+                    objection: appState.objection,
+                    contexts: [...appState.contexts],
+                    data
+                }));
+                const trimmed = logs.slice(-STORAGE_LIMITS.logs);
+                return saveLocalJSON(STORAGE_KEYS.logs, trimmed);
+            }
             return new Promise(resolve => {
                 let done = false;
                 const tx = db.transaction("logs", "readwrite");
@@ -1658,7 +2019,11 @@
 
         async function loadCasesCache() {
             await waitForDB();
-            if (!db) { casesCache = []; return casesCache; }
+            if (!db) {
+                const local = loadLocalJSON(STORAGE_KEYS.cases, []);
+                casesCache = sanitizeCases(local);
+                return casesCache;
+            }
             casesCache = await new Promise(r => {
                 const req = db.transaction("cases", "readonly").objectStore("cases").getAll();
                 req.onsuccess = () => r(req.result || []);
@@ -1669,7 +2034,20 @@
 
         async function saveCase(c, rawText) {
             await waitForDB();
-            if (!db) return false;
+            if (!db) {
+                const cloned = safeClone(c, "saveCase.localClone");
+                if (!cloned) return false;
+                const norm = normalizeCard(cloned);
+                if (!validateCardShape(norm)) return false;
+                const newKw = cleanKeywords(rawText);
+                const merged = [...new Set([...(norm.keywords || []), ...newKw])];
+                norm.keywords = merged.slice(0, 60);
+                if (!casesCache) casesCache = [];
+                const idx = casesCache.findIndex(x => x.id === norm.id);
+                if (idx > -1) casesCache[idx] = norm; else casesCache.push(norm);
+                casesCache = casesCache.slice(-STORAGE_LIMITS.cases);
+                return saveLocalJSON(STORAGE_KEYS.cases, casesCache);
+            }
             return new Promise((resolve) => {
                 const cloned = safeClone(c, "saveCase.deepClone");
                 if (!cloned) { resolve(false); return; }
@@ -1774,6 +2152,7 @@
         async function callAI(objection, contexts) {
             const { apiProvider, apiKey, modelName, proxyUrl, department, storePolicy } = appState.settings;
             if (!apiKey && !proxyUrl) throw new Error("Kein API Key");
+            if (!isSessionUnlocked()) throw new Error("Session gesperrt");
             if (!navigator.onLine) throw new Error("Offline");
             const contextMods = [];
             if (contexts.includes("hurry")) contextMods.push("Kunde ist eilig: Ultra-kurz, max 2 Sätze pro Abschnitt.");
@@ -1903,6 +2282,7 @@ SCHEMA: {"meta":{"pattern":"str"},"ui":{"color":"success|warning|error","icon":"
             trigger.className = "expand-trigger";
             trigger.dataset.action = "toggle";
             trigger.setAttribute("aria-expanded", "false");
+            trigger.setAttribute("aria-controls", panelId);
             const label = document.createElement("div");
             label.className = "expand-label";
             label.textContent = title;
@@ -1913,6 +2293,7 @@ SCHEMA: {"meta":{"pattern":"str"},"ui":{"color":"success|warning|error","icon":"
             trigger.append(label, icon);
             const content = document.createElement("div");
             content.className = "expand-content";
+            content.id = panelId;
             content.dataset.panelId = panelId;
             contentBuilder(content);
             wrapper.append(trigger, content);
@@ -2092,10 +2473,17 @@ SCHEMA: {"meta":{"pattern":"str"},"ui":{"color":"success|warning|error","icon":"
                 haptic([50]);
             } catch (e) {
                 console.warn("Fallback", e);
+                const msg = String(e?.message || e);
+                if (msg.includes("Session gesperrt")) {
+                    appState.loading = false;
+                    showToast("Session gesperrt");
+                    render();
+                    return;
+                }
                 appState.cards = [JOKER_CARD];
                 appState.error = navigator.onLine ? "Fallback Modus aktiv" : "Offline: Nur lokale Daten verfügbar";
                 showToast(appState.error);
-                await logEvent("error_fallback", { message: String(e?.message || e) });
+                await logEvent("error_fallback", { message: msg });
                 haptic([100, 50, 100]);
             }
             appState.loading = false;
@@ -2178,6 +2566,7 @@ SCHEMA: {"meta":{"pattern":"str"},"ui":{"color":"success|warning|error","icon":"
             }
             window.addEventListener("resize", () => {
                 scheduleLayoutMetrics();
+                applyAutoDensityIfNeeded();
                 if (window.visualViewport) onResize();
             });
         }
@@ -2201,24 +2590,75 @@ SCHEMA: {"meta":{"pattern":"str"},"ui":{"color":"success|warning|error","icon":"
             });
         }
 
+        function mergeIncomingCases(existingList, incomingList) {
+            const map = new Map();
+            existingList.forEach(item => { if (item && item.id) map.set(item.id, item); });
+            let errorCount = 0;
+            let successCount = 0;
+            for (const item of incomingList) {
+                if (!item || typeof item !== "object") continue;
+                const incomingCloned = safeClone({ ...item, id: (item.id != null ? String(item.id) : genId()), isMaster: true }, "syncMaster.incomingClone");
+                if (!incomingCloned) continue;
+                incomingCloned.meta = incomingCloned.meta || {};
+                incomingCloned.meta.source = "master";
+                const rawId = incomingCloned.id;
+                const id = rawId.startsWith("master_") ? rawId : ("master_" + rawId);
+                incomingCloned.id = id;
+                const existing = map.get(id);
+                const incomingTime = toFiniteNumber(incomingCloned.updatedAt, 0);
+                const existingTime = toFiniteNumber(existing?.updatedAt, 0);
+                const normNew = normalizeCard(incomingCloned);
+                if (existing) {
+                    if (incomingTime && existingTime && incomingTime < existingTime) continue;
+                    if (incomingTime === existingTime || !incomingTime) {
+                        const fpA = getFingerprint(normNew);
+                        const existingCloned = safeClone(existing, "syncMaster.existingClone");
+                        if (existingCloned) {
+                            const fpB = getFingerprint(normalizeCard(existingCloned));
+                            if (fpA === fpB) continue;
+                        }
+                    }
+                }
+                normNew.updatedAt = incomingTime || 0;
+                if (!validateCardShape(normNew)) { errorCount++; continue; }
+                if (existing && Array.isArray(existing.keywords)) {
+                    normNew.keywords = [...new Set([...(existing.keywords || []), ...(normNew.keywords || [])])];
+                }
+                map.set(id, normNew);
+                successCount++;
+            }
+            return { list: Array.from(map.values()).slice(-STORAGE_LIMITS.cases), successCount, errorCount };
+        }
+
         async function syncMaster() {
             if (syncRunning) return;
             if (!navigator.onLine) { updateStatusPill(); return; }
             syncRunning = true;
             updateStatusPill();
+            const masterHash = appState.settings.masterHash || EXPECTED_MASTER_SHA256;
             try {
+                if (!masterHash) {
+                    showToast("Sync blockiert: Hash fehlt");
+                    return;
+                }
                 const res = await fetchWithTimeout(MASTER_URL + "?t=" + Date.now(), { cache: "no-store" }, 6000, 1);
                 if (!res.ok) { showToast("Sync Fehler: " + res.status); return; }
                 const raw = await res.text();
-                if (EXPECTED_MASTER_SHA256) {
-                    const hex = await sha256Hex(raw);
-                    if (hex !== EXPECTED_MASTER_SHA256) { showToast("Sync Integrität Fehler"); return; }
-                }
+                const hex = await sha256Hex(raw);
+                if (hex !== masterHash) { showToast("Sync Integrität Fehler"); return; }
                 let data;
                 try { data = JSON.parse(raw); } catch(_) { showToast("Sync Daten defekt"); return; }
                 if (!Array.isArray(data) || data.length === 0) return;
                 await waitForDB();
-                if (!db) { showToast("DB nicht bereit"); return; }
+                if (!db) {
+                    const existing = sanitizeCases(loadLocalJSON(STORAGE_KEYS.cases, []));
+                    const merge = mergeIncomingCases(existing, data);
+                    const ok = saveLocalJSON(STORAGE_KEYS.cases, merge.list);
+                    if (!ok) showToast("Speicher nicht verfügbar");
+                    casesCache = merge.list;
+                    if (merge.errorCount > 0) showToast(`Sync: ${merge.successCount} ok, ${merge.errorCount} Fehler`);
+                    return;
+                }
                 let txAborted = false;
                 let errorCount = 0;
                 let successCount = 0;
@@ -2237,6 +2677,8 @@ SCHEMA: {"meta":{"pattern":"str"},"ui":{"color":"success|warning|error","icon":"
                             if (!item || typeof item !== "object") continue;
                             const incomingCloned = safeClone({ ...item, id: (item.id != null ? String(item.id) : genId()), isMaster: true }, "syncMaster.incomingClone");
                             if (!incomingCloned) continue;
+                            incomingCloned.meta = incomingCloned.meta || {};
+                            incomingCloned.meta.source = "master";
                             const rawId = incomingCloned.id;
                             const id = rawId.startsWith("master_") ? rawId : ("master_" + rawId);
                             incomingCloned.id = id;
@@ -2282,17 +2724,27 @@ SCHEMA: {"meta":{"pattern":"str"},"ui":{"color":"success|warning|error","icon":"
 
         async function exportData() {
             await waitForDB();
-            if (!db) { showToast("DB nicht bereit"); return; }
-            const tx = db.transaction(["cases", "logs", "settings"], "readonly");
-            const casesReq = tx.objectStore("cases").getAll();
-            const logsReq = tx.objectStore("logs").getAll();
-            const settingsReq = tx.objectStore("settings").get("main");
-            const [cases, logs, settings] = await Promise.all([
-                new Promise(r => { casesReq.onsuccess = () => r(casesReq.result || []); casesReq.onerror = () => r([]); }),
-                new Promise(r => { logsReq.onsuccess = () => r(logsReq.result || []); logsReq.onerror = () => r([]); }),
-                new Promise(r => { settingsReq.onsuccess = () => r(settingsReq.result || null); settingsReq.onerror = () => r(null); })
-            ]);
-            if (settings) delete settings.apiKey;
+            if (!db && !localStorageAvailable) { showToast("Speicher nicht verfügbar"); return; }
+            let cases = [];
+            let logs = [];
+            let settings = null;
+            if (!db) {
+                cases = sanitizeCases(loadLocalJSON(STORAGE_KEYS.cases, []));
+                logs = (loadLocalJSON(STORAGE_KEYS.logs, []) || []).map(sanitizeLog);
+                settings = loadLocalJSON(STORAGE_KEYS.settings, null);
+                if (settings) settings = sanitizeSettings(settings);
+            } else {
+                const tx = db.transaction(["cases", "logs", "settings"], "readonly");
+                const casesReq = tx.objectStore("cases").getAll();
+                const logsReq = tx.objectStore("logs").getAll();
+                const settingsReq = tx.objectStore("settings").get("main");
+                [cases, logs, settings] = await Promise.all([
+                    new Promise(r => { casesReq.onsuccess = () => r(casesReq.result || []); casesReq.onerror = () => r([]); }),
+                    new Promise(r => { logsReq.onsuccess = () => r(logsReq.result || []); logsReq.onerror = () => r([]); }),
+                    new Promise(r => { settingsReq.onsuccess = () => r(settingsReq.result || null); settingsReq.onerror = () => r(null); })
+                ]);
+                if (settings) settings = sanitizeSettings(settings);
+            }
             const data = {
                 version: BUILD_SIGNATURE,
                 exportDate: new Date().toISOString(),
@@ -2312,26 +2764,39 @@ SCHEMA: {"meta":{"pattern":"str"},"ui":{"color":"success|warning|error","icon":"
 
         async function importData(file) {
             await waitForDB();
-            if (!db) { showToast("DB nicht bereit"); return; }
+            if (!db && !localStorageAvailable) { showToast("Speicher nicht verfügbar"); return; }
             const reader = new FileReader();
             reader.onload = async (e) => {
                 try {
-                    const data = JSON.parse(String(e.target.result || "{}"));
-                    if (!confirm("Import überschreibt lokale Daten. Fortfahren?")) return;
-                    const tx = db.transaction(["cases", "logs", "settings"], "readwrite");
-                    const cases = Array.isArray(data.cases) ? data.cases : [];
-                    const logs = Array.isArray(data.logs) ? data.logs : [];
-                    cases.forEach(item => tx.objectStore("cases").put(item));
-                    logs.forEach(log => tx.objectStore("logs").add(log));
-                    if (data.settings && typeof data.settings === "object") {
-                        delete data.settings.apiKey;
-                        tx.objectStore("settings").put({ id: "main", ...data.settings });
+                    const parsed = JSON.parse(String(e.target.result || "{}"));
+                    const data = sanitizeImportData(parsed);
+                    const confirmed = await showConfirm({
+                        title: "Import bestätigen",
+                        message: "Import überschreibt lokale Daten. Fortfahren?",
+                        confirmText: "Importieren"
+                    });
+                    if (!confirmed) return;
+                    if (!db) {
+                        saveLocalJSON(STORAGE_KEYS.cases, data.cases);
+                        saveLocalJSON(STORAGE_KEYS.logs, data.logs);
+                        saveLocalJSON(STORAGE_KEYS.settings, data.settings);
                         appState.settings = { ...appState.settings, ...data.settings, apiKey: appState.settings.apiKey };
+                        await loadCasesCache();
                         applyTheme(appState.settings.theme);
                         applyDensity(appState.settings.density);
+                        showToast("Import abgeschlossen");
+                        render();
+                        return;
                     }
+                    const tx = db.transaction(["cases", "logs", "settings"], "readwrite");
+                    data.cases.forEach(item => tx.objectStore("cases").put(item));
+                    data.logs.forEach(log => tx.objectStore("logs").add(log));
+                    tx.objectStore("settings").put({ id: "main", ...data.settings });
                     tx.oncomplete = async () => {
+                        appState.settings = { ...appState.settings, ...data.settings, apiKey: appState.settings.apiKey };
                         await loadCasesCache();
+                        applyTheme(appState.settings.theme);
+                        applyDensity(appState.settings.density);
                         showToast("Import abgeschlossen");
                         render();
                     };
@@ -2360,7 +2825,15 @@ SCHEMA: {"meta":{"pattern":"str"},"ui":{"color":"success|warning|error","icon":"
 
         async function doHardReset() {
             await waitForDB();
-            if (!db) { showToast("DB nicht bereit"); return; }
+            if (!db) {
+                if (!localStorageAvailable) { showToast("DB nicht bereit"); return; }
+                localStorage.removeItem(STORAGE_KEYS.cases);
+                localStorage.removeItem(STORAGE_KEYS.logs);
+                localStorage.removeItem(STORAGE_KEYS.settings);
+                showToast("System wird zurückgesetzt...");
+                location.reload();
+                return;
+            }
             appState.loading = true;
             render();
             micRunning = false;
@@ -2392,6 +2865,7 @@ SCHEMA: {"meta":{"pattern":"str"},"ui":{"color":"success|warning|error","icon":"
                 const idx = DENSITY_ORDER.indexOf(appState.settings.density);
                 const next = DENSITY_ORDER[(idx + 1) % DENSITY_ORDER.length];
                 appState.settings.density = next;
+                appState.settings.densityLocked = true;
                 applyDensity(next);
                 const ok = await saveSettings(appState.settings);
                 if (!ok) showToast("Dichte nicht gespeichert");
@@ -2409,6 +2883,54 @@ SCHEMA: {"meta":{"pattern":"str"},"ui":{"color":"success|warning|error","icon":"
             dom.settingsModal.addEventListener("click", (e) => {
                 if (e.target === dom.settingsModal) closeSettingsModal();
             });
+
+            dom.unlockBtn.addEventListener("click", async () => {
+                const pass = dom.unlockPassphrase.value.trim();
+                if (!pass) { showToast("Passphrase fehlt"); return; }
+                const ok = await unlockSession(pass);
+                if (!ok) {
+                    showToast("Passphrase falsch");
+                    dom.unlockPassphrase.focus();
+                    return;
+                }
+                dom.unlockPassphrase.value = "";
+                hideLockPanel();
+                showToast("Session entsperrt");
+                const first = getFirstFocusable(dom.settingsModal);
+                if (first) first.focus();
+            });
+
+            dom.unlockPassphrase.addEventListener("keydown", (e) => {
+                if (e.key === "Enter") dom.unlockBtn.click();
+            });
+
+            dom.unlockCancelBtn.addEventListener("click", () => closeSettingsModal());
+
+            dom.lockRemoveBtn.addEventListener("click", async () => {
+                if (!appState.settings.lockHash) { showToast("Kein Lock aktiv"); return; }
+                const confirmed = await showConfirm({
+                    title: "Lock entfernen",
+                    message: "Session Lock wirklich entfernen?",
+                    confirmText: "Entfernen"
+                });
+                if (!confirmed) return;
+                appState.settings.lockHash = "";
+                appState.settings.lockTimeoutMin = 30;
+                lockSession();
+                dom.lockPassphrase.value = "";
+                dom.lockPassphraseConfirm.value = "";
+                dom.lockTimeout.value = String(appState.settings.lockTimeoutMin);
+                await saveSettings(appState.settings);
+                showToast("Lock entfernt");
+            });
+
+            dom.confirmModal.addEventListener("click", (e) => {
+                if (e.target === dom.confirmModal) closeConfirm(false);
+            });
+
+            dom.confirmOkBtn.addEventListener("click", () => closeConfirm(true));
+            dom.confirmCancelBtn.addEventListener("click", () => closeConfirm(false));
+            dom.confirmCloseBtn.addEventListener("click", () => closeConfirm(false));
 
             dom.settingsModal.addEventListener("keydown", (e) => {
                 if (e.key !== "Tab") return;
@@ -2430,8 +2952,29 @@ SCHEMA: {"meta":{"pattern":"str"},"ui":{"color":"success|warning|error","icon":"
                 }
             });
 
+            dom.confirmModal.addEventListener("keydown", (e) => {
+                if (e.key !== "Tab") return;
+                const focusables = Array.from(dom.confirmModal.querySelectorAll('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'))
+                    .filter(el => isFocusable(el));
+                if (focusables.length === 0) { e.preventDefault(); return; }
+                const first = focusables[0];
+                const last = focusables[focusables.length - 1];
+                if (e.shiftKey) {
+                    if (document.activeElement === first || !dom.confirmModal.contains(document.activeElement)) {
+                        e.preventDefault();
+                        last.focus();
+                    }
+                } else {
+                    if (document.activeElement === last || !dom.confirmModal.contains(document.activeElement)) {
+                        e.preventDefault();
+                        first.focus();
+                    }
+                }
+            });
+
             document.addEventListener("focusin", (e) => {
                 if (modalClosing) return;
+                if (dom.confirmModal.classList.contains("open")) return;
                 if (dom.settingsModal.classList.contains("open") && !dom.settingsModal.contains(e.target)) {
                     const first = getFirstFocusable(dom.settingsModal);
                     if (first) first.focus();
@@ -2440,6 +2983,10 @@ SCHEMA: {"meta":{"pattern":"str"},"ui":{"color":"success|warning|error","icon":"
 
             document.addEventListener("keydown", (e) => {
                 if (e.key === "Escape") {
+                    if (dom.confirmModal.classList.contains("open")) {
+                        closeConfirm(false);
+                        return;
+                    }
                     if (dom.stealthOverlay.classList.contains("active")) {
                         dom.stealthOverlay.classList.remove("active");
                         dom.stealthOverlay.setAttribute("aria-hidden", "true");
@@ -2447,6 +2994,7 @@ SCHEMA: {"meta":{"pattern":"str"},"ui":{"color":"success|warning|error","icon":"
                     closeSettingsModal();
                 }
                 if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "k") {
+                    if (dom.confirmModal.classList.contains("open")) return;
                     if (appState.objection.trim() === "" && !dom.settingsModal.classList.contains("open")) {
                         e.preventDefault();
                         dom.objectionInput.focus();
@@ -2521,6 +3069,7 @@ SCHEMA: {"meta":{"pattern":"str"},"ui":{"color":"success|warning|error","icon":"
             document.getElementById("saveSettingsBtn").onclick = async () => {
                 appState.settings.theme = dom.themeSelect.value;
                 appState.settings.density = dom.densitySelect.value;
+                appState.settings.densityLocked = true;
                 appState.settings.apiProvider = dom.apiProvider.value;
                 appState.settings.modelName = dom.modelName.value.trim();
                 appState.settings.department = dom.department.value;
@@ -2529,11 +3078,32 @@ SCHEMA: {"meta":{"pattern":"str"},"ui":{"color":"success|warning|error","icon":"
                 const proxy = validateProxyUrl(proxyRaw);
                 if (proxyRaw && !proxy) { showToast("Proxy URL ungültig"); dom.proxyUrl.focus(); return; }
                 appState.settings.proxyUrl = proxy;
+                const masterHashRaw = dom.masterHash.value.trim().toLowerCase();
+                if (masterHashRaw && !/^[a-f0-9]{64}$/i.test(masterHashRaw)) {
+                    showToast("Master Hash ungültig");
+                    dom.masterHash.focus();
+                    return;
+                }
+                appState.settings.masterHash = masterHashRaw;
                 const newKey = dom.apiKey.value.trim();
                 if (newKey) appState.settings.apiKey = newKey;
+                const pass = dom.lockPassphrase.value.trim();
+                const passConfirm = dom.lockPassphraseConfirm.value.trim();
+                const timeoutMin = Math.min(240, Math.max(5, toFiniteNumber(dom.lockTimeout.value, appState.settings.lockTimeoutMin || 30)));
+                if (pass || passConfirm) {
+                    if (pass !== passConfirm) { showToast("Passphrase stimmt nicht"); return; }
+                    if (pass.length < 6) { showToast("Passphrase zu kurz"); return; }
+                    appState.settings.lockHash = await hashPassphrase(pass);
+                    appState.settings.lockTimeoutMin = timeoutMin;
+                    lockSession();
+                    await unlockSession(pass);
+                } else if (appState.settings.lockHash) {
+                    appState.settings.lockTimeoutMin = timeoutMin;
+                }
                 applyTheme(appState.settings.theme);
                 applyDensity(appState.settings.density);
                 const ok = await saveSettings(appState.settings);
+                appState.settings = { ...appState.settings, ...sanitizeSettings(appState.settings), apiKey: appState.settings.apiKey };
                 closeSettingsModal();
                 showToast(ok ? "Einstellungen gespeichert" : "Fehler beim Speichern");
                 render();
@@ -2559,12 +3129,18 @@ SCHEMA: {"meta":{"pattern":"str"},"ui":{"color":"success|warning|error","icon":"
                 cancelReset();
                 resetHoldTimer = setTimeout(() => {
                     clearBtn.classList.add("active");
-                    if (confirm("Alle Daten werden gelöscht. Fortfahren?")) {
-                        doHardReset();
-                    } else {
-                        clearBtn.classList.remove("active");
-                        showToast("Abgebrochen");
-                    }
+                    showConfirm({
+                        title: "Daten löschen",
+                        message: "Alle Daten werden gelöscht. Fortfahren?",
+                        confirmText: "Löschen"
+                    }).then((confirmed) => {
+                        if (confirmed) {
+                            doHardReset();
+                        } else {
+                            clearBtn.classList.remove("active");
+                            showToast("Abgebrochen");
+                        }
+                    });
                 }, 1200);
                 showToast("Halten zum Zurücksetzen...");
             };
@@ -2584,8 +3160,15 @@ SCHEMA: {"meta":{"pattern":"str"},"ui":{"color":"success|warning|error","icon":"
                 showToast("Offline");
             });
 
+            document.addEventListener("visibilitychange", () => {
+                if (document.visibilityState !== "visible" && appState.settings.lockHash) {
+                    lockSession();
+                }
+            });
+
             window.addEventListener("popstate", () => {
                 if (ignoreNextPop) { ignoreNextPop = false; return; }
+                if (dom.confirmModal.classList.contains("open")) { closeConfirm(false); return; }
                 if (dom.settingsModal.classList.contains("open")) closeSettingsModal({ skipHistory: true });
             });
 
@@ -2651,6 +3234,7 @@ SCHEMA: {"meta":{"pattern":"str"},"ui":{"color":"success|warning|error","icon":"
             bindDom();
             setupViewportHandling();
             updateStatusPill();
+            localStorageAvailable = isLocalStorageAvailable();
             await initDB();
             await waitForDB();
             const saved = await loadSettings();
@@ -2664,8 +3248,13 @@ SCHEMA: {"meta":{"pattern":"str"},"ui":{"color":"success|warning|error","icon":"
             if (!saved || !saved.theme) {
                 appState.settings.theme = "auto";
             }
+            if (!appState.settings.masterHash && EXPECTED_MASTER_SHA256) {
+                appState.settings.masterHash = EXPECTED_MASTER_SHA256;
+            }
             applyTheme(appState.settings.theme);
             applyDensity(appState.settings.density);
+            lastAutoDensity = appState.settings.density;
+            applyAutoDensityIfNeeded();
             await saveSettings(appState.settings);
             await loadCasesCache();
             setupEvents();
