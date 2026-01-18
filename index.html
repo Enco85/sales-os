@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="de" data-theme="light" data-density="comfortable">
+<html lang="de" data-theme="light" data-density="comfortable" data-debug="false">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
@@ -10,7 +10,7 @@
     <meta name="referrer" content="no-referrer">
     <meta http-equiv="Content-Security-Policy" content="default-src 'none'; base-uri 'self'; form-action 'self'; img-src 'self' data:; font-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline'; connect-src 'self' https://api.openai.com https://api.groq.com; frame-ancestors 'none'; object-src 'none';">
     <!-- CSP Level 2 (Enterprise, hash-based, no unsafe-inline):
-         Content-Security-Policy: default-src 'none'; base-uri 'self'; form-action 'self'; img-src 'self' data:; font-src 'self'; style-src 'self' 'sha256-33pxw97LKjYTPxxGI9rUihksfEusFldZOhDLcN4VIX0='; script-src 'self' 'sha256-Ynw8AqKGDQhASZvzimu2xMZ6HO6dmgBx8bvY6dI6uAM='; connect-src 'self' https://api.openai.com https://api.groq.com; frame-ancestors 'none'; object-src 'none';
+         Content-Security-Policy: default-src 'none'; base-uri 'self'; form-action 'self'; img-src 'self' data:; font-src 'self'; style-src 'self' 'sha256-DfpShdlp4EVLA30rFHv1hJT4U1scXYSZsGgjcQh540U='; script-src 'self' 'sha256-sx0jgiuSguIPgxrujv4zWxp4Siu19SQLZwyb3jkKxeE='; connect-src 'self' https://api.openai.com https://api.groq.com; frame-ancestors 'none'; object-src 'none';
          Hash calculation details: see REPORT.md
     -->
     <title>MEHIC SALES OS — Enterprise RC 2026</title>
@@ -460,6 +460,44 @@
         .tile-desc {
             font-size: 14px;
             color: var(--color-text-secondary);
+        }
+
+        .diagnostics {
+            display: none;
+        }
+
+        html[data-debug="true"] .diagnostics {
+            display: block;
+        }
+
+        .diagnostics-grid {
+            display: grid;
+            gap: var(--space-2);
+            margin-top: var(--space-3);
+        }
+
+        .diag-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: var(--space-3);
+            font-size: 12px;
+            padding: 6px 8px;
+            border-radius: var(--radius-1);
+            background: var(--color-elevated);
+            border: 1px solid var(--color-border);
+        }
+
+        .diag-key {
+            color: var(--color-text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.6px;
+            font-weight: 700;
+        }
+
+        .diag-value {
+            color: var(--color-text-primary);
+            font-weight: 700;
         }
 
         .stat-grid {
@@ -1403,6 +1441,33 @@
                 </div>
             </section>
 
+            <section class="tile diagnostics" id="diagnosticsTile" aria-live="polite" aria-hidden="true">
+                <div class="tile-title">Diagnostics</div>
+                <div class="tile-desc">Toggle: Ctrl + Shift + I</div>
+                <div class="diagnostics-grid">
+                    <div class="diag-row">
+                        <span class="diag-key">Theme</span>
+                        <span class="diag-value" id="diagTheme">–</span>
+                    </div>
+                    <div class="diag-row">
+                        <span class="diag-key">Density</span>
+                        <span class="diag-value" id="diagDensity">–</span>
+                    </div>
+                    <div class="diag-row">
+                        <span class="diag-key">Online</span>
+                        <span class="diag-value" id="diagOnline">–</span>
+                    </div>
+                    <div class="diag-row">
+                        <span class="diag-key">Storage</span>
+                        <span class="diag-value" id="diagDb">–</span>
+                    </div>
+                    <div class="diag-row">
+                        <span class="diag-key">CSP</span>
+                        <span class="diag-value" id="diagCsp">–</span>
+                    </div>
+                </div>
+            </section>
+
             <section class="tile tile--wide" id="shortcutsTile">
                 <div class="tile-title">Shortcuts</div>
                 <div class="shortcut-row">
@@ -1661,7 +1726,8 @@
             ui: {
                 online: navigator.onLine,
                 syncStatus: "idle",
-                lastSync: null
+            lastSync: null,
+            debug: false
             },
             stats: {
                 cases: 0,
@@ -1875,6 +1941,12 @@
             elements.syncTitle = document.getElementById("syncTitle");
             elements.syncDesc = document.getElementById("syncDesc");
             elements.syncTime = document.getElementById("syncTime");
+            elements.diagnosticsTile = document.getElementById("diagnosticsTile");
+            elements.diagTheme = document.getElementById("diagTheme");
+            elements.diagDensity = document.getElementById("diagDensity");
+            elements.diagOnline = document.getElementById("diagOnline");
+            elements.diagDb = document.getElementById("diagDb");
+            elements.diagCsp = document.getElementById("diagCsp");
         }
 
         function escapeHTML(value) {
@@ -1964,6 +2036,7 @@
             if (persist) {
                 saveSettings(buildPersistedSettings());
             }
+            updateDiagnostics();
         }
 
         function computeDensity(width) {
@@ -1982,6 +2055,7 @@
             if (persist) {
                 saveSettings(buildPersistedSettings());
             }
+            updateDiagnostics();
         }
 
         function updateContextStatus() {
@@ -1999,7 +2073,7 @@
         }
 
         function updatePolicyTile() {
-            const policy = appState.settings.storePolicy.trim();
+            const policy = sanitizeString(appState.settings.storePolicy, 400);
             if (policy) {
                 elements.policyTitle.textContent = "Aktive Policy";
                 elements.policyText.textContent = policy;
@@ -2018,6 +2092,37 @@
             if (!appState.ui.online) {
                 setSyncStatus("offline", "Offline");
             }
+            updateDiagnostics();
+        }
+
+        function getCspMode() {
+            const meta = document.querySelector('meta[http-equiv="Content-Security-Policy"]');
+            if (!meta) return "unknown";
+            const content = meta.getAttribute("content") || "";
+            if (content.includes("'unsafe-inline'")) return "Level 1 (unsafe-inline)";
+            if (content.includes("sha256-")) return "Level 2 (hash)";
+            return "custom";
+        }
+
+        function updateDiagnostics() {
+            if (!elements.diagTheme) return;
+            const mode = appState.settings.themeMode;
+            const resolved = resolveTheme(mode);
+            elements.diagTheme.textContent = `${mode} (${resolved})`;
+            elements.diagDensity.textContent = appState.settings.densityMode || "auto";
+            elements.diagOnline.textContent = appState.ui.online ? "online" : "offline";
+            const dbState = storage.ready ? `ready (${storage.mode})` : `loading (${storage.mode})`;
+            elements.diagDb.textContent = dbState;
+            elements.diagCsp.textContent = getCspMode();
+        }
+
+        function setDebugMode(enabled) {
+            appState.ui.debug = enabled;
+            document.documentElement.setAttribute("data-debug", enabled ? "true" : "false");
+            if (elements.diagnosticsTile) {
+                elements.diagnosticsTile.setAttribute("aria-hidden", String(!enabled));
+            }
+            updateDiagnostics();
         }
 
         function setSyncStatus(status, label) {
@@ -2857,6 +2962,7 @@ OUTPUT FORMAT (STRICT JSON):
             updateContextStatus();
             updateTrustStatus();
             updatePolicyTile();
+            updateDiagnostics();
             renderCards();
         }
 
@@ -3350,7 +3456,7 @@ OUTPUT FORMAT (STRICT JSON):
 
             elements.saveSettingsBtn.addEventListener("click", async () => {
                 appState.settings.apiProvider = elements.apiProvider.value;
-                appState.settings.modelName = elements.modelName.value.trim() || MODEL_DEFAULTS[appState.settings.apiProvider];
+                appState.settings.modelName = sanitizeString(elements.modelName.value, 80) || MODEL_DEFAULTS[appState.settings.apiProvider];
                 const proxyValue = elements.proxyUrl.value.trim();
                 const proxyCheck = validateProxyUrl(proxyValue);
                 if (proxyValue && !proxyCheck.ok) {
@@ -3361,9 +3467,9 @@ OUTPUT FORMAT (STRICT JSON):
                     appState.settings.proxyUrl = proxyValue;
                 }
                 appState.settings.department = elements.department.value;
-                appState.settings.storePolicy = elements.storePolicy.value.trim();
+                appState.settings.storePolicy = sanitizeString(elements.storePolicy.value, 400);
                 if (!appState.settings.apiKeyLocked) {
-                    appState.settings.apiKey = elements.apiKey.value.trim();
+                    appState.settings.apiKey = sanitizeString(elements.apiKey.value, 200);
                 }
                 const themeMode = document.querySelector("input[name='themeMode']:checked");
                 const densityMode = document.querySelector("input[name='densityMode']:checked");
@@ -3405,6 +3511,10 @@ OUTPUT FORMAT (STRICT JSON):
                 if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "k") {
                     event.preventDefault();
                     elements.objectionInput.focus();
+                }
+                if (event.ctrlKey && event.shiftKey && event.key.toLowerCase() === "i") {
+                    event.preventDefault();
+                    setDebugMode(!appState.ui.debug);
                 }
                 if (event.ctrlKey && event.shiftKey && event.key.toLowerCase() === "t") {
                     event.preventDefault();
@@ -3511,6 +3621,7 @@ OUTPUT FORMAT (STRICT JSON):
 
         async function init() {
             cacheElements();
+            setDebugMode(false);
             await initDB();
             const savedSettings = await loadSettings();
             if (savedSettings) {

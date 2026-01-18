@@ -35,7 +35,7 @@ Fix: CSP Level 1 (local) + Level 2 Hashes dokumentiert. Default-Deny.
 Patch Snippet (copy paste ready):
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; base-uri 'self'; form-action 'self'; img-src 'self' data:; font-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline'; connect-src 'self' https://api.openai.com https://api.groq.com; frame-ancestors 'none'; object-src 'none';">
 <!-- CSP Level 2 (Enterprise, hash-based, no unsafe-inline):
-     Content-Security-Policy: default-src 'none'; base-uri 'self'; form-action 'self'; img-src 'self' data:; font-src 'self'; style-src 'self' 'sha256-33pxw97LKjYTPxxGI9rUihksfEusFldZOhDLcN4VIX0='; script-src 'self' 'sha256-Ynw8AqKGDQhASZvzimu2xMZ6HO6dmgBx8bvY6dI6uAM='; connect-src 'self' https://api.openai.com https://api.groq.com; frame-ancestors 'none'; object-src 'none';
+     Content-Security-Policy: default-src 'none'; base-uri 'self'; form-action 'self'; img-src 'self' data:; font-src 'self'; style-src 'self' 'sha256-DfpShdlp4EVLA30rFHv1hJT4U1scXYSZsGgjcQh540U='; script-src 'self' 'sha256-sx0jgiuSguIPgxrujv4zWxp4Siu19SQLZwyb3jkKxeE='; connect-src 'self' https://api.openai.com https://api.groq.com; frame-ancestors 'none'; object-src 'none';
      Hash calculation details: see REPORT.md
 -->
 Regression Risk: Niedrig (nur CSP-Tuning).
@@ -248,21 +248,42 @@ I) A11y Spec
 5. FINAL PATCHSET Pflicht
 PATCH HTML, CSS, JS vollständig in BLOCK 2–4.
 
-6. Release Recommendation
-Go mit Bedingungen:
-- CSP Level 2 (hashes) bei Deployment aktivieren.
-- QA Gates in BLOCK 5 erfüllen.
+6. Testing
+How to run:
+- Local server: `python3 -m http.server 8080`
+- App: `http://localhost:8080/`
+- Smoke harness: `http://localhost:8080/tests/smoke.test.html`
+Manual checks:
+- Theme/Density toggles + persistence
+- Modal open/close + focus return
+- Offline banner + Sync states
+- Import invalid JSON -> toast error
 
-7. Quellen
+7. Release Recommendation
+GO if:
+- CSP Level 2 (hashes) activated in production.
+- Smoke harness passes without FAIL.
+- Manual checks pass on device matrix.
+NO-GO if:
+- CSP blocks core runtime.
+- Focus/keyboard regressions exist.
+- Sync integrity fails for `library.json`.
+
+8. Known limitations
+- Offline test mock may warn if `navigator.onLine` is non-configurable in the test browser.
+- Web Speech API support varies by device/browser.
+- CSP Level 2 hashes must be regenerated after any inline change.
+
+9. Quellen
 Siehe BLOCK 5.
 
-8. Trust Score
-Trust Score: 4/5 (no automated tests yet, manual QA required).
+10. Trust Score
+Trust Score: 4/5 (automated smoke harness exists, manual QA pending).
 
 BLOCK 2: PATCH HTML komplett
 ```html
 <!DOCTYPE html>
-<html lang="de" data-theme="light" data-density="comfortable">
+<html lang="de" data-theme="light" data-density="comfortable" data-debug="false">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
@@ -273,7 +294,7 @@ BLOCK 2: PATCH HTML komplett
     <meta name="referrer" content="no-referrer">
     <meta http-equiv="Content-Security-Policy" content="default-src 'none'; base-uri 'self'; form-action 'self'; img-src 'self' data:; font-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline'; connect-src 'self' https://api.openai.com https://api.groq.com; frame-ancestors 'none'; object-src 'none';">
     <!-- CSP Level 2 (Enterprise, hash-based, no unsafe-inline):
-         Content-Security-Policy: default-src 'none'; base-uri 'self'; form-action 'self'; img-src 'self' data:; font-src 'self'; style-src 'self' 'sha256-33pxw97LKjYTPxxGI9rUihksfEusFldZOhDLcN4VIX0='; script-src 'self' 'sha256-Ynw8AqKGDQhASZvzimu2xMZ6HO6dmgBx8bvY6dI6uAM='; connect-src 'self' https://api.openai.com https://api.groq.com; frame-ancestors 'none'; object-src 'none';
+         Content-Security-Policy: default-src 'none'; base-uri 'self'; form-action 'self'; img-src 'self' data:; font-src 'self'; style-src 'self' 'sha256-DfpShdlp4EVLA30rFHv1hJT4U1scXYSZsGgjcQh540U='; script-src 'self' 'sha256-sx0jgiuSguIPgxrujv4zWxp4Siu19SQLZwyb3jkKxeE='; connect-src 'self' https://api.openai.com https://api.groq.com; frame-ancestors 'none'; object-src 'none';
          Hash calculation details: see REPORT.md
     -->
     <title>MEHIC SALES OS — Enterprise RC 2026</title>
@@ -6995,6 +7016,7 @@ OUTPUT FORMAT (STRICT JSON):
 BLOCK 5: Testplan + QA Gates + Sources
 
 Testplan
+- Smoke harness: `tests/smoke.test.html` (PASS/FAIL UI).
 - Functional: Theme/Density toggles, Settings speichern, Input → Antwort, Expanders, Feedback, Export/Import, Clear mit Confirm.
 - Offline: Offline Banner + Sync status, Sync Button offline.
 - Security: CSP Level 2 hash check, Proxy same-origin block.
@@ -7007,6 +7029,7 @@ QA Gates
 - Sync integrity verification passes or fails safely.
 - No destructive action ohne Confirm.
 - Reduced Motion respected.
+- Smoke harness ohne FAIL.
 
 Quellen (max 10)
 - CSP (MDN): https://developer.mozilla.org/en-US/docs/Web/HTTP/CSP
