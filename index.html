@@ -3,7 +3,7 @@
 Executive Summary:
 - Minimal-Header mit Status-Dot und Quick-Panel-Zugriff für Retail-Speed.
 - Sales First: Hero-Input, Kontext-Chips, sofortige Antwortkarten.
-- Quick Panel bündelt Modus, Theme/Density, Datenaktionen, Danger Zone.
+- Schnellpanel bündelt Modus, Theme/Density, Datenaktionen, Danger Zone.
 - Training Frame als KPI + Drill mit Top-3-Schwächen und Verlauf.
 - Wiki erzwingt Datenblatt-Check, keine erfundenen Specs.
 - Security & A11y bleiben aktiv (CSP, Focus, Tap Targets, Offline).
@@ -19,12 +19,17 @@ Executive Summary:
     <meta name="referrer" content="no-referrer">
     <meta http-equiv="Content-Security-Policy" content="default-src 'none'; base-uri 'self'; form-action 'self'; img-src 'self' data:; font-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline'; connect-src 'self' https://api.openai.com https://api.groq.com; frame-ancestors 'none'; object-src 'none';">
     <!-- CSP Level 2 (Enterprise, hash-based, no unsafe-inline):
-         Content-Security-Policy: default-src 'none'; base-uri 'self'; form-action 'self'; img-src 'self' data:; font-src 'self'; style-src 'self' 'sha256-M4sENJrqBVCDv+mUS/Xrapwi66pZn/GK7b1VFlYbuAs='; script-src 'self' 'sha256-S/ySjqTl5V92Ch0CpgyK4oh71Ka7qeSo4DlQTi4tj0k=' 'sha256-+6vfCGl5FxFFbtiAodhL+PgaVRAKIFMgPVgoCrs9/DM='; connect-src 'self' https://api.openai.com https://api.groq.com; frame-ancestors 'none'; object-src 'none';
+         Content-Security-Policy: default-src 'none'; base-uri 'self'; form-action 'self'; img-src 'self' data:; font-src 'self'; style-src 'self' 'sha256-Jhyg13TmnASBKBJvPLkTvYZIVsimmgGwid/ZAZJEfF0='; script-src 'self' 'sha256-uidaNXhBbF0bMHh91G+CTafsQpqlUaRwV+PxK3j9j5o=' 'sha256-Rk7nEFg7lrHY02TCzu50Ayj7xe772kOO49V573kFAXQ='; connect-src 'self' https://api.openai.com https://api.groq.com; frame-ancestors 'none'; object-src 'none';
          Hash calculation details: see REPORT.md
     -->
     <script>
         (() => {
             try {
+                const direct = localStorage.getItem("msos_frame");
+                if (["sales", "training", "wiki"].includes(direct)) {
+                    document.documentElement.setAttribute("data-frame", direct);
+                    return;
+                }
                 const raw = localStorage.getItem("msos_settings");
                 if (!raw) return;
                 const settings = JSON.parse(raw);
@@ -498,7 +503,7 @@ Executive Summary:
             flex: 1;
             overflow-y: auto;
             padding: var(--space-6);
-            padding-bottom: calc(var(--space-6) + var(--safe-bottom));
+            padding-bottom: calc(var(--space-6) + var(--safe-bottom) + var(--keyboard-offset));
             overscroll-behavior: contain;
         }
 
@@ -995,7 +1000,7 @@ Executive Summary:
             text-transform: uppercase;
             letter-spacing: 0.4px;
             color: var(--color-text-secondary);
-            min-height: 32px;
+            min-height: var(--tap-min);
         }
 
         .favorite-btn[aria-pressed="true"] {
@@ -1156,6 +1161,12 @@ Executive Summary:
             grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
         }
 
+        .feedback-meta {
+            margin-top: var(--space-4);
+            display: grid;
+            gap: var(--space-2);
+        }
+
         .feedback-btn {
             padding: 10px;
             border-radius: var(--radius-2);
@@ -1169,6 +1180,7 @@ Executive Summary:
             font-weight: 800;
             text-transform: uppercase;
             letter-spacing: 0.4px;
+            min-height: var(--tap-min);
         }
 
         .feedback-btn.success {
@@ -1425,6 +1437,23 @@ Executive Summary:
             display: flex;
         }
 
+        dialog.modal {
+            display: flex;
+            border: none;
+            padding: 0;
+            background: transparent;
+            margin: 0;
+        }
+
+        dialog.modal:not([open]) {
+            display: none;
+        }
+
+        dialog.modal::backdrop {
+            background: var(--color-backdrop);
+            backdrop-filter: blur(8px);
+        }
+
         .modal-content {
             background: var(--color-surface);
             border-radius: var(--radius-3);
@@ -1558,6 +1587,10 @@ Executive Summary:
             body.panel-docked .quick-panel .modal-content {
                 pointer-events: auto;
             }
+
+            body.panel-docked dialog.quick-panel::backdrop {
+                background: transparent;
+            }
         }
 
         .modal-header {
@@ -1635,6 +1668,11 @@ Executive Summary:
             border: 1px solid var(--color-border);
             background: var(--color-elevated);
             font-size: 14px;
+        }
+
+        .input-error {
+            border-color: rgba(220, 38, 38, 0.6);
+            box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.12);
         }
 
         .form-textarea {
@@ -1941,7 +1979,7 @@ Executive Summary:
     </header>
 
     <div class="offline-banner" id="offlineBanner" role="status" aria-live="polite">
-        Offline – Lokale Daten aktiv. Sync pausiert.
+        Offline – Lokale Daten aktiv. Abgleich pausiert.
     </div>
 
     <main class="stage" id="stage">
@@ -1986,9 +2024,9 @@ Executive Summary:
                                 Techie
                             </button>
                         </div>
-                        <div class="context-chips tech-toggle" id="techToggleGroup" role="group" aria-label="Technische Produktfrage">
+                        <div class="context-chips tech-toggle" id="techToggleGroup" role="group" aria-label="Technikfrage">
                             <button class="chip" id="techQuestionToggle" type="button" aria-pressed="false" data-tech-question="true">
-                                Technische Produktfrage
+                                Technikfrage
                             </button>
                         </div>
                     </section>
@@ -1998,101 +2036,210 @@ Executive Summary:
                         </section>
                         <section class="tile sales-playbook" id="salesPlaybook">
                             <div class="tile-title">Leitfaden</div>
-                            <div class="tile-subtitle">1-Tap Fragen und Abschlussbausteine.</div>
+                            <div class="tile-subtitle">Kurz, direkt, 1-Tap.</div>
+
                             <div class="playbook-section">
                                 <div class="playbook-header">
-                                    <div class="history-meta">Bedarf & Prioritäten</div>
-                                    <button class="copy-btn" type="button" data-playbook-copy="Welche Leistungen sind Ihnen wichtig | Welche sind Ihnen weniger wichtig | Welche Geräte verwenden Sie | Wer wird es hauptsächlich nutzen | Wie viel nutzen Sie es im Durchschnitt | Was ist Ihnen wichtig bei einem Smartphone | Was ist Ihnen wichtig bei einem Fernseher | Welche Ansprüche haben Sie an das Notebook oder den Laptop">Copy</button>
+                                    <div class="history-meta">Bedarf-Fragen</div>
+                                    <button class="copy-btn" type="button" data-playbook-copy="Fuer wen soll das neue Produkt denn sein? | Wer nutzt das neue Produkt bei Ihnen Zuhause eventuell noch? | Darf ich Ihnen ein paar Fragen stellen, um herauszufinden was Ihnen wichtig ist? | Uebrigens, bevor wir starten, mein Name ist..., Sie sind Herr/Frau ...? | Was hatten Sie bisher fuer ein Produkt Zuhause? | Was ist damit passiert? | Also waere es gut, wenn wir heute ein neues Produkt fuer Sie finden? | Was ist Ihnen wichtig?">Kopieren</button>
                                 </div>
                                 <div class="playbook-chips">
-                                    <button class="chip" type="button" data-playbook-text="Welche Leistungen sind Ihnen wichtig">Welche Leistungen sind Ihnen wichtig</button>
-                                    <button class="chip" type="button" data-playbook-text="Welche sind Ihnen weniger wichtig">Welche sind Ihnen weniger wichtig</button>
-                                    <button class="chip" type="button" data-playbook-text="Welche Geräte verwenden Sie">Welche Geräte verwenden Sie</button>
-                                    <button class="chip" type="button" data-playbook-text="Wer wird es hauptsächlich nutzen">Wer wird es hauptsächlich nutzen</button>
-                                    <button class="chip" type="button" data-playbook-text="Wie viel nutzen Sie es im Durchschnitt">Wie viel nutzen Sie es im Durchschnitt</button>
-                                    <button class="chip" type="button" data-playbook-text="Was ist Ihnen wichtig bei einem Smartphone">Was ist Ihnen wichtig bei einem Smartphone</button>
-                                    <button class="chip" type="button" data-playbook-text="Was ist Ihnen wichtig bei einem Fernseher">Was ist Ihnen wichtig bei einem Fernseher</button>
-                                    <button class="chip" type="button" data-playbook-text="Welche Ansprüche haben Sie an das Notebook oder den Laptop">Welche Ansprüche haben Sie an das Notebook oder den Laptop</button>
+                                    <button class="chip" type="button" data-playbook-text="Fuer wen soll das neue Produkt denn sein?">Fuer wen soll das neue Produkt denn sein?</button>
+                                    <button class="chip" type="button" data-playbook-text="Wer nutzt das neue Produkt bei Ihnen Zuhause eventuell noch?">Wer nutzt das neue Produkt bei Ihnen Zuhause eventuell noch?</button>
+                                    <button class="chip" type="button" data-playbook-text="Darf ich Ihnen ein paar Fragen stellen, um herauszufinden was Ihnen wichtig ist?">Darf ich Ihnen ein paar Fragen stellen, um herauszufinden was Ihnen wichtig ist?</button>
+                                    <button class="chip" type="button" data-playbook-text="Uebrigens, bevor wir starten, mein Name ist..., Sie sind Herr/Frau ...?">Uebrigens, bevor wir starten, mein Name ist..., Sie sind Herr/Frau ...?</button>
+                                    <button class="chip" type="button" data-playbook-text="Was hatten Sie bisher fuer ein Produkt Zuhause?">Was hatten Sie bisher fuer ein Produkt Zuhause?</button>
+                                    <button class="chip" type="button" data-playbook-text="Was ist damit passiert?">Was ist damit passiert?</button>
+                                    <button class="chip" type="button" data-playbook-text="Also waere es gut, wenn wir heute ein neues Produkt fuer Sie finden?">Also waere es gut, wenn wir heute ein neues Produkt fuer Sie finden?</button>
+                                    <button class="chip" type="button" data-playbook-text="Was ist Ihnen wichtig?">Was ist Ihnen wichtig?</button>
+                                </div>
+                                <div class="helper-text">Hinweis: (Marke, Alter), (Wenn fuer Kinder: wie alt), (Garantie oder Geraeteschutz), (Wenn nicht defekt: Aus welchen Gruenden darf es heute etwas Neues sein?)</div>
+                            </div>
+
+                            <div class="playbook-section">
+                                <div class="playbook-header">
+                                    <div class="history-meta">Meinungsfragen</div>
+                                    <button class="copy-btn" type="button" data-playbook-copy="Wenn Sie sich die zwei Geraete anschauen, welches ueberzeugt Sie? | Sie sind sehr gut informiert! Was ist denn Ihr erster Eindruck von dem Geraet?">Kopieren</button>
+                                </div>
+                                <div class="playbook-chips">
+                                    <button class="chip" type="button" data-playbook-text="Wenn Sie sich die zwei Geraete anschauen, welches ueberzeugt Sie?">Wenn Sie sich die zwei Geraete anschauen, welches ueberzeugt Sie?</button>
+                                    <button class="chip" type="button" data-playbook-text="Sie sind sehr gut informiert! Was ist denn Ihr erster Eindruck von dem Geraet?">Sie sind sehr gut informiert! Was ist denn Ihr erster Eindruck von dem Geraet?</button>
                                 </div>
                             </div>
+
                             <div class="playbook-section">
                                 <div class="playbook-header">
-                                    <div class="history-meta">Nutzen & Wert</div>
-                                    <button class="copy-btn" type="button" data-playbook-copy="Was ist der Vorteil für Sie, wenn das Smartphone eine gute Kamera hat | Was ist der Vorteil für Sie, wenn das Smartphone einen großen Speicher hat | Was ist der Vorteil für Sie, wenn das Notebook oder der Laptop eine lange Akkulaufzeit hat">Copy</button>
+                                    <div class="history-meta">Hypothetische Frage oder Wunschfrage</div>
+                                    <button class="copy-btn" type="button" data-playbook-copy="Wenn Geld keine Rolle spielen wuerde, welches Produkt wuerden Sie sofort mitnehmen? | Stellen Sie sich vor, Sie haben dieses Geraet zuhause. Was wuerden Sie noch benoetigen, um maximalen Spass oder Nutzen zu haben?">Kopieren</button>
                                 </div>
                                 <div class="playbook-chips">
-                                    <button class="chip" type="button" data-playbook-text="Was ist der Vorteil für Sie, wenn das Smartphone eine gute Kamera hat">Was ist der Vorteil für Sie, wenn das Smartphone eine gute Kamera hat</button>
-                                    <button class="chip" type="button" data-playbook-text="Was ist der Vorteil für Sie, wenn das Smartphone einen großen Speicher hat">Was ist der Vorteil für Sie, wenn das Smartphone einen großen Speicher hat</button>
-                                    <button class="chip" type="button" data-playbook-text="Was ist der Vorteil für Sie, wenn das Notebook oder der Laptop eine lange Akkulaufzeit hat">Was ist der Vorteil für Sie, wenn das Notebook oder der Laptop eine lange Akkulaufzeit hat</button>
+                                    <button class="chip" type="button" data-playbook-text="Wenn Geld keine Rolle spielen wuerde, welches Produkt wuerden Sie sofort mitnehmen?">Wenn Geld keine Rolle spielen wuerde, welches Produkt wuerden Sie sofort mitnehmen?</button>
+                                    <button class="chip" type="button" data-playbook-text="Stellen Sie sich vor, Sie haben dieses Geraet zuhause. Was wuerden Sie noch benoetigen, um maximalen Spass oder Nutzen zu haben?">Stellen Sie sich vor, Sie haben dieses Geraet zuhause. Was wuerden Sie noch benoetigen, um maximalen Spass oder Nutzen zu haben?</button>
                                 </div>
                             </div>
+
                             <div class="playbook-section">
                                 <div class="playbook-header">
-                                    <div class="history-meta">Abschlussfragen</div>
-                                    <button class="copy-btn" type="button" data-playbook-copy="Sollen wir es einpacken | Wollen wir das so machen | Darf ich es Ihnen reservieren | Wollen Sie bar oder mit Karte zahlen | Soll ich es gleich aktivieren | Soll ich es gleich einrichten | Soll ich es Ihnen nach Hause liefern lassen">Copy</button>
+                                    <div class="history-meta">Alternativfragen</div>
+                                    <button class="copy-btn" type="button" data-playbook-copy="Nehmen Sie das [Farbe/Produkt] oder das [Farbe/Produkt]? | Wollen Sie die Standard 2 Jahre Garantie oder die 5 Jahre Premium Garantie? | Wollen Sie das Geraet zuhause sofort verwenden oder tun Sie sich die Arbeit selbst an?">Kopieren</button>
                                 </div>
                                 <div class="playbook-chips">
-                                    <button class="chip" type="button" data-playbook-text="Sollen wir es einpacken">Sollen wir es einpacken</button>
-                                    <button class="chip" type="button" data-playbook-text="Wollen wir das so machen">Wollen wir das so machen</button>
-                                    <button class="chip" type="button" data-playbook-text="Darf ich es Ihnen reservieren">Darf ich es Ihnen reservieren</button>
-                                    <button class="chip" type="button" data-playbook-text="Wollen Sie bar oder mit Karte zahlen">Wollen Sie bar oder mit Karte zahlen</button>
-                                    <button class="chip" type="button" data-playbook-text="Soll ich es gleich aktivieren">Soll ich es gleich aktivieren</button>
-                                    <button class="chip" type="button" data-playbook-text="Soll ich es gleich einrichten">Soll ich es gleich einrichten</button>
-                                    <button class="chip" type="button" data-playbook-text="Soll ich es Ihnen nach Hause liefern lassen">Soll ich es Ihnen nach Hause liefern lassen</button>
+                                    <button class="chip" type="button" data-playbook-text="Nehmen Sie das [Farbe/Produkt] oder das [Farbe/Produkt]?">Nehmen Sie das [Farbe/Produkt] oder das [Farbe/Produkt]?</button>
+                                    <button class="chip" type="button" data-playbook-text="Wollen Sie die Standard 2 Jahre Garantie oder die 5 Jahre Premium Garantie?">Wollen Sie die Standard 2 Jahre Garantie oder die 5 Jahre Premium Garantie?</button>
+                                    <button class="chip" type="button" data-playbook-text="Wollen Sie das Geraet zuhause sofort verwenden oder tun Sie sich die Arbeit selbst an?">Wollen Sie das Geraet zuhause sofort verwenden oder tun Sie sich die Arbeit selbst an?</button>
                                 </div>
                             </div>
+
                             <div class="playbook-section">
-                                <div class="playbook-header">
-                                    <div class="history-meta">DAF (Dank – Abklärung – Frage)</div>
-                                    <button class="copy-btn" type="button" data-playbook-copy="D: Super, dass Sie das ansprechen | D: Danke, dass Sie das sagen | A: Was genau ist Ihnen dabei wichtig | A: Woran würden Sie festmachen, dass es sich lohnt | F: Wenn wir das lösen, wollen wir es heute mitnehmen | F: Wollen wir es so machen">Copy</button>
-                                </div>
-                                <div class="playbook-chips">
-                                    <button class="chip" type="button" data-playbook-text="Super, dass Sie das ansprechen">D: Super, dass Sie das ansprechen</button>
-                                    <button class="chip" type="button" data-playbook-text="Danke, dass Sie das sagen">D: Danke, dass Sie das sagen</button>
-                                    <button class="chip" type="button" data-playbook-text="Was genau ist Ihnen dabei wichtig">A: Was genau ist Ihnen dabei wichtig</button>
-                                    <button class="chip" type="button" data-playbook-text="Woran würden Sie festmachen, dass es sich lohnt">A: Woran würden Sie festmachen, dass es sich lohnt</button>
-                                    <button class="chip" type="button" data-playbook-text="Wenn wir das lösen, wollen wir es heute mitnehmen">F: Wenn wir das lösen, wollen wir es heute mitnehmen</button>
-                                    <button class="chip" type="button" data-playbook-text="Wollen wir es so machen">F: Wollen wir es so machen</button>
+                                <div class="history-meta">Kaufsignale Trigger</div>
+                                <div class="pattern-list">
+                                    <div class="pattern-item">Zubehoer</div>
+                                    <div class="pattern-item">Einbindung Zuhause</div>
+                                    <div class="pattern-item">Benutzertipps</div>
+                                    <div class="pattern-item">Zahlungsmoeglichkeiten</div>
+                                    <div class="pattern-item">Garantiezeit</div>
+                                    <div class="pattern-item">Preisnachlass</div>
+                                    <div class="pattern-item">Lieferung</div>
+                                    <div class="pattern-item">Verfuegbarkeit</div>
                                 </div>
                             </div>
+
                             <div class="playbook-section">
                                 <div class="playbook-header">
-                                    <div class="history-meta">SPIN – Problem</div>
-                                    <button class="copy-btn" type="button" data-playbook-copy="Was stört Sie am aktuellen Gerät am meisten | Was fehlt Ihnen im Alltag am meisten">Copy</button>
+                                    <div class="history-meta">Abschluss einleiten</div>
+                                    <button class="copy-btn" type="button" data-playbook-copy="Also, gefaellt Ihnen das Produkt? | Wenn ich Ihnen ein tolles Finanzierungsangebot mache, dann kommen wir ins Geschaeft? | Gute Nachrichten, das Produkt ist lagernd. Schauen wir uns das passende Zubehoer an?">Kopieren</button>
                                 </div>
                                 <div class="playbook-chips">
-                                    <button class="chip" type="button" data-playbook-text="Was stört Sie am aktuellen Gerät am meisten">Was stört Sie am aktuellen Gerät am meisten</button>
-                                    <button class="chip" type="button" data-playbook-text="Was fehlt Ihnen im Alltag am meisten">Was fehlt Ihnen im Alltag am meisten</button>
+                                    <button class="chip" type="button" data-playbook-text="Also, gefaellt Ihnen das Produkt?">Also, gefaellt Ihnen das Produkt?</button>
+                                    <button class="chip" type="button" data-playbook-text="Wenn ich Ihnen ein tolles Finanzierungsangebot mache, dann kommen wir ins Geschaeft?">Wenn ich Ihnen ein tolles Finanzierungsangebot mache, dann kommen wir ins Geschaeft?</button>
+                                    <button class="chip" type="button" data-playbook-text="Gute Nachrichten, das Produkt ist lagernd. Schauen wir uns das passende Zubehoer an?">Gute Nachrichten, das Produkt ist lagernd. Schauen wir uns das passende Zubehoer an?</button>
                                 </div>
                             </div>
+
                             <div class="playbook-section">
                                 <div class="playbook-header">
-                                    <div class="history-meta">SPIN – Implikation</div>
-                                    <button class="copy-btn" type="button" data-playbook-copy="Was passiert, wenn das Problem bleibt | Was kostet Sie das im Alltag (Zeit, Nerven, Geld)">Copy</button>
+                                    <div class="history-meta">Abschluss (klar)</div>
+                                    <button class="copy-btn" type="button" data-playbook-copy="Sehr gute Wahl, darf ich Ihnen eine Rechnung fuer die Garantie ausstellen?">Kopieren</button>
                                 </div>
                                 <div class="playbook-chips">
-                                    <button class="chip" type="button" data-playbook-text="Was passiert, wenn das Problem bleibt">Was passiert, wenn das Problem bleibt</button>
-                                    <button class="chip" type="button" data-playbook-text="Was kostet Sie das im Alltag (Zeit, Nerven, Geld)">Was kostet Sie das im Alltag (Zeit, Nerven, Geld)</button>
+                                    <button class="chip" type="button" data-playbook-text="Sehr gute Wahl, darf ich Ihnen eine Rechnung fuer die Garantie ausstellen?">Sehr gute Wahl, darf ich Ihnen eine Rechnung fuer die Garantie ausstellen?</button>
                                 </div>
                             </div>
+
                             <div class="playbook-section">
                                 <div class="playbook-header">
-                                    <div class="history-meta">SPIN – Need-Payoff</div>
-                                    <button class="copy-btn" type="button" data-playbook-copy="Was wäre für Sie besser, wenn das gelöst ist | Woran merken Sie, dass es sich gelohnt hat">Copy</button>
+                                    <div class="history-meta">Abschluss (alternativ)</div>
+                                    <button class="copy-btn" type="button" data-playbook-copy="Sollen wir Ihnen das Produkt zustellen oder nehmen Sie es mit Transportschutz selbst mit? | Nehmen Sie Ihr neues Produkt ohne Geraeteschutz oder mit der extra Sicherheit?">Kopieren</button>
                                 </div>
                                 <div class="playbook-chips">
-                                    <button class="chip" type="button" data-playbook-text="Was wäre für Sie besser, wenn das gelöst ist">Was wäre für Sie besser, wenn das gelöst ist</button>
-                                    <button class="chip" type="button" data-playbook-text="Woran merken Sie, dass es sich gelohnt hat">Woran merken Sie, dass es sich gelohnt hat</button>
+                                    <button class="chip" type="button" data-playbook-text="Sollen wir Ihnen das Produkt zustellen oder nehmen Sie es mit Transportschutz selbst mit?">Sollen wir Ihnen das Produkt zustellen oder nehmen Sie es mit Transportschutz selbst mit?</button>
+                                    <button class="chip" type="button" data-playbook-text="Nehmen Sie Ihr neues Produkt ohne Geraeteschutz oder mit der extra Sicherheit?">Nehmen Sie Ihr neues Produkt ohne Geraeteschutz oder mit der extra Sicherheit?</button>
                                 </div>
                             </div>
+
                             <div class="playbook-section">
                                 <div class="playbook-header">
-                                    <div class="history-meta">Kalibrierte Fragen</div>
-                                    <button class="copy-btn" type="button" data-playbook-copy="Wie soll das für Sie idealerweise aussehen | Was müsste passieren, damit es für Sie passt">Copy</button>
+                                    <div class="history-meta">Abschluss (suggestiv)</div>
+                                    <button class="copy-btn" type="button" data-playbook-copy="Sie moechten fuer Ihr neues Geraet das perfekte Zubehoer, oder? | Sie entscheiden sich bestimmt fuer die sichere Variante, oder?">Kopieren</button>
                                 </div>
                                 <div class="playbook-chips">
-                                    <button class="chip" type="button" data-playbook-text="Wie soll das für Sie idealerweise aussehen">Wie soll das für Sie idealerweise aussehen</button>
-                                    <button class="chip" type="button" data-playbook-text="Was müsste passieren, damit es für Sie passt">Was müsste passieren, damit es für Sie passt</button>
+                                    <button class="chip" type="button" data-playbook-text="Sie moechten fuer Ihr neues Geraet das perfekte Zubehoer, oder?">Sie moechten fuer Ihr neues Geraet das perfekte Zubehoer, oder?</button>
+                                    <button class="chip" type="button" data-playbook-text="Sie entscheiden sich bestimmt fuer die sichere Variante, oder?">Sie entscheiden sich bestimmt fuer die sichere Variante, oder?</button>
+                                </div>
+                            </div>
+
+                            <div class="playbook-section">
+                                <div class="playbook-header">
+                                    <div class="history-meta">Abschluss ueber ein Angebot</div>
+                                    <button class="copy-btn" type="button" data-playbook-copy="Wenn ich Ihnen sage, dass Sie bei uns bequem alles per flexibler Teilzahlung zahlen koennten, nehmen wir dann Ihr Wunschprodukt? | Wenn Sie das Geraet heute mitnehmen, dann probiere ich mit Ihnen gerne das Zubehoer aus, ist das ein Deal?">Kopieren</button>
+                                </div>
+                                <div class="playbook-chips">
+                                    <button class="chip" type="button" data-playbook-text="Wenn ich Ihnen sage, dass Sie bei uns bequem alles per flexibler Teilzahlung zahlen koennten, nehmen wir dann Ihr Wunschprodukt?">Wenn ich Ihnen sage, dass Sie bei uns bequem alles per flexibler Teilzahlung zahlen koennten, nehmen wir dann Ihr Wunschprodukt?</button>
+                                    <button class="chip" type="button" data-playbook-text="Wenn Sie das Geraet heute mitnehmen, dann probiere ich mit Ihnen gerne das Zubehoer aus, ist das ein Deal?">Wenn Sie das Geraet heute mitnehmen, dann probiere ich mit Ihnen gerne das Zubehoer aus, ist das ein Deal?</button>
+                                </div>
+                            </div>
+
+                            <div class="playbook-section">
+                                <div class="playbook-header">
+                                    <div class="history-meta">Einwaende (DAF + NEIN/JA)</div>
+                                    <button class="copy-btn" type="button" data-playbook-copy="Super, dass Sie das ansprechen. | Ich moechte, dass Sie bei mir das Gefuehl haben, einen guten Deal gemacht zu haben. | Wenn Preis keine Rolle spielen wuerde, was gefaellt Ihnen besonders an dem Produkt?">Kopieren</button>
+                                </div>
+                                <div class="playbook-chips">
+                                    <button class="chip" type="button" data-playbook-text="Super, dass Sie das ansprechen.">Super, dass Sie das ansprechen.</button>
+                                    <button class="chip" type="button" data-playbook-text="Ich moechte, dass Sie bei mir das Gefuehl haben, einen guten Deal gemacht zu haben.">Ich moechte, dass Sie bei mir das Gefuehl haben, einen guten Deal gemacht zu haben.</button>
+                                    <button class="chip" type="button" data-playbook-text="Wenn Preis keine Rolle spielen wuerde, was gefaellt Ihnen besonders an dem Produkt?">Wenn Preis keine Rolle spielen wuerde, was gefaellt Ihnen besonders an dem Produkt?</button>
+                                </div>
+                            </div>
+
+                            <div class="playbook-section">
+                                <div class="playbook-header">
+                                    <div class="history-meta">NEIN/JA Methode</div>
+                                    <button class="copy-btn" type="button" data-playbook-copy="Sagen Sie generell NEIN zu Garantieverlaengerungen oder sagen Sie JA wenn Sie die naechsten 5 Jahre Freude an dem Produkt haben, ohne sich darueber Sorgen machen zu muessen? | Sagen Sie generell NEIN zu einem Geraeteschutz oder sagen Sie JA wenn Sie Ihre Investition die naechsten 2 Jahre gesichert haben? | Sagen Sie generell NEIN zu einer Garantieverlaengerung oder sagen Sie JA wenn Sie sich anfallende Techniker-Kosten zusaetzlich sparen? | Sagen Sie als jemand der sich auskennt generell NEIN zu einem Einrichtungs-Service oder sagen Sie JA wenn Sie sich fuer Preis XY auch Muehe und Zeit sparen? | Sagen Sie generell NEIN zu der Firma XY oder sagen JA, wenn es Ihnen die Arbeit drastisch erleichtern wuerde?">Kopieren</button>
+                                </div>
+                                <div class="playbook-chips">
+                                    <button class="chip" type="button" data-playbook-text="Sagen Sie generell NEIN zu Garantieverlaengerungen oder sagen Sie JA wenn Sie die naechsten 5 Jahre Freude an dem Produkt haben, ohne sich darueber Sorgen machen zu muessen?">Sagen Sie generell NEIN zu Garantieverlaengerungen oder sagen Sie JA wenn Sie die naechsten 5 Jahre Freude an dem Produkt haben, ohne sich darueber Sorgen machen zu muessen?</button>
+                                    <button class="chip" type="button" data-playbook-text="Sagen Sie generell NEIN zu einem Geraeteschutz oder sagen Sie JA wenn Sie Ihre Investition die naechsten 2 Jahre gesichert haben?">Sagen Sie generell NEIN zu einem Geraeteschutz oder sagen Sie JA wenn Sie Ihre Investition die naechsten 2 Jahre gesichert haben?</button>
+                                    <button class="chip" type="button" data-playbook-text="Sagen Sie generell NEIN zu einer Garantieverlaengerung oder sagen Sie JA wenn Sie sich anfallende Techniker-Kosten zusaetzlich sparen?">Sagen Sie generell NEIN zu einer Garantieverlaengerung oder sagen Sie JA wenn Sie sich anfallende Techniker-Kosten zusaetzlich sparen?</button>
+                                    <button class="chip" type="button" data-playbook-text="Sagen Sie als jemand der sich auskennt generell NEIN zu einem Einrichtungs-Service oder sagen Sie JA wenn Sie sich fuer Preis XY auch Muehe und Zeit sparen?">Sagen Sie als jemand der sich auskennt generell NEIN zu einem Einrichtungs-Service oder sagen Sie JA wenn Sie sich fuer Preis XY auch Muehe und Zeit sparen?</button>
+                                    <button class="chip" type="button" data-playbook-text="Sagen Sie generell NEIN zu der Firma XY oder sagen JA, wenn es Ihnen die Arbeit drastisch erleichtern wuerde?">Sagen Sie generell NEIN zu der Firma XY oder sagen JA, wenn es Ihnen die Arbeit drastisch erleichtern wuerde?</button>
+                                </div>
+                            </div>
+
+                            <div class="playbook-section">
+                                <div class="playbook-header">
+                                    <div class="history-meta">Service-Einwaende</div>
+                                    <button class="copy-btn" type="button" data-playbook-copy="Wie lange haben Sie vor, Ihr Geraet in Benutzung zu haben? | Wie lange wollen Sie, dass Ihr Geraet haelt? | Versprechen kann ich natuerlich nichts, aber 3/5 Jahre Garantie kann ich Ihnen anbieten! | Welche Erfahrungen hatten Sie mit einer Standard Garantie? | Keine Sorge, bei uns haben Sie die Moeglichkeit, die Garantie zu verlaengern. | Ihnen ist doch sicher wichtig, dass Ihr Geraet lange haelt, oder?">Kopieren</button>
+                                </div>
+                                <div class="playbook-chips">
+                                    <button class="chip" type="button" data-playbook-text="Wie lange haben Sie vor, Ihr Geraet in Benutzung zu haben?">Wie lange haben Sie vor, Ihr Geraet in Benutzung zu haben?</button>
+                                    <button class="chip" type="button" data-playbook-text="Wie lange wollen Sie, dass Ihr Geraet haelt?">Wie lange wollen Sie, dass Ihr Geraet haelt?</button>
+                                    <button class="chip" type="button" data-playbook-text="Versprechen kann ich natuerlich nichts, aber 3/5 Jahre Garantie kann ich Ihnen anbieten!">Versprechen kann ich natuerlich nichts, aber 3/5 Jahre Garantie kann ich Ihnen anbieten!</button>
+                                    <button class="chip" type="button" data-playbook-text="Welche Erfahrungen hatten Sie mit einer Standard Garantie?">Welche Erfahrungen hatten Sie mit einer Standard Garantie?</button>
+                                    <button class="chip" type="button" data-playbook-text="Keine Sorge, bei uns haben Sie die Moeglichkeit, die Garantie zu verlaengern.">Keine Sorge, bei uns haben Sie die Moeglichkeit, die Garantie zu verlaengern.</button>
+                                    <button class="chip" type="button" data-playbook-text="Ihnen ist doch sicher wichtig, dass Ihr Geraet lange haelt, oder?">Ihnen ist doch sicher wichtig, dass Ihr Geraet lange haelt, oder?</button>
+                                </div>
+                            </div>
+
+                            <div class="playbook-section">
+                                <div class="playbook-header">
+                                    <div class="history-meta">Dienstleistungen Einwaende</div>
+                                    <button class="copy-btn" type="button" data-playbook-copy="Der Unterschied ist, dass bei einer Versicherung ein Schadensfall bestehen muss. Wenn Ihre Waschmaschine/Fernseher etc sich nicht mehr einschalten laesst, dann ist das ein Garantiefall. | Stellen Sie sich vor, Sie muessten sich die naechsten 2/3/5 Jahre keine Gedanken darueber machen, ob Ihr Geraet kaputt geht oder nicht. Das ist auch sehr gut, oder? | Wir bieten tolle Finanzierungsmoeglichkeiten! Mit einem Geraeteschutz sind Sie dann nicht nur sicher, sondern muessen jetzt nicht so viel Geld auf einmal bezahlen. | Oder: Wir bieten auch ein bequemes Abo-Modell!">Kopieren</button>
+                                </div>
+                                <div class="playbook-chips">
+                                    <button class="chip" type="button" data-playbook-text="Der Unterschied ist, dass bei einer Versicherung ein Schadensfall bestehen muss. Wenn Ihre Waschmaschine/Fernseher etc sich nicht mehr einschalten laesst, dann ist das ein Garantiefall.">Der Unterschied ist, dass bei einer Versicherung ein Schadensfall bestehen muss. Wenn Ihre Waschmaschine/Fernseher etc sich nicht mehr einschalten laesst, dann ist das ein Garantiefall.</button>
+                                    <button class="chip" type="button" data-playbook-text="Stellen Sie sich vor, Sie muessten sich die naechsten 2/3/5 Jahre keine Gedanken darueber machen, ob Ihr Geraet kaputt geht oder nicht. Das ist auch sehr gut, oder?">Stellen Sie sich vor, Sie muessten sich die naechsten 2/3/5 Jahre keine Gedanken darueber machen, ob Ihr Geraet kaputt geht oder nicht. Das ist auch sehr gut, oder?</button>
+                                    <button class="chip" type="button" data-playbook-text="Wir bieten tolle Finanzierungsmoeglichkeiten! Mit einem Geraeteschutz sind Sie dann nicht nur sicher, sondern muessen jetzt nicht so viel Geld auf einmal bezahlen.">Wir bieten tolle Finanzierungsmoeglichkeiten! Mit einem Geraeteschutz sind Sie dann nicht nur sicher, sondern muessen jetzt nicht so viel Geld auf einmal bezahlen.</button>
+                                    <button class="chip" type="button" data-playbook-text="Oder: Wir bieten auch ein bequemes Abo-Modell!">Oder: Wir bieten auch ein bequemes Abo-Modell!</button>
+                                </div>
+                            </div>
+
+                            <div class="playbook-section">
+                                <div class="playbook-header">
+                                    <div class="history-meta">Fallschirmangebote</div>
+                                    <button class="copy-btn" type="button" data-playbook-copy="Was sagen Sie dazu, wenn ich Ihnen sage, dass Sie fuer [Preis] die naechsten Jahre keine Sorgen mehr haben? | Wollen Sie die Standard- oder die Premium Garantie? | Wollen Sie 2 oder 3/5 Jahre Garantie? | Wollen Sie sich bis 20XX keine Sorgen mehr machen, dass Sie ein neues Geraet kaufen muessen? | Wollen Sie bis 20XX Garantie? | Sie zahlen fuer das Geraet [Preis], aber da ist nur die 2 Jahre gesetzliche Garantie dabei. Fuer nur [Preis] mehr bekommen Sie 3/5 Jahre Premium Garantie.">Kopieren</button>
+                                </div>
+                                <div class="playbook-chips">
+                                    <button class="chip" type="button" data-playbook-text="Was sagen Sie dazu, wenn ich Ihnen sage, dass Sie fuer [Preis] die naechsten Jahre keine Sorgen mehr haben?">Was sagen Sie dazu, wenn ich Ihnen sage, dass Sie fuer [Preis] die naechsten Jahre keine Sorgen mehr haben?</button>
+                                    <button class="chip" type="button" data-playbook-text="Wollen Sie die Standard- oder die Premium Garantie?">Wollen Sie die Standard- oder die Premium Garantie?</button>
+                                    <button class="chip" type="button" data-playbook-text="Wollen Sie 2 oder 3/5 Jahre Garantie?">Wollen Sie 2 oder 3/5 Jahre Garantie?</button>
+                                    <button class="chip" type="button" data-playbook-text="Wollen Sie sich bis 20XX keine Sorgen mehr machen, dass Sie ein neues Geraet kaufen muessen?">Wollen Sie sich bis 20XX keine Sorgen mehr machen, dass Sie ein neues Geraet kaufen muessen?</button>
+                                    <button class="chip" type="button" data-playbook-text="Wollen Sie bis 20XX Garantie?">Wollen Sie bis 20XX Garantie?</button>
+                                    <button class="chip" type="button" data-playbook-text="Sie zahlen fuer das Geraet [Preis], aber da ist nur die 2 Jahre gesetzliche Garantie dabei. Fuer nur [Preis] mehr bekommen Sie 3/5 Jahre Premium Garantie.">Sie zahlen fuer das Geraet [Preis], aber da ist nur die 2 Jahre gesetzliche Garantie dabei. Fuer nur [Preis] mehr bekommen Sie 3/5 Jahre Premium Garantie.</button>
+                                </div>
+                            </div>
+
+                            <div class="playbook-section">
+                                <div class="playbook-header">
+                                    <div class="history-meta">Up- &amp; Cross-Selling Fragen</div>
+                                    <button class="copy-btn" type="button" data-playbook-copy="Was moechten Sie in Zukunft noch mit Ihrem Produkt machen? | Wie lange moechten Sie mit Ihrem Produkt auf dem neuesten Stand sein? | Was muesste das Produkt noch koennen, damit Sie sagen, dass Sie lange daran Freude haben werden? | Wo wird das Produkt ueberall hin mitgenommen? | Wer verwendet das Produkt noch? | Haben Sie Kinder? Wie benutzen die Kinder das Produkt?">Kopieren</button>
+                                </div>
+                                <div class="playbook-chips">
+                                    <button class="chip" type="button" data-playbook-text="Was moechten Sie in Zukunft noch mit Ihrem Produkt machen?">Was moechten Sie in Zukunft noch mit Ihrem Produkt machen?</button>
+                                    <button class="chip" type="button" data-playbook-text="Wie lange moechten Sie mit Ihrem Produkt auf dem neuesten Stand sein?">Wie lange moechten Sie mit Ihrem Produkt auf dem neuesten Stand sein?</button>
+                                    <button class="chip" type="button" data-playbook-text="Was muesste das Produkt noch koennen, damit Sie sagen, dass Sie lange daran Freude haben werden?">Was muesste das Produkt noch koennen, damit Sie sagen, dass Sie lange daran Freude haben werden?</button>
+                                    <button class="chip" type="button" data-playbook-text="Wo wird das Produkt ueberall hin mitgenommen?">Wo wird das Produkt ueberall hin mitgenommen?</button>
+                                    <button class="chip" type="button" data-playbook-text="Wer verwendet das Produkt noch?">Wer verwendet das Produkt noch?</button>
+                                    <button class="chip" type="button" data-playbook-text="Haben Sie Kinder? Wie benutzen die Kinder das Produkt?">Haben Sie Kinder? Wie benutzen die Kinder das Produkt?</button>
                                 </div>
                             </div>
                         </section>
@@ -2106,6 +2253,10 @@ Executive Summary:
                                 <div class="history-meta">Favoriten</div>
                                 <div class="history-list" id="favoriteList"></div>
                             </div>
+                            <div class="history-section">
+                                <div class="history-meta">Top Antworten</div>
+                                <div class="history-list" id="topAnswersList"></div>
+                            </div>
                         </aside>
                     </div>
                 </div>
@@ -2115,7 +2266,7 @@ Executive Summary:
                         <section class="tile training-card" id="trainingCardPanel">
                             <div class="tile-header">
                                 <div>
-                                    <div class="tile-title">Training Card</div>
+                                    <div class="tile-title">Training Karte</div>
                                     <div class="tile-subtitle" id="trainingCardTitle">Aktueller Einwand</div>
                                 </div>
                                 <div class="variant-toggle" role="tablist" aria-label="Varianten">
@@ -2125,7 +2276,7 @@ Executive Summary:
                                 </div>
                             </div>
                             <div id="trainingCardContainer"></div>
-                            <div class="roleplay-box" id="roleplayPrompt">Roleplay bereit. Klick auf „Kunde sagt“.</div>
+                            <div class="roleplay-box" id="roleplayPrompt">Rollenspiel bereit. Klick auf „Kunde sagt“.</div>
                             <div class="btn-group">
                                 <button class="btn btn-secondary" id="roleplayBtn" type="button">Kunde sagt</button>
                                 <button class="btn btn-secondary" id="roleplaySoftBtn" type="button" data-variant="soft">Antwort Soft</button>
@@ -2136,13 +2287,13 @@ Executive Summary:
                         </section>
 
                         <section class="tile training-drill" id="trainingDrillPanel">
-                            <div class="tile-title">Drill Mode</div>
+                            <div class="tile-title">Drill</div>
                             <div class="tile-desc" id="drillText">Kein Drill geladen.</div>
                             <div class="btn-group">
                                 <button class="btn btn-secondary" id="nextDrillBtn" type="button">Neuer Drill</button>
                                 <button class="btn btn-primary" id="drillDoneBtn" type="button">30s fertig</button>
                             </div>
-                            <div class="history-meta">Self-Rating</div>
+                            <div class="history-meta">Selbsteinschaetzung</div>
                             <div class="pill-row" id="ratingButtons">
                                 <button class="pill rating-btn" type="button" data-rating="1">1</button>
                                 <button class="pill rating-btn" type="button" data-rating="2">2</button>
@@ -2153,12 +2304,12 @@ Executive Summary:
                         </section>
 
                         <section class="tile training-pattern" id="trainingPatternPanel">
-                            <div class="tile-title">Pattern Library</div>
-                            <select class="form-select" id="patternFilter" aria-label="Pattern Filter"></select>
+                            <div class="tile-title">Pattern-Bibliothek</div>
+                            <select class="form-select" id="patternFilter" aria-label="Pattern-Filter"></select>
                             <div class="pattern-list" id="patternList"></div>
-                            <div class="microlearning" id="microlearningBox">Microlearning erscheint hier.</div>
+                            <div class="microlearning" id="microlearningBox">Kurztraining erscheint hier.</div>
                             <div class="history-section">
-                                <div class="history-meta">Training KPIs</div>
+                                <div class="history-meta">Training-KPIs</div>
                                 <div class="stat-grid" id="trainingStats"></div>
                             </div>
                             <div class="history-section">
@@ -2180,7 +2331,7 @@ Executive Summary:
                             <input class="form-input" id="wikiSearchInput" type="text" placeholder="Produkt suchen..." autocomplete="off">
                             <div class="context-chips" id="wikiFilterChips" role="group" aria-label="Wiki Filter"></div>
                             <div class="btn-group">
-                                <button class="btn btn-secondary" id="wikiSyncBtn" type="button">Wiki Sync</button>
+                                <button class="btn btn-secondary" id="wikiSyncBtn" type="button">Wiki Abgleich</button>
                                 <button class="btn btn-secondary" id="wikiClearBtn" type="button">Filter zurücksetzen</button>
                             </div>
                         </section>
@@ -2209,7 +2360,7 @@ Executive Summary:
                         </section>
 
                         <section class="tile wiki-qa-panel">
-                            <div class="tile-title">Product Q&A</div>
+                            <div class="tile-title">Produktfragen</div>
                             <input class="form-input" id="wikiQuestionInput" type="text" placeholder="Frage zum Produkt..." autocomplete="off">
                             <div class="btn-group">
                                 <button class="btn btn-primary" id="wikiQuestionBtn" type="button">Antwort holen</button>
@@ -2229,11 +2380,11 @@ Executive Summary:
         </div>
     </main>
 
-    <div class="modal quick-panel" id="settingsModal" role="dialog" aria-modal="true" aria-labelledby="settingsTitle" aria-hidden="true">
+    <dialog class="modal quick-panel" id="settingsModal" role="dialog" aria-modal="true" aria-labelledby="settingsTitle" aria-hidden="true">
         <div class="modal-content" role="document">
             <div class="panel-handle" aria-hidden="true"></div>
             <div class="modal-header">
-                <div class="modal-title" id="settingsTitle">Quick Panel</div>
+                <div class="modal-title" id="settingsTitle">Schnellpanel</div>
                 <button class="close-btn" id="closeSettingsBtn" type="button" aria-label="Panel schließen">
                     <svg viewBox="0 0 24 24">
                         <line x1="18" y1="6" x2="6" y2="18"/>
@@ -2292,12 +2443,17 @@ Executive Summary:
                 </div>
                 <input type="file" id="importFile" accept=".json" class="sr-only" />
                 <div class="btn-group">
-                    <button class="btn btn-secondary" id="libraryExportBtn" type="button">Library exportieren</button>
-                    <button class="btn btn-secondary" id="libraryImportBtn" type="button">Library importieren</button>
+                    <button class="btn btn-secondary" id="libraryExportBtn" type="button">Feedback exportieren</button>
+                    <button class="btn btn-secondary" id="libraryImportBtn" type="button">Feedback importieren</button>
                 </div>
                 <input type="file" id="libraryImportFile" accept=".json" class="sr-only" />
+                <div class="btn-group">
+                    <button class="btn btn-secondary" id="wikiExportBtn" type="button">Wiki exportieren</button>
+                    <button class="btn btn-secondary" id="wikiImportBtn" type="button">Wiki importieren</button>
+                </div>
+                <input type="file" id="wikiImportFile" accept=".json" class="sr-only" />
                 <button class="btn btn-secondary" id="wikiResetBtn" type="button">Wiki zurücksetzen</button>
-                <div class="helper-text">Letzter Sync: <span id="syncTime">–</span></div>
+                <div class="helper-text">Letzter Abgleich: <span id="syncTime">–</span></div>
             </div>
 
             <div class="panel-section panel-danger">
@@ -2333,9 +2489,9 @@ Executive Summary:
                     <label class="form-label" for="sessionOnlyKey">API Key Modus</label>
                     <label class="toggle-row">
                         <input type="checkbox" id="sessionOnlyKey">
-                        Session Only (nicht speichern)
+                        Nur Sitzung (nicht speichern)
                     </label>
-                    <div class="helper-text">Wenn aktiv, bleibt der Key nur im RAM und wird nicht persistiert.</div>
+                    <div class="helper-text">Standard: Nur Sitzung. Nur deaktivieren, wenn Sie den Key auf diesem Geraet merken wollen.</div>
                 </div>
 
                 <div class="panel-section">
@@ -2344,7 +2500,7 @@ Executive Summary:
                     <div class="helper-text" id="lockStatus">Lock deaktiviert</div>
                     <div class="btn-group">
                         <button class="btn btn-secondary" id="lockToggleBtn" type="button">Passphrase-Lock aktivieren</button>
-                        <button class="btn btn-secondary" id="unlockBtn" type="button">Unlock</button>
+                        <button class="btn btn-secondary" id="unlockBtn" type="button">Entsperren</button>
                     </div>
                 </div>
 
@@ -2356,13 +2512,17 @@ Executive Summary:
                 <div class="panel-section">
                     <label class="form-label" for="proxyUrl">API Proxy URL (optional)</label>
                     <input type="text" class="form-input" id="proxyUrl" placeholder="https://your-proxy.example" />
-                    <div class="helper-text">Nur Same-Origin Proxies erlaubt (CSP-konform).</div>
+                    <div class="btn-group">
+                        <button class="btn btn-secondary" id="proxyTestBtn" type="button">Proxy testen</button>
+                    </div>
+                    <div class="helper-text" id="proxyStatus">Proxy: Aus</div>
+                    <div class="helper-text" id="proxyHint">Nur Same-Origin Proxies erlaubt (CSP-konform).</div>
                 </div>
 
                 <div class="panel-section">
                     <label class="form-label" for="wikiSourceUrl">Wiki Source URL (optional)</label>
                     <input type="text" class="form-input" id="wikiSourceUrl" placeholder="https://example.com/wiki.json" />
-                    <div class="helper-text">Wiki Sync nutzt diese Quelle (same-origin empfohlen).</div>
+                    <div class="helper-text">Wiki Abgleich nutzt diese Quelle (same-origin empfohlen).</div>
                 </div>
 
                 <div class="panel-section">
@@ -2387,7 +2547,7 @@ Executive Summary:
                 </div>
             </details>
         </div>
-    </div>
+    </dialog>
 
     <div class="modal confirm-modal" id="confirmModal" role="alertdialog" aria-modal="true" aria-labelledby="confirmTitle" aria-describedby="confirmMessage" aria-hidden="true">
         <div class="modal-content" role="document">
@@ -2474,7 +2634,7 @@ Executive Summary:
         const BUILD_SIGNATURE = `MEHIC_SALES_OS_RC_${APP_VERSION}__${BUILD_DATE}`;
 
         const DB_NAME = "MehicSalesOS_DB";
-        const DB_VERSION = 4;
+        const DB_VERSION = 5;
         const MASTER_LIBRARY_URL = "./library.json";
         const LIBRARY_SHA256 = "pM/qq9A97C8i/Bgtyx2UG/8gtFdRzlangPRZbIYFbUQ=";
 
@@ -2485,84 +2645,14 @@ Executive Summary:
 
         const FRAME_MODES = ["sales", "training", "wiki"];
         const DEFAULT_WIKI_SEEDS = [];
-        const DEFAULT_LIBRARY_SEEDS = [
-            {
-                id: "abo_kuendigung_vergessen",
-                objectionKey: "subscription_aversion",
-                objectionText: "Abo kündigen vergessen",
-                suggestedReply: "Transparenz: Ich zeige kurz, was abgedeckt ist und was nicht. Sie entscheiden in Ruhe.",
-                playbookRefs: [],
-                sellerVotes: { works: 0, fails: 0 },
-                lastUsedAt: 0,
-                updatedAt: Date.now(),
-                source: "seed"
-            },
-            {
-                id: "zu_teuer",
-                objectionKey: "price",
-                objectionText: "Zu teuer",
-                suggestedReply: "Ich zeige kurz, welcher Nutzen im Alltag für Sie relevant ist.",
-                playbookRefs: [],
-                sellerVotes: { works: 0, fails: 0 },
-                lastUsedAt: 0,
-                updatedAt: Date.now(),
-                source: "seed"
-            },
-            {
-                id: "ueberlege_noch",
-                objectionKey: "uncertainty",
-                objectionText: "Überlege noch",
-                suggestedReply: "Gerne. Was müssten wir klären, damit Sie sicher entscheiden können?",
-                playbookRefs: [],
-                sellerVotes: { works: 0, fails: 0 },
-                lastUsedAt: 0,
-                updatedAt: Date.now(),
-                source: "seed"
-            },
-            {
-                id: "brauche_ich_nicht",
-                objectionKey: "feature_gap",
-                objectionText: "Brauche ich nicht",
-                suggestedReply: "Verstanden. Darf ich fragen, was für Sie im Alltag wirklich zählt?",
-                playbookRefs: [],
-                sellerVotes: { works: 0, fails: 0 },
-                lastUsedAt: 0,
-                updatedAt: Date.now(),
-                source: "seed"
-            },
-            {
-                id: "nur_schauen",
-                objectionKey: "trust",
-                objectionText: "Nur schauen",
-                suggestedReply: "Natürlich. Darf ich kurz verstehen, was Sie vergleichen möchten?",
-                playbookRefs: [],
-                sellerVotes: { works: 0, fails: 0 },
-                lastUsedAt: 0,
-                updatedAt: Date.now(),
-                source: "seed"
-            },
-            {
-                id: "online_guenstiger",
-                objectionKey: "competitor",
-                objectionText: "Online günstiger",
-                suggestedReply: "Danke fürs Offen sagen. Wollen wir kurz den Gesamtvergleich machen?",
-                playbookRefs: [],
-                sellerVotes: { works: 0, fails: 0 },
-                lastUsedAt: 0,
-                updatedAt: Date.now(),
-                source: "seed"
-            },
-            {
-                id: "keine_zeit",
-                objectionKey: "delivery",
-                objectionText: "Keine Zeit",
-                suggestedReply: "Verstanden. Was wäre der schnellste Weg für Sie: kurz klären oder gleich reservieren?",
-                playbookRefs: [],
-                sellerVotes: { works: 0, fails: 0 },
-                lastUsedAt: 0,
-                updatedAt: Date.now(),
-                source: "seed"
-            }
+        const FEEDBACK_REASONS = [
+            { value: "", label: "Kein Grund" },
+            { value: "preis", label: "Preis" },
+            { value: "zu_technisch", label: "Zu technisch" },
+            { value: "zu_lang", label: "Zu lang" },
+            { value: "kein_fit", label: "Kein Fit" },
+            { value: "zeitdruck", label: "Zeitdruck" },
+            { value: "sonstiges", label: "Sonstiges" }
         ];
         const MAX_HISTORY = 15;
         const DEFAULT_TRAINING_STATE = {
@@ -2703,7 +2793,8 @@ Executive Summary:
             history: [],
             favorites: [],
             playbookRefs: [],
-            library: [],
+            feedback: [],
+            feedbackRanking: [],
             training: { ...DEFAULT_TRAINING_STATE },
             wiki: {
                 products: [],
@@ -2724,7 +2815,7 @@ Executive Summary:
                 apiKeyIv: "",
                 apiKeySalt: "",
                 apiKeyLocked: false,
-                sessionOnlyKey: false,
+                sessionOnlyKey: true,
                 modelName: "gpt-4o-mini",
                 proxyUrl: "",
                 department: "TV",
@@ -2743,6 +2834,9 @@ Executive Summary:
                 lastSync: null,
                 lastWikiSync: null,
                 techQuestion: false,
+                proxyVerified: false,
+                proxyTestedUrl: "",
+                proxyBlocked: false,
                 debug: false
             },
             stats: {
@@ -3016,6 +3110,7 @@ Executive Summary:
             elements.salesPlaybook = document.getElementById("salesPlaybook");
             elements.historyList = document.getElementById("historyList");
             elements.favoriteList = document.getElementById("favoriteList");
+            elements.topAnswersList = document.getElementById("topAnswersList");
             elements.trainingCardContainer = document.getElementById("trainingCardContainer");
             elements.trainingCardTitle = document.getElementById("trainingCardTitle");
             elements.variantSoftBtn = document.getElementById("variantSoftBtn");
@@ -3084,6 +3179,9 @@ Executive Summary:
             elements.lockStatus = document.getElementById("lockStatus");
             elements.modelName = document.getElementById("modelName");
             elements.proxyUrl = document.getElementById("proxyUrl");
+            elements.proxyTestBtn = document.getElementById("proxyTestBtn");
+            elements.proxyStatus = document.getElementById("proxyStatus");
+            elements.proxyHint = document.getElementById("proxyHint");
             elements.wikiSourceUrl = document.getElementById("wikiSourceUrl");
             elements.department = document.getElementById("department");
             elements.storePolicy = document.getElementById("storePolicy");
@@ -3093,6 +3191,9 @@ Executive Summary:
             elements.libraryExportBtn = document.getElementById("libraryExportBtn");
             elements.libraryImportBtn = document.getElementById("libraryImportBtn");
             elements.libraryImportFile = document.getElementById("libraryImportFile");
+            elements.wikiExportBtn = document.getElementById("wikiExportBtn");
+            elements.wikiImportBtn = document.getElementById("wikiImportBtn");
+            elements.wikiImportFile = document.getElementById("wikiImportFile");
             elements.wikiResetBtn = document.getElementById("wikiResetBtn");
             elements.clearBtn = document.getElementById("clearBtn");
             elements.confirmModal = document.getElementById("confirmModal");
@@ -3294,6 +3395,11 @@ Executive Summary:
             if (persist) {
                 appState.settings.frameMode = mode;
                 saveSettings(buildPersistedSettings());
+                try {
+                    localStorage.setItem("msos_frame", mode);
+                } catch {
+                    // ignore storage errors
+                }
             }
         }
 
@@ -3316,6 +3422,87 @@ Executive Summary:
             }
             if (elements.trustMotionStatus) {
                 elements.trustMotionStatus.textContent = reduceMotionMedia.matches ? "Motion: Reduced" : "Motion: Standard";
+            }
+        }
+
+        function setProxyStatus(message, isError = false) {
+            if (elements.proxyStatus) {
+                elements.proxyStatus.textContent = message;
+            }
+            if (elements.proxyUrl) {
+                elements.proxyUrl.classList.toggle("input-error", isError);
+            }
+        }
+
+        function updateProxyAvailability() {
+            if (!elements.proxyUrl || !elements.proxyHint) return;
+            const isFile = window.location.protocol === "file:";
+            elements.proxyUrl.disabled = isFile;
+            if (elements.proxyTestBtn) {
+                elements.proxyTestBtn.disabled = isFile;
+            }
+            elements.proxyHint.textContent = isFile
+                ? "Proxy im file:// Modus deaktiviert."
+                : "Proxy wird erst nach erfolgreichem Test aktiv.";
+            if (isFile) {
+                setProxyStatus("Proxy: Aus", false);
+            } else if (appState.ui.proxyBlocked) {
+                setProxyStatus("Proxy durch Sicherheitsrichtlinie blockiert", true);
+            } else if (appState.settings.proxyUrl) {
+                setProxyStatus("Proxy: Aktiv", false);
+            } else {
+                setProxyStatus("Proxy: Aus", false);
+            }
+        }
+
+        function handleProxyBlocked() {
+            if (!elements.proxyUrl) return;
+            appState.settings.proxyUrl = "";
+            appState.ui.proxyVerified = false;
+            appState.ui.proxyTestedUrl = "";
+            appState.ui.proxyBlocked = true;
+            elements.proxyUrl.value = "";
+            setProxyStatus("Proxy durch Sicherheitsrichtlinie blockiert", true);
+            showToast("Proxy durch Sicherheitsrichtlinie blockiert");
+        }
+
+        async function testProxyConnection(url, provider) {
+            const validated = validateProxyUrl(url);
+            if (!validated.ok) {
+                setProxyStatus("Proxy nicht erlaubt", true);
+                return false;
+            }
+            const controller = new AbortController();
+            const timeout = setTimeout(() => controller.abort(), 8000);
+            try {
+                const response = await fetch(validated.url, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        provider: provider || appState.settings.apiProvider,
+                        prompt: "TEST",
+                        objection: "ping"
+                    }),
+                    signal: controller.signal,
+                    referrerPolicy: "no-referrer",
+                    credentials: "omit"
+                });
+                clearTimeout(timeout);
+                if (!response.ok) throw new Error("Proxy Test fehlgeschlagen");
+                appState.ui.proxyVerified = true;
+                appState.ui.proxyTestedUrl = url;
+                appState.ui.proxyBlocked = false;
+                setProxyStatus("Proxy: Getestet", false);
+                return true;
+            } catch (error) {
+                if (navigator.onLine && /Failed to fetch|NetworkError/i.test(String(error.message || ""))) {
+                    handleProxyBlocked();
+                } else {
+                    setProxyStatus("Proxy Test fehlgeschlagen", true);
+                }
+                return false;
+            } finally {
+                clearTimeout(timeout);
             }
         }
 
@@ -3354,10 +3541,10 @@ Executive Summary:
                 label = "Offline";
             } else if (appState.ui.syncStatus === "syncing") {
                 status = "syncing";
-                label = "Syncing";
+                label = "Abgleich";
             } else if (appState.ui.syncStatus === "error") {
                 status = "error";
-                label = "Sync Fehler";
+                label = "Abgleich Fehler";
             }
             elements.onlineStatus.dataset.status = status;
             elements.onlineStatusLabel.textContent = label;
@@ -3645,8 +3832,16 @@ Executive Summary:
             document.body.classList.toggle("panel-docked", panelDocked);
             elements.settingsModal.setAttribute("aria-modal", panelDocked ? "false" : "true");
             if (panelDocked) {
+                const isDialog = elements.settingsModal.tagName === "DIALOG";
                 panelOpen = true;
-                elements.settingsModal.classList.add("open");
+                if (isDialog) {
+                    if (elements.settingsModal.open) {
+                        elements.settingsModal.close();
+                    }
+                    elements.settingsModal.show();
+                } else {
+                    elements.settingsModal.classList.add("open");
+                }
                 elements.settingsModal.setAttribute("aria-hidden", "false");
                 if (elements.settingsBtn) {
                     elements.settingsBtn.setAttribute("aria-expanded", "true");
@@ -3662,8 +3857,13 @@ Executive Summary:
                 return;
             }
             if (wasDocked && !panelDocked) {
+                const isDialog = elements.settingsModal.tagName === "DIALOG";
                 panelOpen = false;
-                elements.settingsModal.classList.remove("open");
+                if (isDialog && elements.settingsModal.open) {
+                    elements.settingsModal.close();
+                } else {
+                    elements.settingsModal.classList.remove("open");
+                }
                 elements.settingsModal.setAttribute("aria-hidden", "true");
                 if (elements.settingsBtn) {
                     elements.settingsBtn.setAttribute("aria-expanded", "false");
@@ -3679,7 +3879,13 @@ Executive Summary:
                 elements.settingsBtn.setAttribute("aria-expanded", "true");
             }
             if (panelDocked) {
-                elements.settingsModal.classList.add("open");
+                if (elements.settingsModal.tagName === "DIALOG") {
+                    if (!elements.settingsModal.open) {
+                        elements.settingsModal.show();
+                    }
+                } else {
+                    elements.settingsModal.classList.add("open");
+                }
                 elements.settingsModal.setAttribute("aria-hidden", "false");
                 return;
             }
@@ -3943,28 +4149,23 @@ Executive Summary:
             };
         }
 
-        function normalizeLibraryItem(item) {
+        function normalizeFeedbackEntry(item) {
             if (!item || typeof item !== "object") return null;
-            const votes = item.sellerVotes || {};
             return {
-                id: sanitizeString(item.id || `lib_${Date.now()}`, 80),
-                objectionKey: sanitizeString(item.objectionKey, 80),
+                id: sanitizeString(item.id || `fb_${Date.now()}`, 80),
                 objectionText: sanitizeString(item.objectionText, 200),
-                suggestedReply: sanitizeString(item.suggestedReply, 600),
-                playbookRefs: sanitizeArray(item.playbookRefs, 120),
-                sellerVotes: {
-                    works: Number(votes.works) || 0,
-                    fails: Number(votes.fails) || 0
-                },
-                lastUsedAt: typeof item.lastUsedAt === "number" ? item.lastUsedAt : 0,
-                updatedAt: typeof item.updatedAt === "number" ? item.updatedAt : Date.now(),
-                source: sanitizeEnum(item.source, ["seed", "learned"], "learned")
+                suggestedAnswerId: sanitizeString(item.suggestedAnswerId, 80),
+                verdict: sanitizeEnum(item.verdict, ["yes", "no"], "yes"),
+                reason: sanitizeString(item.reason, 80),
+                note: sanitizeString(item.note, 200),
+                timestamp: sanitizeString(item.timestamp, 40) || new Date().toISOString()
             };
         }
 
         function validateProxyUrl(value) {
             if (!value) return { ok: false };
             try {
+                if (window.location.protocol === "file:") return { ok: false, reason: "file_disabled" };
                 const url = new URL(value, window.location.origin);
                 const isSameOrigin = url.origin === window.location.origin && window.location.origin !== "null";
                 if (!isSameOrigin) return { ok: false, reason: "same_origin_required" };
@@ -4009,6 +4210,7 @@ Executive Summary:
                     if (!db.objectStoreNames.contains("seller")) db.createObjectStore("seller", { keyPath: "id" });
                     if (!db.objectStoreNames.contains("wiki")) db.createObjectStore("wiki", { keyPath: "id" });
                     if (!db.objectStoreNames.contains("objection_library")) db.createObjectStore("objection_library", { keyPath: "id" });
+                    if (!db.objectStoreNames.contains("objection_feedback")) db.createObjectStore("objection_feedback", { keyPath: "id" });
                 };
             });
         }
@@ -4226,49 +4428,60 @@ Executive Summary:
             });
         }
 
-        async function getAllLibraryItems() {
-            return getAllFromStore("objection_library", "msos_objection_library");
+        async function getAllFeedbackEntries() {
+            return getAllFromStore("objection_feedback", "msos_objection_feedback");
         }
 
-        async function saveLibraryItem(item) {
+        async function saveFeedbackEntry(entry) {
             await waitForDB();
             if (storage.mode === "local") {
-                const items = safeParseJSON(localStorage.getItem("msos_objection_library"), []);
-                const index = items.findIndex(entry => entry.id === item.id);
-                if (index > -1) {
-                    items[index] = item;
-                } else {
-                    items.unshift(item);
-                }
-                localStorage.setItem("msos_objection_library", JSON.stringify(items));
+                const items = safeParseJSON(localStorage.getItem("msos_objection_feedback"), []);
+                items.unshift(entry);
+                localStorage.setItem("msos_objection_feedback", JSON.stringify(items));
                 return;
             }
-            const tx = storage.db.transaction("objection_library", "readwrite");
-            tx.objectStore("objection_library").put(item);
+            const tx = storage.db.transaction("objection_feedback", "readwrite");
+            tx.objectStore("objection_feedback").put(entry);
             return new Promise(resolve => {
                 tx.oncomplete = () => resolve();
             });
         }
 
-        async function ensureLibrarySeeds() {
-            const items = await getAllLibraryItems();
-            if (items.length) return;
-            const normalized = DEFAULT_LIBRARY_SEEDS.map(normalizeLibraryItem).filter(Boolean);
-            await saveAllToStore("objection_library", "msos_objection_library", normalized);
+        function computeFeedbackRanking(entries) {
+            const now = Date.now();
+            const scores = new Map();
+            entries.forEach(entry => {
+                const time = Date.parse(entry.timestamp) || now;
+                const ageDays = Math.max(0, (now - time) / 86400000);
+                const weight = Math.exp(-ageDays / 30);
+                const delta = entry.verdict === "yes" ? 1 : -1;
+                const key = entry.suggestedAnswerId || entry.objectionText || entry.id;
+                if (!scores.has(key)) {
+                    scores.set(key, { key, label: entry.objectionText || key, score: 0, yes: 0, no: 0, last: time });
+                }
+                const row = scores.get(key);
+                row.score += delta * weight;
+                row.last = Math.max(row.last, time);
+                if (entry.verdict === "yes") row.yes += 1;
+                else row.no += 1;
+            });
+            return Array.from(scores.values())
+                .sort((a, b) => b.score - a.score)
+                .slice(0, 5);
         }
 
-        async function refreshLibraryItems() {
-            await ensureLibrarySeeds();
-            appState.library = (await getAllLibraryItems()).map(normalizeLibraryItem).filter(Boolean);
+        async function refreshFeedbackData() {
+            appState.feedback = (await getAllFeedbackEntries()).map(normalizeFeedbackEntry).filter(Boolean);
+            appState.feedbackRanking = computeFeedbackRanking(appState.feedback);
         }
 
         async function clearDataStores() {
             await waitForDB();
             if (storage.mode === "local") {
-                ["msos_cases", "msos_logs", "msos_products", "msos_product_faq", "msos_product_notes", "msos_comparisons", "msos_seller", "msos_wiki", "msos_objection_library"].forEach(key => localStorage.removeItem(key));
+                ["msos_cases", "msos_logs", "msos_products", "msos_product_faq", "msos_product_notes", "msos_comparisons", "msos_seller", "msos_wiki", "msos_objection_library", "msos_objection_feedback", "msos_frame"].forEach(key => localStorage.removeItem(key));
                 return;
             }
-            const tx = storage.db.transaction(["cases", "logs", "products", "productFaq", "productNotes", "comparisons", "seller", "wiki", "objection_library"], "readwrite");
+            const tx = storage.db.transaction(["cases", "logs", "products", "productFaq", "productNotes", "comparisons", "seller", "wiki", "objection_library", "objection_feedback"], "readwrite");
             tx.objectStore("cases").clear();
             tx.objectStore("logs").clear();
             tx.objectStore("products").clear();
@@ -4278,6 +4491,7 @@ Executive Summary:
             tx.objectStore("seller").clear();
             tx.objectStore("wiki").clear();
             tx.objectStore("objection_library").clear();
+            tx.objectStore("objection_feedback").clear();
             return new Promise(resolve => {
                 tx.oncomplete = () => resolve();
             });
@@ -4439,6 +4653,7 @@ OUTPUT SCHEMA:
             let apiUrl;
             let headers;
             let body;
+            const usingProxy = Boolean(proxyUrl);
 
             if (proxyUrl) {
                 const validated = validateProxyUrl(proxyUrl);
@@ -4478,14 +4693,22 @@ OUTPUT SCHEMA:
                 throw new Error("Unbekannter Provider");
             }
 
-            const response = await fetch(apiUrl, {
-                method: "POST",
-                headers,
-                body,
-                signal: controller.signal,
-                referrerPolicy: "no-referrer",
-                credentials: "omit"
-            });
+            let response;
+            try {
+                response = await fetch(apiUrl, {
+                    method: "POST",
+                    headers,
+                    body,
+                    signal: controller.signal,
+                    referrerPolicy: "no-referrer",
+                    credentials: "omit"
+                });
+            } catch (error) {
+                if (usingProxy && navigator.onLine && /Failed to fetch|NetworkError/i.test(String(error.message || ""))) {
+                    handleProxyBlocked();
+                }
+                throw error;
+            }
             clearTimeout(timeout);
             if (!response.ok) throw new Error(`API Error: ${response.status}`);
             const data = await response.json();
@@ -4530,6 +4753,7 @@ OUTPUT JSON ONLY:
             let apiUrl;
             let headers;
             let body;
+            const usingProxy = Boolean(proxyUrl);
 
             if (proxyUrl) {
                 const validated = validateProxyUrl(proxyUrl);
@@ -4569,14 +4793,22 @@ OUTPUT JSON ONLY:
                 throw new Error("Unbekannter Provider");
             }
 
-            const response = await fetch(apiUrl, {
-                method: "POST",
-                headers,
-                body,
-                signal: controller.signal,
-                referrerPolicy: "no-referrer",
-                credentials: "omit"
-            });
+            let response;
+            try {
+                response = await fetch(apiUrl, {
+                    method: "POST",
+                    headers,
+                    body,
+                    signal: controller.signal,
+                    referrerPolicy: "no-referrer",
+                    credentials: "omit"
+                });
+            } catch (error) {
+                if (usingProxy && navigator.onLine && /Failed to fetch|NetworkError/i.test(String(error.message || ""))) {
+                    handleProxyBlocked();
+                }
+                throw error;
+            }
             clearTimeout(timeout);
             if (!response.ok) throw new Error("API Error");
             const data = await response.json();
@@ -4671,21 +4903,146 @@ OUTPUT JSON ONLY:
             };
         }
 
+        function splitFacts(text) {
+            return String(text || "")
+                .split(/[\n•-]/)
+                .flatMap(line => line.split(/[.!?;]/))
+                .map(item => item.trim())
+                .filter(Boolean)
+                .slice(0, 3);
+        }
+
+        function deriveCrossSell(entryText) {
+            const text = (entryText || "").toLowerCase();
+            if (text.includes("kabel")) return "Passendes Kabel anbieten.";
+            if (text.includes("schutz") || text.includes("garantie")) return "Geraeteschutz oder Garantie anbieten.";
+            if (text.includes("einrichtung") || text.includes("installation") || text.includes("montage")) return "Einrichtung oder Installation anbieten.";
+            return "";
+        }
+
+        function buildTechAnswerFromWikiEntry(entry) {
+            if (!entry) return null;
+            const summary = entry.sections.kurz || `Kurzinfo zu ${entry.title}.`;
+            const facts = [
+                ...splitFacts(entry.sections.specs),
+                ...splitFacts(entry.sections.faq)
+            ].slice(0, 3);
+            const entryText = [
+                entry.title,
+                entry.brand,
+                entry.category,
+                (entry.tags || []).join(" "),
+                entry.sections.kurz,
+                entry.sections.specs,
+                entry.sections.faq
+            ].join(" ");
+            return {
+                format: "tech",
+                status: facts.length ? "success" : "check_datasheet",
+                source: "wiki",
+                summary: sanitizeString(summary, 200),
+                facts: facts.map(item => sanitizeString(item, 160)),
+                crossSell: deriveCrossSell(entryText),
+                aiSuggestion: false
+            };
+        }
+
+        function buildTechAnswerFromProduct(product) {
+            if (!product) return null;
+            const summary = `Kurzinfo zu ${product.name}.`;
+            const facts = Object.entries(product.specs || {}).map(([key, value]) => `${key}: ${value}`).slice(0, 3);
+            const crossSell = product.accessories && product.accessories.length
+                ? `Zubehoer: ${product.accessories[0]}`
+                : "";
+            return {
+                format: "tech",
+                status: facts.length ? "success" : "check_datasheet",
+                source: "wiki",
+                summary: sanitizeString(summary, 200),
+                facts: facts.map(item => sanitizeString(item, 160)),
+                crossSell,
+                aiSuggestion: false
+            };
+        }
+
+        function buildTechAnswerFromAi(answer) {
+            const summary = String(answer.answer || "").split(/[.!?]/)[0].trim() || "KI-Vorschlag.";
+            const facts = answer.citations && answer.citations.length
+                ? answer.citations.map(item => `${item.field}: ${item.value}`).slice(0, 3)
+                : splitFacts(answer.answer);
+            return {
+                format: "tech",
+                status: answer.status || "fact_check_needed",
+                source: answer.source || "ai_only",
+                summary: sanitizeString(summary, 200),
+                facts: facts.map(item => sanitizeString(item, 160)),
+                crossSell: "",
+                aiSuggestion: true
+            };
+        }
+
+        function findTechWikiEntry(question) {
+            const query = question.toLowerCase();
+            const words = query.split(/\s+/).filter(word => word.length > 2);
+            const entries = appState.wiki.entries.filter(entry => (entry.category || "").toLowerCase().includes("produktfragen"));
+            let best = null;
+            let bestScore = 0;
+            entries.forEach(entry => {
+                const haystack = [
+                    entry.title,
+                    entry.brand,
+                    entry.category,
+                    (entry.tags || []).join(" "),
+                    entry.sections.kurz,
+                    entry.sections.specs,
+                    entry.sections.faq
+                ].join(" ").toLowerCase();
+                const score = words.reduce((acc, word) => acc + (haystack.includes(word) ? 1 : 0), 0);
+                if (score > bestScore) {
+                    bestScore = score;
+                    best = entry;
+                }
+            });
+            return bestScore ? best : null;
+        }
+
         async function handleTechnicalQuestion(question) {
-            appState.wiki.searchQuery = question;
+            const trimmed = sanitizeString(question, 300);
+            if (!trimmed) return;
+            appState.wiki.searchQuery = trimmed;
             if (elements.wikiSearchInput) {
-                elements.wikiSearchInput.value = question;
+                elements.wikiSearchInput.value = trimmed;
             }
             renderWikiFrame();
             setFrame("wiki");
-            let answer = await answerProductQuestion(question);
-            if (answer && answer.status !== "success") {
+
+            let answer = buildTechAnswerFromWikiEntry(findTechWikiEntry(trimmed));
+            if (!answer) {
+                const product = appState.wiki.products.find(item => item.id === appState.wiki.selectedProductId);
+                answer = buildTechAnswerFromProduct(product);
+            }
+            if (!answer || answer.status !== "success") {
                 try {
-                    const product = appState.wiki.products.find(item => item.id === appState.wiki.selectedProductId);
-                    answer = await callAIProduct(question, product);
+                    if (appState.settings.apiKey || appState.settings.proxyUrl) {
+                        const product = appState.wiki.products.find(item => item.id === appState.wiki.selectedProductId);
+                        const aiAnswer = await callAIProduct(trimmed, product);
+                        answer = buildTechAnswerFromAi(aiAnswer);
+                    }
                 } catch {
                     // keep wiki-only answer
                 }
+            }
+            if (!answer) {
+                answer = {
+                    format: "tech",
+                    status: "fact_check_needed",
+                    source: "wiki",
+                    summary: "Keine gesicherten Daten im Wiki. Bitte Produktseite pruefen.",
+                    facts: [],
+                    crossSell: "",
+                    aiSuggestion: false
+                };
+                showToast("Keine Wiki-Daten gefunden");
             }
             appState.wiki.answer = answer;
             renderWikiAnswer();
@@ -4795,35 +5152,23 @@ OUTPUT JSON ONLY:
             appState.playbookRefs = [text, ...existing].slice(0, 12);
         }
 
-        async function recordLibraryVote(card, voteType) {
-            await refreshLibraryItems();
-            const now = Date.now();
-            const id = sanitizeString(card.id || `lib_${now}`, 80);
-            let item = appState.library.find(entry => entry.id === id);
-            if (!item) {
-                const quick = card.content.quick.neutral;
-                item = normalizeLibraryItem({
-                    id,
-                    objectionKey: card.meta.pattern,
-                    objectionText: card.objection || appState.objection,
-                    suggestedReply: [quick.entry, quick.anchor, quick.question, quick.bridge, quick.close].join(" "),
-                    playbookRefs: [...appState.playbookRefs],
-                    sellerVotes: { works: 0, fails: 0 },
-                    lastUsedAt: now,
-                    updatedAt: now,
-                    source: "learned"
-                });
-                appState.library.unshift(item);
-            }
-            if (voteType === "works") {
-                item.sellerVotes.works += 1;
-            } else {
-                item.sellerVotes.fails += 1;
-            }
-            item.lastUsedAt = now;
-            item.updatedAt = now;
-            item.playbookRefs = Array.from(new Set([...(item.playbookRefs || []), ...appState.playbookRefs]));
-            await saveLibraryItem(item);
+        async function recordFeedback(card, verdict) {
+            const reasonEl = document.getElementById("feedbackReason");
+            const noteEl = document.getElementById("feedbackNote");
+            const reason = reasonEl ? reasonEl.value : "";
+            const note = noteEl ? sanitizeString(noteEl.value, 200) : "";
+            const entry = normalizeFeedbackEntry({
+                id: `fb_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
+                objectionText: appState.objection || card.objection,
+                suggestedAnswerId: card.id,
+                verdict,
+                reason,
+                note,
+                timestamp: new Date().toISOString()
+            });
+            await saveFeedbackEntry(entry);
+            await refreshFeedbackData();
+            renderSalesHistory();
         }
 
         function toggleFavorite(cardId) {
@@ -4844,6 +5189,10 @@ OUTPUT JSON ONLY:
             appState.playbookRefs = [];
             appState.ui.techQuestion = false;
             elements.objectionInput.value = "";
+            const reasonEl = document.getElementById("feedbackReason");
+            const noteEl = document.getElementById("feedbackNote");
+            if (reasonEl) reasonEl.value = "";
+            if (noteEl) noteEl.value = "";
             elements.contextChips.querySelectorAll(".chip").forEach(chip => {
                 chip.setAttribute("aria-pressed", "false");
             });
@@ -4863,7 +5212,7 @@ OUTPUT JSON ONLY:
                 <div class="cue-block">
                     <div class="cue-header">
                         <div class="cue-label">${label}</div>
-                        <button class="copy-btn" type="button" data-card="${cardId}" data-copy="${field}" data-variant="${variant}">Copy</button>
+                        <button class="copy-btn" type="button" data-card="${cardId}" data-copy="${field}" data-variant="${variant}">Kopieren</button>
                     </div>
                     <div class="cue-text">${escapeHTML(text)}</div>
                 </div>
@@ -4890,7 +5239,7 @@ OUTPUT JSON ONLY:
                 <section class="tile card ${card.ui.color}">
                     <div class="card-header">
                         <svg class="card-icon" viewBox="0 0 24 24">${getIcon(card.ui.icon)}</svg>
-                        <div class="card-title">Sales Frame</div>
+                        <div class="card-title">Verkauf</div>
                         <div class="card-header-actions">
                             <button class="favorite-btn" type="button" data-favorite="${card.id}" aria-pressed="${isFavorite}">
                                 <svg viewBox="0 0 24 24"><path d="M12 17.3l-6.2 3.7 1.6-7-5.4-4.7 7.1-.6L12 2l2.9 6.7 7.1.6-5.4 4.7 1.6 7z"/></svg>
@@ -4903,14 +5252,14 @@ OUTPUT JSON ONLY:
                         ${buildQuickBlock("Einstieg", quick.entry, card.id, "entry", "neutral")}
                         ${buildQuickBlock("Anker", quick.anchor, card.id, "anchor", "neutral")}
                         ${buildQuickBlock("Frage", quick.question, card.id, "question", "neutral")}
-                        ${buildQuickBlock("Bridge", quick.bridge, card.id, "bridge", "neutral")}
-                        ${buildQuickBlock("Close", quick.close, card.id, "close", "neutral")}
-                        <button class="copy-btn" type="button" data-card="${card.id}" data-copy="full" data-variant="neutral">Copy Full Quick</button>
+                        ${buildQuickBlock("Ueberleitung", quick.bridge, card.id, "bridge", "neutral")}
+                        ${buildQuickBlock("Abschluss", quick.close, card.id, "close", "neutral")}
+                        <button class="copy-btn" type="button" data-card="${card.id}" data-copy="full" data-variant="neutral">Quick komplett</button>
                     </div>
 
                     <div class="expandable">
                         <button class="expand-trigger" type="button" aria-expanded="false" aria-controls="smart-${safeId}" data-target="smart-${safeId}">
-                            Smart Script
+                            Skript
                             <svg class="expand-icon" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>
                         </button>
                         <div class="expand-content" id="smart-${safeId}" hidden>
@@ -4972,13 +5321,21 @@ OUTPUT JSON ONLY:
                             <svg viewBox="0 0 24 24"><path d="M10 15v4a3 3 0 0 0 3 3l4-9V2H5.72a2 2 0 0 0-2 1.7l-1.38 9a2 2 0 0 0 2 2.3zm7-13h2.67A2.31 2.31 0 0 1 22 4v7a2.31 2.31 0 0 1-2.33 2H17"/></svg>
                             Nicht hilfreich
                         </button>
-                        <button class="feedback-btn" type="button" data-train="${card.id}">Train this</button>
-                        <button class="feedback-btn success" type="button" data-library-vote="works" data-card="${card.id}">
+                        <button class="feedback-btn" type="button" data-train="${card.id}">Training starten</button>
+                        <button class="feedback-btn success" type="button" data-feedback-verdict="yes" data-card="${card.id}">
                             Funktioniert
                         </button>
-                        <button class="feedback-btn error" type="button" data-library-vote="fails" data-card="${card.id}">
+                        <button class="feedback-btn error" type="button" data-feedback-verdict="no" data-card="${card.id}">
                             Funktioniert nicht
                         </button>
+                    </div>
+                    <div class="feedback-meta">
+                        <label class="form-label" for="feedbackReason">Grund (optional)</label>
+                        <select class="form-select" id="feedbackReason">
+                            ${FEEDBACK_REASONS.map(reason => `<option value="${reason.value}">${escapeHTML(reason.label)}</option>`).join("")}
+                        </select>
+                        <label class="form-label" for="feedbackNote">Notiz (optional)</label>
+                        <input class="form-input" id="feedbackNote" type="text" maxlength="200" placeholder="Kurznotiz" autocomplete="off" />
                     </div>
                 </section>
             `;
@@ -5023,6 +5380,16 @@ OUTPUT JSON ONLY:
                 `;
             }).join("");
             elements.favoriteList.innerHTML = favorites || `<div class="tile-desc">Keine Favoriten.</div>`;
+
+            if (elements.topAnswersList) {
+                const topAnswers = appState.feedbackRanking.map(item => `
+                    <div class="history-item">
+                        <div>${escapeHTML(item.label)}</div>
+                        <div class="history-meta">Wertung ${item.score.toFixed(2)} • Ja ${item.yes} / Nein ${item.no}</div>
+                    </div>
+                `).join("");
+                elements.topAnswersList.innerHTML = topAnswers || `<div class="tile-desc">Noch kein Feedback.</div>`;
+            }
         }
 
         function renderTrainingFrame() {
@@ -5035,7 +5402,7 @@ OUTPUT JSON ONLY:
                         <div class="empty-subtitle">Wähle eine Karte aus dem Verkauf.</div>
                     </div>
                 `;
-                elements.roleplayPrompt.textContent = "Roleplay bereit. Wähle zuerst eine Karte.";
+                elements.roleplayPrompt.textContent = "Rollenspiel bereit. Wähle zuerst eine Karte.";
                 elements.roleplayResponse.textContent = "";
             } else {
                 elements.trainingCardTitle.textContent = `Pattern: ${card.meta.pattern}`;
@@ -5051,8 +5418,8 @@ OUTPUT JSON ONLY:
                         ${buildQuickBlock("Einstieg", quick.entry, card.id, "entry", variant)}
                         ${buildQuickBlock("Anker", quick.anchor, card.id, "anchor", variant)}
                         ${buildQuickBlock("Frage", quick.question, card.id, "question", variant)}
-                        ${buildQuickBlock("Bridge", quick.bridge, card.id, "bridge", variant)}
-                        ${buildQuickBlock("Close", quick.close, card.id, "close", variant)}
+                        ${buildQuickBlock("Ueberleitung", quick.bridge, card.id, "bridge", variant)}
+                        ${buildQuickBlock("Abschluss", quick.close, card.id, "close", variant)}
                     </div>
                 `;
             }
@@ -5078,6 +5445,11 @@ OUTPUT JSON ONLY:
                 "Drill Nutzen: Formuliere eine Nutzenfrage und einen Nutzenanker.",
                 "Drill Abschluss: Wähle zwei Abschlussfragen aus dem Leitfaden."
             );
+            if (appState.playbookRefs.length) {
+                appState.playbookRefs.slice(0, 3).forEach(text => {
+                    drills.push(`Drill Leitfaden: Verwende "${text}" in einer Antwort.`);
+                });
+            }
             const pool = [
                 ...appState.cards.map(item => item.objection).filter(Boolean),
                 ...appState.history.slice(0, 200).map(item => item.objection).filter(Boolean),
@@ -5128,19 +5500,19 @@ OUTPUT JSON ONLY:
 
             elements.trainingStats.innerHTML = `
                 <div class="stat">
-                    <div class="stat-label">Last 10</div>
+                    <div class="stat-label">Letzte 10</div>
                     <div class="stat-value">${lastTen.length}</div>
                 </div>
                 <div class="stat">
-                    <div class="stat-label">Success</div>
+                    <div class="stat-label">Erfolg</div>
                     <div class="stat-value">${successRate}%</div>
                 </div>
                 <div class="stat">
-                    <div class="stat-label">Top Pattern</div>
+                    <div class="stat-label">Top Muster</div>
                     <div class="stat-value">${escapeHTML(patternText)}</div>
                 </div>
                 <div class="stat">
-                    <div class="stat-label">Sessions</div>
+                    <div class="stat-label">Sitzungen</div>
                     <div class="stat-value">${appState.training.sessions}</div>
                 </div>
             `;
@@ -5333,7 +5705,24 @@ OUTPUT JSON ONLY:
                 elements.wikiCitations.innerHTML = "";
                 return;
             }
-            elements.wikiAnswerStatus.textContent = `${answer.status} • ${answer.source}`;
+            if (answer.format === "tech") {
+                const label = answer.aiSuggestion ? "KI-Vorschlag" : "Wiki";
+                elements.wikiAnswerStatus.textContent = `${answer.status} • ${label}`;
+                elements.wikiAnswerText.textContent = answer.summary;
+                const facts = Array.isArray(answer.facts) ? answer.facts.slice(0, 3) : [];
+                const bullets = [
+                    ...facts,
+                    ...(answer.crossSell ? [`Cross-Sell: ${answer.crossSell}`] : [])
+                ];
+                elements.wikiCitations.innerHTML = bullets.map(text => `
+                    <div class="pattern-item">
+                        <div>${escapeHTML(text)}</div>
+                    </div>
+                `).join("") || `<div class="tile-desc">Keine Fakten im Wiki.</div>`;
+                return;
+            }
+            const sourceLabel = answer.source === "ai_only" ? "KI-Vorschlag" : answer.source;
+            elements.wikiAnswerStatus.textContent = `${answer.status} • ${sourceLabel}`;
             elements.wikiAnswerText.textContent = `${answer.answer} Nächster Schritt: ${answer.nextAction}`;
             elements.wikiCitations.innerHTML = answer.citations.map(item => `
                 <div class="pattern-item">
@@ -5631,11 +6020,22 @@ OUTPUT JSON ONLY:
         }
 
         async function exportLibraryData() {
-            const library = (await getAllLibraryItems()).map(normalizeLibraryItem).filter(Boolean);
+            const objection_feedback = (await getAllFeedbackEntries()).map(normalizeFeedbackEntry).filter(Boolean);
+            const rankings = computeFeedbackRanking(objection_feedback);
             return {
                 schemaVersion: 1,
                 exportVersion: 1,
-                library
+                objection_feedback,
+                rankings
+            };
+        }
+
+        async function exportWikiData() {
+            const wiki = (await getAllWikiEntries()).map(normalizeWikiEntry).filter(Boolean);
+            return {
+                schemaVersion: 1,
+                exportVersion: 1,
+                wiki
             };
         }
 
@@ -5690,15 +6090,42 @@ OUTPUT JSON ONLY:
             const parsed = JSON.parse(raw);
             if (!parsed || typeof parsed !== "object") throw new Error("Invalid import");
             const keys = Object.keys(parsed);
-            const allowed = ["schemaVersion", "exportVersion", "library"];
-            if (keys.length !== allowed.length || !allowed.every(key => keys.includes(key))) {
+            const allowed = ["schemaVersion", "exportVersion", "objection_feedback", "rankings"];
+            const required = ["schemaVersion", "exportVersion", "objection_feedback"];
+            if (!keys.every(key => allowed.includes(key)) || !required.every(key => keys.includes(key))) {
                 throw new Error("Schema ungültig");
             }
-            if (!Array.isArray(parsed.library)) throw new Error("Library fehlt");
-            if (parsed.library.length > 10000) throw new Error("Zu viele Einträge");
-            const normalized = parsed.library.map(normalizeLibraryItem).filter(Boolean);
-            await saveAllToStore("objection_library", "msos_objection_library", normalized);
-            await refreshLibraryItems();
+            if (!Array.isArray(parsed.objection_feedback)) throw new Error("Feedback fehlt");
+            if (parsed.objection_feedback.length > 5000) throw new Error("Zu viele Einträge");
+            const allowedEntryKeys = ["id", "objectionText", "suggestedAnswerId", "verdict", "reason", "note", "timestamp"];
+            parsed.objection_feedback.forEach(entry => {
+                if (!entry || typeof entry !== "object") throw new Error("Feedback ungültig");
+                const entryKeys = Object.keys(entry);
+                if (!entryKeys.every(key => allowedEntryKeys.includes(key))) {
+                    throw new Error("Feedback Schema ungültig");
+                }
+            });
+            const normalized = parsed.objection_feedback.map(normalizeFeedbackEntry).filter(Boolean);
+            await saveAllToStore("objection_feedback", "msos_objection_feedback", normalized);
+            await refreshFeedbackData();
+        }
+
+        async function importWikiData(file) {
+            if (file.size > 2 * 1024 * 1024) throw new Error("Datei zu groß");
+            const raw = await file.text();
+            const parsed = JSON.parse(raw);
+            if (!parsed || typeof parsed !== "object") throw new Error("Invalid import");
+            const keys = Object.keys(parsed);
+            const allowed = ["schemaVersion", "exportVersion", "wiki"];
+            const required = ["schemaVersion", "exportVersion", "wiki"];
+            if (!keys.every(key => allowed.includes(key)) || !required.every(key => keys.includes(key))) {
+                throw new Error("Schema ungültig");
+            }
+            if (!Array.isArray(parsed.wiki)) throw new Error("Wiki fehlt");
+            if (parsed.wiki.length > 2000) throw new Error("Zu viele Wiki Einträge");
+            const normalized = parsed.wiki.map(normalizeWikiEntry).filter(Boolean);
+            await saveAllToStore("wiki", "msos_wiki", normalized);
+            await refreshWikiData();
         }
 
         async function verifyLibraryHash(buffer) {
@@ -5712,10 +6139,10 @@ OUTPUT JSON ONLY:
         async function syncLibrary(manual = false) {
             if (!navigator.onLine) {
                 setSyncStatus("offline", "Offline");
-                if (manual) showToast("Offline – Sync pausiert");
+                if (manual) showToast("Offline – Abgleich pausiert");
                 return;
             }
-            setSyncStatus("syncing", "Syncing");
+            setSyncStatus("syncing", "Abgleich");
             try {
                 const controller = new AbortController();
                 const timeout = setTimeout(() => controller.abort(), 10000);
@@ -5726,25 +6153,25 @@ OUTPUT JSON ONLY:
                     signal: controller.signal
                 });
                 clearTimeout(timeout);
-                if (!response.ok) throw new Error("Sync failed");
+                if (!response.ok) throw new Error("Abgleich fehlgeschlagen");
                 const buffer = await response.arrayBuffer();
                 const hashOk = await verifyLibraryHash(buffer);
-                if (!hashOk) throw new Error("Integrity failed");
+                if (!hashOk) throw new Error("Integritaet fehlgeschlagen");
                 const text = new TextDecoder().decode(buffer);
                 const data = JSON.parse(text);
-                if (!Array.isArray(data)) throw new Error("Format invalid");
+                if (!Array.isArray(data)) throw new Error("Format ungueltig");
                 const normalized = data.map(normalizeCaseCard);
                 await saveAllToStore("cases", "msos_cases", normalized);
                 appState.ui.lastSync = new Date().toISOString();
                 appState.settings.lastSyncAt = appState.ui.lastSync;
                 await saveSettings(buildPersistedSettings());
-                setSyncStatus("ok", "Sync OK");
+                setSyncStatus("ok", "Abgleich OK");
                 updateSyncTime();
                 await updateStats();
-                if (manual) showToast("Sync abgeschlossen");
+                if (manual) showToast("Abgleich abgeschlossen");
             } catch {
-                setSyncStatus("error", "Sync Fehler");
-                if (manual) showToast("Sync fehlgeschlagen");
+                setSyncStatus("error", "Abgleich Fehler");
+                if (manual) showToast("Abgleich fehlgeschlagen");
             }
         }
 
@@ -5755,16 +6182,16 @@ OUTPUT JSON ONLY:
                 return;
             }
             if (!navigator.onLine) {
-                if (manual) showToast("Offline – Wiki Sync pausiert");
+                if (manual) showToast("Offline – Wiki Abgleich pausiert");
                 return;
             }
-            setSyncStatus("syncing", "Syncing");
+            setSyncStatus("syncing", "Abgleich");
             try {
                 const controller = new AbortController();
                 const timeout = setTimeout(() => controller.abort(), 10000);
                 const response = await fetch(url, { cache: "no-store", credentials: "omit", signal: controller.signal });
                 clearTimeout(timeout);
-                if (!response.ok) throw new Error("Wiki Sync failed");
+                if (!response.ok) throw new Error("Wiki Abgleich fehlgeschlagen");
                 const data = await response.json();
                 const products = Array.isArray(data.products) ? data.products.map(normalizeProduct).filter(Boolean) : (Array.isArray(data) ? data.map(normalizeProduct).filter(Boolean) : []);
                 const faq = Array.isArray(data.faq) ? data.faq.map(normalizeFaq).filter(Boolean) : [];
@@ -5776,11 +6203,11 @@ OUTPUT JSON ONLY:
                 appState.settings.lastWikiSyncAt = appState.ui.lastWikiSync;
                 await saveSettings(buildPersistedSettings());
                 await refreshWikiData();
-                setSyncStatus("ok", "Sync OK");
-                if (manual) showToast("Wiki Sync abgeschlossen");
+                setSyncStatus("ok", "Abgleich OK");
+                if (manual) showToast("Wiki Abgleich abgeschlossen");
             } catch {
-                setSyncStatus("error", "Sync Fehler");
-                if (manual) showToast("Wiki Sync fehlgeschlagen");
+                setSyncStatus("error", "Abgleich Fehler");
+                if (manual) showToast("Wiki Abgleich fehlgeschlagen");
             }
         }
 
@@ -5803,9 +6230,14 @@ OUTPUT JSON ONLY:
 
         function setupViewportHandling() {
             if (!window.visualViewport) return;
+            let viewportRaf = null;
             const update = () => {
-                const offset = Math.max(0, window.innerHeight - window.visualViewport.height - window.visualViewport.offsetTop);
-                document.documentElement.style.setProperty("--keyboard-offset", `${Math.round(offset)}px`);
+                if (viewportRaf) cancelAnimationFrame(viewportRaf);
+                viewportRaf = requestAnimationFrame(() => {
+                    const offset = Math.max(0, window.innerHeight - window.visualViewport.height - window.visualViewport.offsetTop);
+                    document.documentElement.style.setProperty("--keyboard-offset", `${Math.round(offset)}px`);
+                    viewportRaf = null;
+                });
             };
             window.visualViewport.addEventListener("resize", update, { passive: true });
             window.visualViewport.addEventListener("scroll", update, { passive: true });
@@ -5838,6 +6270,20 @@ OUTPUT JSON ONLY:
                     closeQuickPanel();
                 }
             });
+            if (elements.settingsModal.tagName === "DIALOG") {
+                elements.settingsModal.addEventListener("cancel", (event) => {
+                    event.preventDefault();
+                    closeQuickPanel();
+                });
+                elements.settingsModal.addEventListener("close", () => {
+                    if (!panelDocked) {
+                        panelOpen = false;
+                        if (elements.settingsBtn) {
+                            elements.settingsBtn.setAttribute("aria-expanded", "false");
+                        }
+                    }
+                });
+            }
             elements.confirmModal.addEventListener("click", (event) => {
                 if (event.target === elements.confirmModal) closeModal(elements.confirmModal);
             });
@@ -5888,7 +6334,7 @@ OUTPUT JSON ONLY:
                     const next = !isActive;
                     elements.techQuestionToggle.setAttribute("aria-pressed", String(next));
                     appState.ui.techQuestion = next;
-                    showToast(next ? "Technische Frage aktiv" : "Technische Frage aus");
+                    showToast(next ? "Technikfrage aktiv" : "Technikfrage aus");
                 });
             }
 
@@ -5937,12 +6383,12 @@ OUTPUT JSON ONLY:
                     renderTrainingStats();
                 }
 
-                const libraryVote = event.target.closest("[data-library-vote]");
-                if (libraryVote) {
+                const verdictBtn = event.target.closest("[data-feedback-verdict]");
+                if (verdictBtn) {
                     const card = getActiveCard();
                     if (!card) return;
-                    await recordLibraryVote(card, libraryVote.dataset.libraryVote);
-                    showToast("Learning Loop gespeichert");
+                    await recordFeedback(card, verdictBtn.dataset.feedbackVerdict);
+                    showToast("Feedback gespeichert");
                 }
 
                 const favoriteBtn = event.target.closest(".favorite-btn");
@@ -5986,6 +6432,7 @@ OUTPUT JSON ONLY:
                         elements.objectionInput.value = next;
                         appState.objection = next;
                         trackPlaybookRef(text);
+                        copyToClipboard(text);
                         elements.objectionInput.focus();
                     }
                 });
@@ -6204,6 +6651,31 @@ OUTPUT JSON ONLY:
 
             elements.lockToggleBtn.addEventListener("click", () => handleLockToggle());
             elements.unlockBtn.addEventListener("click", () => handleUnlock());
+            if (elements.proxyTestBtn) {
+                elements.proxyTestBtn.addEventListener("click", async () => {
+                    const value = elements.proxyUrl.value.trim();
+                    if (!value) {
+                        setProxyStatus("Proxy: Aus", false);
+                        appState.ui.proxyVerified = false;
+                        appState.ui.proxyTestedUrl = "";
+                        showToast("Proxy URL fehlt");
+                        return;
+                    }
+                    const ok = await testProxyConnection(value, elements.apiProvider.value);
+                    showToast(ok ? "Proxy-Test OK" : "Proxy-Test fehlgeschlagen");
+                });
+            }
+            if (elements.proxyUrl) {
+                elements.proxyUrl.addEventListener("input", () => {
+                    elements.proxyUrl.classList.remove("input-error");
+                    if (elements.proxyStatus) {
+                        elements.proxyStatus.textContent = "Proxy: Aus";
+                    }
+                    appState.ui.proxyVerified = false;
+                    appState.ui.proxyTestedUrl = "";
+                    appState.ui.proxyBlocked = false;
+                });
+            }
 
             elements.exportBtn.addEventListener("click", async () => {
                 const confirmed = await confirmAction({
@@ -6249,8 +6721,8 @@ OUTPUT JSON ONLY:
             if (elements.libraryExportBtn) {
                 elements.libraryExportBtn.addEventListener("click", async () => {
                     const confirmed = await confirmAction({
-                        title: "Library exportieren?",
-                        message: "Export enthält lokale Learning-Loop Einträge.",
+                        title: "Feedback exportieren?",
+                        message: "Export enthält lokales Einwand-Feedback.",
                         confirmLabel: "Exportieren"
                     });
                     if (!confirmed) return;
@@ -6259,10 +6731,10 @@ OUTPUT JSON ONLY:
                     const url = URL.createObjectURL(blob);
                     const anchor = document.createElement("a");
                     anchor.href = url;
-                    anchor.download = `mehic_library_export_${Date.now()}.json`;
+                    anchor.download = "library.json";
                     anchor.click();
                     URL.revokeObjectURL(url);
-                    showToast("Library Export abgeschlossen");
+                    showToast("Feedback Export abgeschlossen");
                 });
             }
 
@@ -6278,16 +6750,64 @@ OUTPUT JSON ONLY:
                     const file = event.target.files[0];
                     if (!file) return;
                     const confirmed = await confirmAction({
-                        title: "Library importieren?",
-                        message: "Lokale Learning-Loop Einträge werden ersetzt.",
+                        title: "Feedback importieren?",
+                        message: "Lokales Feedback wird ersetzt.",
                         confirmLabel: "Importieren"
                     });
                     if (!confirmed) return;
                     try {
                         await importLibraryData(file);
-                        showToast("Library Import abgeschlossen");
+                        renderSalesHistory();
+                        showToast("Feedback Import abgeschlossen");
                     } catch {
-                        showToast("Library Import fehlgeschlagen");
+                        showToast("Feedback Import fehlgeschlagen");
+                    }
+                });
+            }
+
+            if (elements.wikiExportBtn) {
+                elements.wikiExportBtn.addEventListener("click", async () => {
+                    const confirmed = await confirmAction({
+                        title: "Wiki exportieren?",
+                        message: "Export enthält lokale Wiki Einträge.",
+                        confirmLabel: "Exportieren"
+                    });
+                    if (!confirmed) return;
+                    const data = await exportWikiData();
+                    const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+                    const url = URL.createObjectURL(blob);
+                    const anchor = document.createElement("a");
+                    anchor.href = url;
+                    anchor.download = "wiki.json";
+                    anchor.click();
+                    URL.revokeObjectURL(url);
+                    showToast("Wiki Export abgeschlossen");
+                });
+            }
+
+            if (elements.wikiImportBtn) {
+                elements.wikiImportBtn.addEventListener("click", () => {
+                    elements.wikiImportFile.value = "";
+                    elements.wikiImportFile.click();
+                });
+            }
+
+            if (elements.wikiImportFile) {
+                elements.wikiImportFile.addEventListener("change", async (event) => {
+                    const file = event.target.files[0];
+                    if (!file) return;
+                    const confirmed = await confirmAction({
+                        title: "Wiki importieren?",
+                        message: "Lokale Wiki Einträge werden ersetzt.",
+                        confirmLabel: "Importieren"
+                    });
+                    if (!confirmed) return;
+                    try {
+                        await importWikiData(file);
+                        renderWikiFrame();
+                        showToast("Wiki Import abgeschlossen");
+                    } catch {
+                        showToast("Wiki Import fehlgeschlagen");
                     }
                 });
             }
@@ -6309,10 +6829,11 @@ OUTPUT JSON ONLY:
                 appState.history = [];
                 appState.favorites = [];
                 appState.training = { ...DEFAULT_TRAINING_STATE };
-                appState.library = [];
+                appState.feedback = [];
+                appState.feedbackRanking = [];
                 appState.playbookRefs = [];
                 await saveSellerState();
-                await refreshLibraryItems();
+                await refreshFeedbackData();
                 resetApp();
                 await updateStats();
                 showToast("Daten gelöscht");
@@ -6323,13 +6844,29 @@ OUTPUT JSON ONLY:
                 appState.settings.apiProvider = elements.apiProvider.value;
                 appState.settings.modelName = sanitizeString(elements.modelName.value, 80) || MODEL_DEFAULTS[appState.settings.apiProvider];
                 const proxyValue = elements.proxyUrl.value.trim();
-                const proxyCheck = validateProxyUrl(proxyValue);
-                if (proxyValue && !proxyCheck.ok) {
-                    showToast("Proxy nicht erlaubt");
-                    appState.settings.proxyUrl = "";
-                    elements.proxyUrl.value = "";
+                if (proxyValue) {
+                    const proxyCheck = validateProxyUrl(proxyValue);
+                    if (!proxyCheck.ok) {
+                        showToast(proxyCheck.reason === "file_disabled" ? "Proxy im file:// Modus deaktiviert" : "Proxy nicht erlaubt");
+                        appState.settings.proxyUrl = "";
+                        setProxyStatus("Proxy: Aus", true);
+                        appState.ui.proxyBlocked = false;
+                    } else if (!appState.ui.proxyVerified || appState.ui.proxyTestedUrl !== proxyValue) {
+                        showToast("Proxy zuerst testen");
+                        appState.settings.proxyUrl = "";
+                        setProxyStatus("Proxy: Aus", true);
+                        appState.ui.proxyBlocked = false;
+                    } else {
+                        appState.settings.proxyUrl = proxyValue;
+                        setProxyStatus("Proxy: Aktiv", false);
+                        appState.ui.proxyBlocked = false;
+                    }
                 } else {
-                    appState.settings.proxyUrl = proxyValue;
+                    appState.settings.proxyUrl = "";
+                    appState.ui.proxyVerified = false;
+                    appState.ui.proxyTestedUrl = "";
+                    setProxyStatus("Proxy: Aus", false);
+                    appState.ui.proxyBlocked = false;
                 }
                 appState.settings.department = elements.department.value;
                 appState.settings.storePolicy = sanitizeString(elements.storePolicy.value, 400);
@@ -6366,7 +6903,10 @@ OUTPUT JSON ONLY:
                         closeModal(elements.confirmModal);
                         return;
                     }
-                    if (elements.settingsModal.classList.contains("open")) {
+                    const settingsOpen = elements.settingsModal.tagName === "DIALOG"
+                        ? elements.settingsModal.open
+                        : elements.settingsModal.classList.contains("open");
+                    if (settingsOpen) {
                         closeQuickPanel();
                         return;
                     }
@@ -6470,6 +7010,9 @@ OUTPUT JSON ONLY:
             elements.themeDark.checked = appState.settings.themeMode === "dark";
             elements.densityCompact.checked = appState.settings.densityMode === "compact";
             elements.densityComfortable.checked = appState.settings.densityMode === "comfortable";
+            appState.ui.proxyVerified = Boolean(appState.settings.proxyUrl);
+            appState.ui.proxyTestedUrl = appState.settings.proxyUrl || "";
+            updateProxyAvailability();
             openQuickPanel();
         }
 
@@ -6525,6 +7068,7 @@ OUTPUT JSON ONLY:
             applyTheme(appState.settings.themeMode, false);
             const initialFrame = appState.settings.frameMode || "sales";
             setFrame(initialFrame, false);
+            updateProxyAvailability();
 
             setupEvents();
             setupSpeechRecognition();
@@ -6537,12 +7081,12 @@ OUTPUT JSON ONLY:
             updatePolicyTile();
             updateTrustStatus();
             await refreshWikiData();
-            await refreshLibraryItems();
+            await refreshFeedbackData();
             render();
             await updateStats();
             requestWakeLock();
 
-            elements.buildInfo.textContent = `Build: ${BUILD_SIGNATURE}`;
+            elements.buildInfo.textContent = `Version: ${BUILD_SIGNATURE}`;
             syncLibrary(false);
         }
 
